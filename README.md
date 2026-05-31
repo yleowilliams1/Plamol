@@ -125,9 +125,9 @@ Two combatants in neighboring tiles trigger an opportunity attack if one moves a
 
 ### Ending Combat
 
-Combat ends automatically when all enemies are dead, or when the combat state is set to **Intimidate**.
+Combat ends automatically when all enemies are dead, or when the combat state is set to **Non-Violent End**.
 
-To attempt an **Intimidate end**, a player may spend their entire action (receiving the +2 AC bonus) on an end-combat roll:
+To attempt an **Non-Violent End**, a player may spend their entire action (receiving the +2 AC bonus) on an end-combat roll:
 
 ```
 Both sides roll: 1d20 + chosen skill   (player chooses their skill, enemy uses a matching skill)
@@ -194,22 +194,22 @@ Experience is gained through kills, interactions, and quests. Each threshold is 
 
 ### Derived Skills
 
-All skill values are: `formula result ÷ 4`, rounded up.
+All decimal values are rounded up.
 
 | Skill | Formula |
 |---|---|
-| Physical Coordination | `(STR + DEX − INT) / 2` |
-| Word | `(SOC + INT − CON) / 2` |
-| Prob Analysis | `(INT + WIS − STR) / 2` |
-| Spatial | `(INT + DEX − SOC) / 2` |
-| Musical | `(WIS + DEX − SOC) / 2` |
-| Natural | `(WIS + CON − DEX) / 2` |
-| Interpersonal | `(SOC + WIS − STR) / 2` |
-| Intrapersonal | `(INT + CON − WIS) / 2` |
-| Innocence | `(CON + DEX − INT) / 2` |
-| Heroism | `(STR + SOC − INT) / 2` |
-| Love | `(SOC + CON − DEX) / 2` |
-| Author | `(STR + INT − SOC) / 2` |
+| Physical Coordination | `((STR + DEX − INT) / 2) / 4` |
+| Word | `((SOC + INT − CON) / 2) / 4` |
+| Prob Analysis | `((INT + WIS − STR) / 2) / 4` |
+| Spatial | `((INT + DEX − SOC) / 2) / 4` |
+| Musical | `((WIS + DEX − SOC) / 2) / 4` |
+| Natural | `((WIS + CON − DEX) / 2) / 4` |
+| Interpersonal | `((SOC + WIS − STR) / 2) / 4` |
+| Intrapersonal | `((INT + CON − WIS) / 2) / 4` |
+| Innocence | `*(CON + DEX − INT) / 2) / 4` |
+| Heroism | `((STR + SOC − INT) / 2) / 4` |
+| Love | `((SOC + CON − DEX) / 2) / 4` |
+| Author | `((STR + INT − SOC) / 2) / 4` |
 
 ### Combat-Derived Stats
 
