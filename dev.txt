@@ -1,0 +1,265 @@
+PLAMOL — DEVELOPMENT PLAN
+=========================
+
+
+OVERVIEW
+--------
+Phased development plan for Plamol, a tile-based RPG built in C using raylib.
+Development is solo. Each phase produces a testable milestone before the next
+begins. Content — story, quests, perks, world data — is authored after the
+engine and tooling are complete. Phases are ordered by dependency. Nothing in
+a later phase should be started before its predecessors are stable and testable.
+
+
+================================================================
+PHASE 1 — GRAPHICS MODE
+================================================================
+Goal
+    The player can navigate a tile-based map. This is the foundation
+    everything else is built on.
+
+Deliverables
+    - Tile map loads from a data file
+    - Each tile holds a data structure (type, description, flags)
+    - Player character renders on the map and moves between tiles
+    - Camera follows the player
+    - Basic window and game loop running in raylib
+
+Done When
+    You can walk a character around a hand-authored tile map with no
+    hardcoded tile data in the game logic.
+
+
+================================================================
+PHASE 2 — ACTION MODE
+================================================================
+Goal
+    The player can initiate Action mode on any tile. The action interface
+    displays correctly and returns cleanly to Graphics mode.
+
+Deliverables
+    - Player selects an adjacent or occupied tile to initiate Action mode
+    - Action interface renders with the target tile's icon and available actions
+    - Look and Interact actions function (return description text from tile data)
+    - Mode transition is clean — Graphics > Action > Graphics with no state bleed
+    - No system can force the player into Action mode
+
+Done When
+    The player can walk up to any tile, open Action mode, look at it, and
+    return to Graphics mode. The modal sequence is enforced in code.
+
+
+================================================================
+PHASE 3 — STATS AND CHARACTER CREATION
+================================================================
+Goal
+    A full character can be created at game start. All stat and skill
+    formulas calculate correctly.
+
+Deliverables
+    - 6 base stats rolled with 3d6 each, total displayed, player can redistribute
+    - 4 skill tags available, each adds +5 to a base stat
+    - Up to 5 perks selectable (perk list authored as content later — scaffold the system now)
+    - All 12 derived skills calculate correctly from base stats using the /2 formula
+    - Armor Class, Damage Reduction, Max HP, and Initiative calculate correctly
+    - Character sheet displays all values
+
+Done When
+    A character can be fully created and all derived values are correct
+    and readable on a character screen.
+
+
+================================================================
+PHASE 4 — SAVE / LOAD
+================================================================
+Goal
+    The full game state can be saved to disk and restored exactly. This
+    must be stable before any stateful systems are built on top of it.
+
+Deliverables
+    - Full game state serializes to a file (player position, stats, flags, inventory)
+    - State restores completely and correctly on load
+    - Save and load accessible from a menu
+    - Corrupt or missing save handled gracefully
+
+Done When
+    You can save mid-session, close the program, reopen, load, and be in
+    the exact same state.
+
+
+================================================================
+PHASE 5 — INVENTORY AND HOTBAR
+================================================================
+Goal
+    Items exist in the game. The hotbar applies stat modifiers. The
+    inventory holds items without affecting stats.
+
+Deliverables
+    - Item data structure defined (name, applicable skill, modifier value,
+      weapon flag, efficiency range if ranged)
+    - Items load from data files
+    - Inventory holds items with no stat effect
+    - Hotbar has 8 slots — items equipped here apply their stat modifier
+    - Weapons placed in hotbar are usable in combat (scaffold only, combat in Phase 6)
+    - Items can be moved between inventory and hotbar
+    - Action mode exposes Give option when interacting with NPCs (NPCs built in Phase 7)
+
+Done When
+    A character can hold items, equip them to the hotbar, and see stat
+    values change accordingly.
+
+
+================================================================
+PHASE 6 — COMBAT
+================================================================
+Goal
+    Full turn-based combat runs correctly from initiation through
+    resolution and returns to Action mode.
+
+Deliverables
+    - Combat initiated only via hostile actions in Action mode
+    - Hostile actions marked clearly in the Action interface
+    - Enemy turn order set at initiation; player turn order defaults to
+      initiated value with forward/backward adjustment
+    - Action point system: starts at 100, sub-actions subtract cost,
+      remainder carries forward
+    - Remaining action penalty: (attack-roll + remaining-action / 4)
+    - Full action expended grants +2 AC for the round
+    - Attack rolls: d20 + applicable skill vs defender AC
+    - Damage rolls: weapon dice + applicable skill bonus, minus defender
+      Damage Reduction
+    - Ranged weapons: -10 to attack roll per tile beyond efficiency range
+    - Opportunity attacks draw from previous round action pool; unavailable
+      if pool was fully spent
+    - End-combat versus roll: player spends full action, wagers a skill
+      against enemy skill, both roll 1d20 + skill
+    - Combat ends automatically when all enemies are dead or intimidate
+      state is set
+    - Post-combat drops into Action mode on the battlefield — Interact
+      loots, Look describes
+
+Done When
+    A combat encounter can be started, fully resolved via killing or versus
+    roll, and the player is returned to Action mode on the battlefield with
+    lootable bodies.
+
+
+================================================================
+PHASE 7 — DIALOGUE AND NPCs
+================================================================
+Goal
+    NPCs exist as objects on the map. Dialogue runs through the Action
+    interface. Branching conversations are authorable in data files.
+
+Deliverables
+    - NPC data structure defined (name, icon, dialogue tree reference,
+      stat block for combat)
+    - NPCs load from data files and appear as initiatable objects on the map
+    - Action mode on an NPC exposes Look, Interact, Give, and hostile options
+    - Dialogue system loads branching dialogue trees from data files
+    - Dialogue choices rendered in the Action interface
+    - Dialogue can set world flags (for quest tracking)
+    - XP awarded for interactions as defined in NPC data
+
+Done When
+    A hand-authored NPC can be walked up to, spoken to through a branching
+    dialogue tree, and the conversation sets flags correctly.
+
+
+================================================================
+PHASE 8 — PROGRESSION
+================================================================
+Goal
+    XP accumulates, levels are gained, and the leveling choices function
+    correctly.
+
+Deliverables
+    - XP awarded for kills, interactions, and quest completions
+    - XP threshold: previous threshold x 1.33, starting at 100
+    - Level up triggers at threshold and presents the appropriate choice screen
+    - Every level: tag one skill (+5 to base stat)
+    - Every two levels: choose two randomized perks or tag two skills
+    - Every third level: choose four randomized perks or increase a base stat by one
+    - Perk system accepts randomized perk pool from data files
+    - All derived stats and skills recalculate correctly after any stat change
+
+Done When
+    A character can gain XP, level up multiple times, and all three leveling
+    intervals trigger and apply their choices correctly.
+
+
+================================================================
+PHASE 9 — WORLD AND CONTENT TOOLS
+================================================================
+Goal
+    All game content — tiles, NPCs, items, dialogue, quests, perks — is
+    authored in data files with no hardcoded content in the game logic.
+
+Deliverables
+    - Tile map editor or clear map file format with documentation
+    - NPC authoring format with dialogue tree structure documented
+    - Item definition format documented
+    - Quest flag system documented and functional
+    - Perk definition format documented (ready for perk list to be authored)
+    - All existing test content migrated to data files
+    - Game runs with zero hardcoded world content
+
+Done When
+    A new NPC, item, location, or dialogue tree can be added to the game
+    by editing data files alone, without touching C code.
+
+
+================================================================
+PHASE 10 — AUDIO
+================================================================
+Goal
+    Sound effects and music play at appropriate moments. Audio is
+    data-driven.
+
+Deliverables
+    - Audio system initialised via raylib
+    - Sound effects for combat actions, UI interactions, movement
+    - Background music loads and loops per zone or context
+    - Audio settings (volume, mute) accessible from menu
+    - All audio referenced from data files, not hardcoded
+
+Done When
+    The game has functional audio that can be adjusted by the player and
+    authored without code changes.
+
+
+================================================================
+PHASE 11 — PLAYTESTING AND POLISH
+================================================================
+Goal
+    The engine is stable, content-ready, and the remaining design gaps are
+    filled. This is where story, perks, and world content are authored now
+    that the tools exist to support them.
+
+Deliverables
+    - Perk list designed and authored into data files
+    - Story content authored using the dialogue and quest systems
+    - World populated with tiles, NPCs, and items
+    - Balance pass on combat numbers
+    - All known bugs resolved
+    - Introductory sequence functional
+
+Done When
+    A complete playable slice of the game exists from character creation
+    through meaningful story content, with combat, dialogue, and progression
+    all functioning together.
+
+
+================================================================
+DEVELOPMENT PRINCIPLES
+================================================================
+    - Each phase must be stable before the next begins. Do not carry
+      broken systems forward.
+    - No hardcoded world content in game logic at any point. Establish
+      data-driven patterns from Phase 1.
+    - Story and content are authored last. The engine serves the content,
+      not the other way around.
+    - The perk list and story are deferred until Phase 11. The systems
+      that run them are built earlier.
+    - Save/load is built early (Phase 4) so every subsequent phase can be
+      tested with persistent state.
