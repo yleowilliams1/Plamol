@@ -219,3 +219,7 @@ All decimal values are rounded up.
 | Damage Reduction | `(STR + CON) − DEX` |
 | Max Hit Points | `(CON + STR) − DEX` |
 | Initiative | `((DEX + WIS) − INT) / 4` |
+
+### Perks
+
+I think it would funny to have phobias as rascism as traits. Like you can be homophobic and rascist. Very funny. 

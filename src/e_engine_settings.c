@@ -12,6 +12,9 @@ static struct EngineSettings *settings;
 char *e_get_map_path(){
 	return settings->map_path;
 }
+char *e_get_path_to_tilesets(){
+	return settings->path_to_tilesets;
+}
 
 static bool parse_bind(const char *action_str, const char *value_str, struct SettingsBind *out){
 	/* Resolve action name */
@@ -44,6 +47,7 @@ void e_free_setting(){
 	free(settings->default_binds_list);
 	free(settings->override_binds_list);
 	free(settings->map_path);
+	free(settings->path_to_tilesets);
 	free(settings);
 }
 
@@ -77,6 +81,9 @@ bool e_load_engine_settings(){
 				if(strcmp(key, "map_path") == 0){
 					settings->map_path = strdup(v);
 				}
+				if(strcmp(key, "path_to_tilesets") == 0){
+					settings->path_to_tilesets = strdup(v);
+				}
 			} else if(strcmp(current_section, "default_binds") == 0){
 				if(settings->default_binds_count < MAX_BINDS){
 					struct SettingsBind *slot = &settings->default_binds_list[settings->default_binds_count];
@@ -105,4 +112,4 @@ bool e_load_engine_settings(){
 
 	fclose(f);
 	return true;
-}
+

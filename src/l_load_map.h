@@ -6,18 +6,10 @@
 // Map tiles are fixed in memory. The indentifer
 // for the data is not.
 struct MapTileData{
-	// Rendering
-	uint8_t tileset_indentifier;
-	uint16_t tile_texture_indentifier;
-	// Data
-	uint32_t tile_data_indentifier;
-	// 1+2+4 = 7
-	
-	uint8_t padding;
-
-	// 8 total
+	uint16_t tile_indx;
 };
 struct MapData{
+	uint8_t  tileset;
 	uint32_t width;
 	uint32_t height;
 	struct MapTileData data[];
