@@ -1,2 +1,2 @@
 #pragma once
-struct GameStateNode s_combat_state(void);
+struct GameStateNode combat_state(void);

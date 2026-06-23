@@ -1,0 +1,5 @@
+#!/bin/bash
+
+path="e_engine_settings.c f_flags.c g_statemachine.c i_input.c i_items.c l_load_map.c m_map_manager.c m_map_tile.c m_map_utils.c main.c p_entity.c p_stats.c r_asset_manager.c s_action.c s_combat.c s_graphics.c s_menu.c t_config_tool.c w_window_manager.c"
+
+gcc $(printf "src/%s " $path) -o game -lraylib -lm

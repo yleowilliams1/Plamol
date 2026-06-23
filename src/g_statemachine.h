@@ -30,5 +30,5 @@ void sm_switch(struct GameStateNode node);
 void sm_push(struct GameStateNode node);
 void sm_pop(void);
 void sm_update(void);
-void sm_submit_draw_calls(void);
+void sm_draw(void);
 void sm_init(struct GameStateNode node); 

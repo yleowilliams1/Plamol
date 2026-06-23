@@ -1,11 +1,5 @@
 #include <stdio.h> 
 #include "g_statemachine.h"
-/*
-    NOTE: sm_submit_draw_calls doesn't actually render.
-    All of the updates inside it are draw calls
-
-
-*/
 static struct StateMachine state_machine = {0};
 void sm_init(struct GameStateNode node){
     sm_push(node);
@@ -49,7 +43,7 @@ void sm_update() {
     }
 }
 
-void sm_submit_draw_calls() {
+void sm_draw() {
     if (state_machine.count == 0) return;
 
     if (state_machine.stack[state_machine.count - 1].on_render) {

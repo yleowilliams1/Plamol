@@ -7,11 +7,14 @@
 #include "m_map_tile.h"
 #include "e_engine_settings.h"
 
-#define MAX_TILES_LOADED 256
 
 struct TileData *tile_data;
 
-bool l_read_tile(uint8_t tileset, uint16_t tile_index){
+struct TileData *grab_tile(){
+	return tile_data;
+}
+
+bool l_load_tile(uint8_t tileset, uint16_t tile_index){
 	char *string = e_get_path_to_tilesets();
 	size_t len = strlen(string);
 	bool needs_slash = (len == 0 || string[len - 1] != '/');
@@ -32,7 +35,7 @@ bool l_read_tile(uint8_t tileset, uint16_t tile_index){
 	if(!f){return false;}
 	
 	if(tile_data){free(tile_data);}
-	tile_data = calloc(0, sizeof(struct TileData));
+	tile_data = calloc(1, sizeof(struct TileData));
 	
 	while(fgets(line, sizeof(line), f)){
 		if(line[0] == '\n' || line[0] == '#' || line[0] == ';'){continue;}
@@ -51,8 +54,11 @@ bool l_read_tile(uint8_t tileset, uint16_t tile_index){
 				if(strcmp(key, "tile_texture_id") == 0){
 					tile_data->tile_texture_index = atoi(v);
 				}
-				else if(strcmp(key, "description_index") == 0){
-					tile_data->description_index = atoi(v); 
+				else if(strcmp(key, "tile_portrait_index") == 0){
+					tile_data->tile_portrait_index = atoi(v);
+				}
+				else if(strcmp(key, "text_index") == 0){
+					tile_data->text_index = atoi(v); 
 				}
 				else if(strcmp(key, "combat_encounter_index") == 0){
 					tile_data->combat_encounter_index = atoi(v);
@@ -90,11 +96,6 @@ bool l_read_tile(uint8_t tileset, uint16_t tile_index){
 	return true;
 }
 
-void m_cleanup_tileset(){
+void m_cleanup_tile(){
 	free(tile_data);
 }
-
-void m_load_tileset(uint8_t tileset, uint16_t tile_index){
-		
-}
-

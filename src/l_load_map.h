@@ -7,6 +7,7 @@
 // for the data is not.
 struct MapTileData{
 	uint16_t tile_indx;
+	bool     is_passable;
 };
 struct MapData{
 	uint8_t  tileset;

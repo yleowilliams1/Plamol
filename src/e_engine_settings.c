@@ -15,7 +15,21 @@ char *e_get_map_path(){
 char *e_get_path_to_tilesets(){
 	return settings->path_to_tilesets;
 }
-
+char *e_get_tile_path(){
+	return settings->tile_path;
+}
+char *e_get_portrait_path(){
+	return settings->portrait_path;
+}
+char *e_get_flag_path(){
+	return settings->flag_path;
+}
+char *e_get_items_path(){
+	return settings->items_path;
+}
+char *e_get_stats_path(){
+	return settings->stats_path;
+}
 static bool parse_bind(const char *action_str, const char *value_str, struct SettingsBind *out){
 	/* Resolve action name */
 	int action = -1;
@@ -48,6 +62,11 @@ void e_free_setting(){
 	free(settings->override_binds_list);
 	free(settings->map_path);
 	free(settings->path_to_tilesets);
+	free(settings->tile_path);
+	free(settings->portrait_path);
+	free(settings->flag_path);
+	free(settings->items_path);
+	free(settings->stats_path);
 	free(settings);
 }
 
@@ -78,11 +97,26 @@ bool e_load_engine_settings(){
 			while (*v == ' ' || *v == '\t') v++;
 			
 			if(strcmp(current_section, "general") == 0){
+				if(strcmp(key, "items_path") == 0){
+					settings->items_path = strdup(v);
+				}
 				if(strcmp(key, "map_path") == 0){
 					settings->map_path = strdup(v);
 				}
 				if(strcmp(key, "path_to_tilesets") == 0){
 					settings->path_to_tilesets = strdup(v);
+				}
+				if(strcmp(key, "tile_path") == 0){
+					settings->tile_path = strdup(v);
+				}
+				if(strcmp(key, "portrait_path") == 0){
+					settings->portrait_path = strdup(v);
+				}
+				if(strcmp(key, "flag_path") == 0){
+					settings->flag_path = strdup(v);
+				}
+				if(strcmp(key, "stats_path") == 0 ){
+					settings->stats_path = strdup(v);
 				}
 			} else if(strcmp(current_section, "default_binds") == 0){
 				if(settings->default_binds_count < MAX_BINDS){
@@ -112,4 +146,4 @@ bool e_load_engine_settings(){
 
 	fclose(f);
 	return true;
-
+}
