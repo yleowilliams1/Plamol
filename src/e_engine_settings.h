@@ -14,6 +14,7 @@ struct EngineSettings{
 	char *flag_path;
 	char *items_path;
 	char *stats_path;
+	float tilemem_secs;
 	struct SettingsBind *default_binds_list;
 	int default_binds_count;
 	struct SettingsBind *override_binds_list;
@@ -26,5 +27,6 @@ char *e_get_portrait_path();
 char *e_get_flag_path();
 char *e_get_items_path();
 char *e_get_stats_path();
+float e_get_tilemem_secs();
 void e_free_setting();
 bool e_load_engine_settings();

@@ -7,6 +7,8 @@
 
 #define INI_PATH "data/engine.ini"
 #define MAX_BINDS 64
+
+/*You need to write errors checking for everything eventually*/
 static struct EngineSettings *settings;
 
 char *e_get_map_path(){
@@ -29,6 +31,9 @@ char *e_get_items_path(){
 }
 char *e_get_stats_path(){
 	return settings->stats_path;
+}
+float e_get_tilemem_secs(){
+	return settings->tilemem_secs;
 }
 static bool parse_bind(const char *action_str, const char *value_str, struct SettingsBind *out){
 	/* Resolve action name */
@@ -117,6 +122,9 @@ bool e_load_engine_settings(){
 				}
 				if(strcmp(key, "stats_path") == 0 ){
 					settings->stats_path = strdup(v);
+				}
+				if(strcmp(key, "tile_memory_seconds") == 0){
+					settings->tilemem_secs = (float)atof(v);
 				}
 			} else if(strcmp(current_section, "default_binds") == 0){
 				if(settings->default_binds_count < MAX_BINDS){

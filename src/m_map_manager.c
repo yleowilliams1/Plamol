@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "e_engine_settings.h"
 #include "l_load_map.h"
-
+#include "m_map_tile.h"
 // Free dumbass
 static struct MapData *map_ptr= NULL;
 
@@ -12,5 +12,5 @@ void m_init_map(){
 }
 
 void m_free_map(){
-	free(map_ptr);
+	if(map_ptr){free(map_ptr);}
 }

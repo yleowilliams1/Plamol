@@ -12,7 +12,7 @@ void menu_update(){
 }
 void menu_render(){
 	DrawRectangle(0,0,GetScreenWidth(), GetScreenHeight(), PL_LIGHT_BROWN);
-	DrawText("Background Texture Here",0,0, wcnf(20.f), BLACK);
+	DrawText("Background Texture Here",wcnf(10.f),wcnf(10.f), wcnf(20.f), BLACK);
 }
 void menu_pause(){
 }
