@@ -47,14 +47,6 @@ static bool get_tile_data_copy(uint8_t tileset, uint16_t tile_index, struct Tile
 	return true;
 }
 
-int m_get_tile_texture_index(uint8_t tileset, uint16_t tile_index){
-	struct TileData data;
-	if(!get_tile_data_copy(tileset, tile_index, &data)){
-		return -1;
-	}
-	return data.tile_texture_index;
-}
-
 int m_get_tile_portrait_index(uint8_t tileset, uint16_t tile_index){
 	struct TileData data;
 	if(!get_tile_data_copy(tileset, tile_index, &data)){
@@ -190,10 +182,7 @@ int l_load_tile(uint8_t tileset, uint16_t tile_index){
 			char *v = value;
 			while(*v == ' ' || *v == '\t') v++;
 			if(strcmp(current_section, "Indexes") == 0){
-				if(strcmp(key, "tile_texture_id") == 0){
-					tile->data.tile_texture_index = atoi(v);
-				}
-				else if(strcmp(key, "tile_portrait_index") == 0){
+				if(strcmp(key, "tile_portrait_index") == 0){
 					tile->data.tile_portrait_index = atoi(v);
 				}
 				else if(strcmp(key, "text_index") == 0){
