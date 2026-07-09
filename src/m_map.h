@@ -25,6 +25,5 @@ struct MetadataTemp{
 	int tileset;
 	int count;
 };
-
-bool l_write_map(const char *filepath, struct MapData *map);
-struct MapData *l_read_map(const char *filepath);
+void m_init(void);
+void m_free();

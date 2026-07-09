@@ -3,23 +3,14 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
-#include "l_load_map.h"
+#include "m_map.h"
 #include "t_config_tool.h"
+#include "e_engine_settings.h"
 #define MAX_STRUCTS 512
 #define MAX_FUNCTIONS 512
 
 struct MapTileData g_pallete[MAX_STRUCTS] = {0};
-
-bool l_write_map(const char *filepath, struct MapData *map){
-	FILE *fp = fopen(filepath, "wb");
-	if(!fp){return false;}	
-
-	size_t size = sizeof(struct MapData) + map->width * map->height * sizeof(struct MapTileData);
-
-	if(fwrite(map, size, 1, fp) != 1){fclose(fp); return false;}
-	fclose(fp);
-	return true;
-}
+static struct MapData *map_ptr = NULL;
 
 void parse_map(struct config_pack p, void *ptr){
 	struct MapData *m = (struct MapData*)ptr;	
@@ -73,20 +64,24 @@ void parse_meta(struct config_pack p, void *ptr){
 		return;
 	}
 }
-struct MapData *l_read_map(const char *filepath){
-	struct MapData *map; 
+void m_init(void){
+	char *filepath = e_get_map_path();
 	struct MetadataTemp *meta = malloc(sizeof(struct MetadataTemp));
 	
 	// Get meta data first	
-	t_config(meta, (char*)filepath, parse_meta);
+	t_config(meta, filepath, parse_meta);
 	size_t size = sizeof(struct MapData) + meta->count * sizeof(struct MapTileData);
-	map = calloc(1, size);
-	map->count = meta->count;
-	map->tileset = meta->tileset;
 	
-	t_config(map, (char *)filepath, parse_map);
+	if(map_ptr){m_free();}	
+
+	map_ptr = calloc(1, size);
+	map_ptr->count = meta->count;
+	map_ptr->tileset = meta->tileset;
+	
+	t_config(map_ptr, (char *)filepath, parse_map);
 	
 	free(meta);
-	return map;
 }
-
+void m_free(){
+	if(map_ptr){free(map_ptr);}
+}

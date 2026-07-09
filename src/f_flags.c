@@ -7,8 +7,6 @@
 
 struct FlagManager *fm = NULL;
 
-void flag_set(const char *name, bool value);
-
 void f_init_flag(){
 	if(fm){return;}
 	char *path = e_get_flag_path();

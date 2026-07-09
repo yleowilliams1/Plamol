@@ -32,9 +32,13 @@ char *e_get_items_path(){
 char *e_get_stats_path(){
 	return settings->stats_path;
 }
+char *e_get_inventory_path(){
+	return settings->inventory_path;
+}
 float e_get_tilemem_secs(){
 	return settings->tilemem_secs;
 }
+
 static bool parse_bind(const char *action_str, const char *value_str, struct SettingsBind *out){
 	/* Resolve action name */
 	int action = -1;
@@ -82,7 +86,7 @@ bool e_load_engine_settings(){
 	FILE *f = fopen(INI_PATH, "r");
 	if(!f) {return false;}
 	
-	settings = malloc(sizeof(struct EngineSettings));
+	settings = calloc(1, sizeof(struct EngineSettings));
 	settings->default_binds_list  = calloc(MAX_BINDS, sizeof(struct SettingsBind));
 	settings->override_binds_list = calloc(MAX_BINDS, sizeof(struct SettingsBind));
 	settings->default_binds_count  = 0;
@@ -125,6 +129,9 @@ bool e_load_engine_settings(){
 				}
 				if(strcmp(key, "tile_memory_seconds") == 0){
 					settings->tilemem_secs = (float)atof(v);
+				}
+				if(strcmp(key, "inventory_path") == 0){
+					settings->inventory_path = strdup(v);
 				}
 			} else if(strcmp(current_section, "default_binds") == 0){
 				if(settings->default_binds_count < MAX_BINDS){

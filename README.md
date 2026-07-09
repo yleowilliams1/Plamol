@@ -221,5 +221,10 @@ All decimal values are rounded up.
 | Initiative | `((DEX + WIS) − INT) / 4` |
 
 ### Perks
+I think it would funny to have phobias as rascism as traits. Like you can be homophobic and rascist. Very funny.
 
-I think it would funny to have phobias as rascism as traits. Like you can be homophobic and rascist. Very funny. 
+### Pace
+
+The game needs evolve in some way every hour or so. For example, hour two has to introduce a specified powerup, like x2 damage on people of X trait; or it has to introduce some new approach, for example a new zone, a new enemy, a new perk, a new boss. Importantly this cannot be an optional evolution. Something like the stealth approach as an option means that players choosing a strength build will be less likely to choose it, and miss out on the evolution. But it also cannot be like the stealth mission. Where the player is railroaded in a gimmicky level. It must evolve from where the player is already at, and present a significatn difference. Of course it mustn't be forced, but it must be apparent and clear. The average player should want to experiement with the new evolution, while the experienced one, perhaps comming back, may choose to not use it. Note, reward that player in someway where the average player won't be affected. 
+
+The formula should also be a signficant decision in the kind of character the player wants to be. A x2 damage on people of X trait can be abused by a willing player to be extra mean to people of X trait. So a new zone wihtin it self isn't a meaningful decision. But perhaps why the player has moved to the zone, and how the zone challenges the player dependant on their character, is. 

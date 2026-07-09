@@ -1,0 +1,7 @@
+[Todo]
+
+-Fix the strdup and write a dynamic string system
+-Localize all config readers to use the config system 
+	and follow the pattern layed out in inventory.c
+-Custom error handler which prints to terminal and logs in 
+	crash log. 

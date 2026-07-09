@@ -30,6 +30,7 @@ static bool get_tile_data_copy(uint8_t tileset, uint16_t tile_index, struct Tile
 		struct TileMetadata mdata = tiles[i]->metadata;
 		if(mdata.tileset != tileset || mdata.tile_index != tile_index){continue;}
 		index = i;
+		break;
 	}
 	// Tile isn't loaded
 	if(index == -1){
@@ -113,20 +114,20 @@ void t_cleanup_tile(){
 	}
 }
 int h_find_arr_indx(){
-	int min_index = -1;
-	float min_time = 0;
+	int oldest_index = -1;
+	float oldest_time = 0;
 	for(int i = 0; i < SLOTS; i++){
 		if(!tiles[i]){
 			return i;
 		}
-		if(min_index == -1 || tiles[i]->metadata.time > min_time){
-			min_time = tiles[i]->metadata.time;
-			min_index = i;
+		if(oldest_index == -1 || tiles[i]->metadata.time > oldest_time){
+			oldest_time = tiles[i]->metadata.time;
+			oldest_index = i;
 		}		
 	}
-	free(tiles[min_index]);
-	tiles[min_index] = NULL;
-	return min_index;
+	free(tiles[oldest_index]);
+	tiles[oldest_index] = NULL;
+	return oldest_index;
 }
 void t_update_tiles(){
 	for(int i = 0; i < SLOTS; i++){

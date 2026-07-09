@@ -18,3 +18,4 @@ struct FlagManager{
 void f_init_flag();
 void f_free_flag();
 bool flag_get(const char *name);
+void flag_set(const char *name, bool value);

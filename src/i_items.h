@@ -25,5 +25,10 @@ struct Item{
 	bool valid;
 };
 
-const struct Item *i_grab_item(int indx);
-void i_load_item(int indx);
+struct BitFlagDef{
+	char *string;
+	uint8_t bit;
+};
+
+bool i_load_item(int gindx);
+bool i_free_item(int gindx);

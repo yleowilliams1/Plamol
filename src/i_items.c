@@ -4,25 +4,23 @@
 #include <stdint.h>
 #include "e_engine_settings.h"
 #include "t_config_tool.h"
+#include "t_gindex_tool.h"
 #include "p_stats.h"
 #include "i_items.h"
+#include "t_strings.h"
+
+
+/*Todo
+ * Write the getter functions for items.*/
 
 #define MAX_ITEMS 512
+static struct Item items[MAX_ITEMS] = {0};
+static struct local_indx indx_man[MAX_ITEMS] = {0};
 
-struct BitFlagDef{
-	char *string;
-	uint8_t bit;
-};
 const struct BitFlagDef flag_lookup[] = {
 	{"throwable",   (1 << FLAG_THROWABLE)},
 	{"consumeable", (1 << FLAG_CONSUMEABLE)},
 };
-
-struct Item items[MAX_ITEMS] = {0};
-
-const struct Item* i_grab_item(int indx){
-	return &items[indx];
-}
 
 static void parse_item_dataset(struct config_pack p, struct ItemDataSet *ds){
 	if(t_check(p.key, "stat")){
@@ -49,17 +47,14 @@ static void parse_flags(char *value, uint8_t *flags){
 		tok = strtok(NULL, " ,|");
 	}
 }
-
 void item_parser(struct config_pack p, void *ptr){
 	struct Item *item = (struct Item *)ptr;
 
 	if(t_check(p.current_section, "item")){
 		if(t_check(p.key, "name")){
-			free(item->name);
-			item->name = strdup(p.value);
+			h_cpy(item->name, p.value);
 		} else if(t_check(p.key, "description")){
-			free(item->description);
-			item->description = strdup(p.value);
+			h_cpy(item->description, p.value);
 		} else if(t_check(p.key, "flags")){
 			parse_flags(p.value, &item->flags);
 		} else if(t_check(p.key, "tile_range")){
@@ -86,22 +81,12 @@ void item_parser(struct config_pack p, void *ptr){
 	}
 }
 
-void i_load_item(int indx){
-	char *base = e_get_items_path();
-	size_t base_len = strlen(base);
-	bool needs_slash = (base_len == 0 || base[base_len - 1] != '/');
+bool i_load_item(int gindx){
+	int lindx = t_gindx_to_lindx(indx_man, MAX_ITEMS, gindx);
+	bool r = t_loader(gindx, indx_man, item_parser, e_get_items_path(), &items[lindx], lindx);
+	return r;
+}
 
-	/* "%s/%u.ini\0" — base + slash + up to 10 digits + 4 + null */
-	char *file = malloc(base_len + needs_slash + 10 + 4 + 1);
-	if(!file){return;}
-
-	strcpy(file, base);
-	if(needs_slash){file[base_len] = '/'; base_len++;}
-	sprintf(file + base_len, "%u.ini", (unsigned int)indx);
-
-	if(t_config(&items[indx], file, item_parser)){
-		items[indx].valid = true;
-	}
-
-	free(file);
+bool i_free_item(int gindx){
+	return t_gfree_lindx(indx_man, MAX_ITEMS, gindx);
 }

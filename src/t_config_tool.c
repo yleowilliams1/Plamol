@@ -3,13 +3,13 @@
 #include <stdbool.h>
 #include <string.h>
 #include "t_config_tool.h"
-
+#include "t_gindex_tool.h"
 bool t_check(char *line, char *arg){
 	bool b = (strcmp(line, arg) == 0);
 	return b;	
 }
 
-bool t_config(void *ptr, char *path, void (*func)(struct config_pack, void *ptr)){
+bool t_config(void *ptr, char *path, ParserType func){
 	struct config_pack pack = {0};
 	FILE *f = fopen(path, "r");
 	if(!f){return false;}
@@ -24,4 +24,26 @@ bool t_config(void *ptr, char *path, void (*func)(struct config_pack, void *ptr)
 	}
 	fclose(f);
 	return true;
+}
+
+char *t_ini_plus_indx(char *base,int indx){
+	size_t base_len = strlen(base);
+	bool needs_slash = (base_len == 0 || base[base_len - 1] != '/');
+	/*%s/%u.ini\0 base + slash + up to 10 digits + 4 + null*/
+	char *file = malloc(base_len + needs_slash + 10 + 4 + 1);
+	strcpy(file, base);
+	if(needs_slash){file[base_len] = '/'; base_len++;}
+	sprintf(file + base_len, "%u.ini", (unsigned int)indx);
+	return file;
+}
+bool t_loader(int gindx, struct local_indx *iman, ParserType func, char *path, void *ptr, int lindx){
+	if(lindx == NULL_INDX){return false;}
+	char *file = t_ini_plus_indx(path, gindx);
+
+	if(t_config(ptr, file, func)){
+		free(file);
+		return true;
+	}
+	free(file);
+	return false;
 }	
