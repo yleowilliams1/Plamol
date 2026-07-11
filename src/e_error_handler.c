@@ -24,6 +24,10 @@ static enum ER_LVL severity(enum ER_CODE code){
 		case ERR_NO_FILE: return LVL_CRITICAL;
 		case ERR_PARSE:   return LVL_CRITICAL;
 		case ERR_INDX:    return LVL_WARNING;
+		case ERR_NULL:    return LVL_WARNING;
+		case ERR_RELOAD:  return LVL_WARNING;
+		case ERR_FUCKED: return LVL_CRASH;
+		case ERR_OUTOFBOUNDS: return LVL_WARNING;
 		default: return LVL_WARNING;
 	}
 }
@@ -42,6 +46,10 @@ static const char *code_label(enum ER_CODE code){
 		case ERR_NO_FILE: return "NO_FILE";
 		case ERR_PARSE: return "PARSER";
 		case ERR_INDX: return "INDX";
+		case ERR_NULL: return "NULL";
+		case ERR_RELOAD: return "RELOAD";
+		case ERR_FUCKED: return "FUCKED";
+		case ERR_OUTOFBOUNDS: return "OUT_OF_BOUNDS";
 		default: return "UNKOWN";
 	}
 }
@@ -60,7 +68,7 @@ static void fatal_crash(void){
 		fprintf(log_file, "== FATAL: process aborting === \n");
 		fflush(log_file);
 		fclose(log_file);
-		log_file == NULL;
+		log_file = NULL;
 	}
 
 	abort();
@@ -92,8 +100,9 @@ void err_log(enum ER_CODE code, const char *file, int line, const char *func, co
 		fprintf(stderr, "[%s:%s%s%s] %s (%s)\n", 
 			str_code, lvl_col(lvl), str_lvl, COLOR_RESET, msg, func);
 	}
-	fprintf(stderr, "[%s:%s] %s (%s)\n", str_code, str_lvl, msg, func);
-
+	else{
+		fprintf(stderr, "[%s:%s] %s (%s)\n", str_code, str_lvl, msg, func);
+	}
 	// Write to file
 	if(log_file){
 		fprintf(log_file, "%s | %s:%s| code=%d | %s:%d in %s() | %s\n",
@@ -109,6 +118,7 @@ void err_log(enum ER_CODE code, const char *file, int line, const char *func, co
 void *xmalloc_impl(size_t size, const char *file, int line, const char *func){
 	if(size == 0){
 		err_log(ERR_INDX, file, line , func, "xmalloc called with size 0");
+		return NULL;
 	}
 	void *p = malloc(size);
 	if(!p){
@@ -119,6 +129,7 @@ void *xmalloc_impl(size_t size, const char *file, int line, const char *func){
 void *xcalloc_impl(size_t count, size_t size, const char *file, int line, const char *func){
 	if(size == 0){
 		err_log(ERR_INDX, file, line, func, "xcalloc called with size 0");
+		return NULL;
 	}
 	void *p = calloc(count, size);
 	if(!p){

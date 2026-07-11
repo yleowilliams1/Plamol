@@ -4,162 +4,91 @@
 #include <string.h>
 #include "e_engine_settings.h"
 #include "i_input.h"
-
+#include "t_config_tool.h"
+#include "e_error_handler.h"
+#include "t_strings.h"
 #define INI_PATH "data/engine.ini"
 #define MAX_BINDS 64
 
-/*You need to write errors checking for everything eventually*/
 static struct EngineSettings *settings;
 
-char *e_get_map_path(){
-	return settings->map_path;
-}
-char *e_get_path_to_tilesets(){
-	return settings->path_to_tilesets;
-}
-char *e_get_tile_path(){
-	return settings->tile_path;
-}
-char *e_get_portrait_path(){
-	return settings->portrait_path;
-}
-char *e_get_flag_path(){
-	return settings->flag_path;
-}
-char *e_get_items_path(){
-	return settings->items_path;
-}
-char *e_get_stats_path(){
-	return settings->stats_path;
-}
-char *e_get_inventory_path(){
-	return settings->inventory_path;
-}
-float e_get_tilemem_secs(){
-	return settings->tilemem_secs;
-}
+const char *str_lokup[ENG_STR_COUNT] = {
+	[MAP_PATH] = "map_path",
+	[TILESET_PATH] = "tileset_path",
+	[TILE_PATH] = "tile_path",
+	[PORTRAIT_PATH] = "portrait_path",
+	[FLAG_PATH] = "flag_path",
+	[ITEMS_PATH] = "items_path",
+	[STATS_PATH] = "stats_path",
+	[INVENTORY_PATH] = "inventory_path",
+	[INPUT_PATH] = "input_path",
+};
 
-static bool parse_bind(const char *action_str, const char *value_str, struct SettingsBind *out){
-	/* Resolve action name */
-	int action = -1;
-	if      (strcmp(action_str, "A_WALK_LEFT")  == 0) action = A_WALK_LEFT;
-	else if (strcmp(action_str, "A_WALK_RIGHT") == 0) action = A_WALK_RIGHT;
-	else if (strcmp(action_str, "A_WALK_UP")    == 0) action = A_WALK_UP;
-	else if (strcmp(action_str, "A_WALK_DOWN")  == 0) action = A_WALK_DOWN;
-	else if (strcmp(action_str, "A_ACTION")     == 0) action = A_ACTION;
-	else { return false; }
+char *e_grab_str(enum EngStrings type){
+	if(type >= ENG_STR_COUNT || type < 0){
+		ERR_LOG(ERR_OUTOFBOUNDS, "Tried to access out of bounds string at index %d.", (int)type);		
+		ERR_LOG(ERR_NULL, "Returning NULL to engine settings string request due to out of bounds request at %d.", (int)type);
+		return NULL;
+	}
+	if(!settings){
+		ERR_LOG(ERR_FUCKED, "Tried to access NULL settings.");
+		return NULL;
+	}
+	char *str = settings->strings[type];
+	if(!str){
+		ERR_LOG(ERR_NULL, "Tried to access engine strings while engine strings aren't loaded.");
+		ERR_LOG(ERR_FUCKED, "String lookup failed due to index %d not being present in the array. You fucked up here. Fix this shit. If your a player seeing this your entitled to a refund and front row seats to the execution of the  idiot that let this slide thorugh." , (int)type);
+				return NULL;
+	}
 
-	/* Resolve type name and numeric key: "KEYBOARD,65" */
-	char type_str[32];
-	int  key_code;
-	if (sscanf(value_str, "%31[^,],%d", type_str, &key_code) != 2) { return false; }
-
-	int type = -1;
-	if      (strcmp(type_str, "KEYBOARD") == 0) type = KEYBOARD;
-	else if (strcmp(type_str, "MOUSE")    == 0) type = MOUSE;
-	else if (strcmp(type_str, "GAMEPAD")  == 0) type = GAMEPAD;
-	else { return false; }
-
-	out->action = action;
-	out->type   = type;
-	out->key    = key_code;
-	return true;
+	return str;
 }
 
 void e_free_setting(){
-	free(settings->default_binds_list);
-	free(settings->override_binds_list);
-	free(settings->map_path);
-	free(settings->path_to_tilesets);
-	free(settings->tile_path);
-	free(settings->portrait_path);
-	free(settings->flag_path);
-	free(settings->items_path);
-	free(settings->stats_path);
-	free(settings->inventory_path);
+	if(!settings){
+		ERR_LOG(ERR_NULL, "Tried to double free settings");
+		return;		
+	}	
+
+	for(int i = 0; i < ENG_STR_COUNT; i++){
+		if(!settings->strings[i]){continue;}
+		free(settings->strings[i]);
+		settings->strings[i] = NULL;
+	}
 	free(settings);
+	settings = NULL;
 }
-
-bool e_load_engine_settings(){
-	char line[256];
-	char current_section[64] = {0};
-	
-	FILE *f = fopen(INI_PATH, "r");
-	if(!f) {return false;}
-	
-	settings = calloc(1, sizeof(struct EngineSettings));
-	settings->default_binds_list  = calloc(MAX_BINDS, sizeof(struct SettingsBind));
-	settings->override_binds_list = calloc(MAX_BINDS, sizeof(struct SettingsBind));
-	settings->default_binds_count  = 0;
-	settings->override_binds_count = 0;
-			
-	while(fgets(line, sizeof(line), f)){
-		if (line[0] == '\n' || line[0] == '#' || line[0] == ';'){continue;}
-		if (line[0] == '[') {
-			sscanf(line, "[%63[^]]]", current_section);
-			continue;
-	    	}
-
-	    	char key[64], value[128];
-	    	if (sscanf(line, "%63[^=]=%127[^\n]", key, value) == 2) {
-			/* trim leading whitespace from value */
-			char *v = value;
-			while (*v == ' ' || *v == '\t') v++;
-			
-			if(strcmp(current_section, "general") == 0){
-				if(strcmp(key, "items_path") == 0){
-					settings->items_path = strdup(v);
-				}
-				if(strcmp(key, "map_path") == 0){
-					settings->map_path = strdup(v);
-				}
-				if(strcmp(key, "path_to_tilesets") == 0){
-					settings->path_to_tilesets = strdup(v);
-				}
-				if(strcmp(key, "tile_path") == 0){
-					settings->tile_path = strdup(v);
-				}
-				if(strcmp(key, "portrait_path") == 0){
-					settings->portrait_path = strdup(v);
-				}
-				if(strcmp(key, "flag_path") == 0){
-					settings->flag_path = strdup(v);
-				}
-				if(strcmp(key, "stats_path") == 0 ){
-					settings->stats_path = strdup(v);
-				}
-				if(strcmp(key, "tile_memory_seconds") == 0){
-					settings->tilemem_secs = (float)atof(v);
-				}
-				if(strcmp(key, "inventory_path") == 0){
-					settings->inventory_path = strdup(v);
-				}
-			} else if(strcmp(current_section, "default_binds") == 0){
-				if(settings->default_binds_count < MAX_BINDS){
-					struct SettingsBind *slot = &settings->default_binds_list[settings->default_binds_count];
-					if(parse_bind(key, v, slot)){
-						settings->default_binds_count++;
-					}
-				}
-			} else if(strcmp(current_section, "override_binds") == 0){
-				if(settings->override_binds_count < MAX_BINDS){
-					struct SettingsBind *slot = &settings->override_binds_list[settings->override_binds_count];
-					if(parse_bind(key, v, slot)){
-						settings->override_binds_count++;
-					}
-				}
+static void engine_parser(struct config_pack p, void *ptr){
+	struct EngineSettings *s = (struct EngineSettings *)ptr;
+	if(!s){
+		ERR_LOG(ERR_FUCKED, "took null pointer in parser, should not be possible. If you see this, you fucked up big time.");	
+		return;
+	}
+	if(t_check(p.current_section, "general")){
+		for(int i = 0; i < ENG_STR_COUNT; i++){
+			char *str = (char *)str_lokup[i];
+			if(!str){
+				ERR_LOG(ERR_FUCKED, "String lookup failed due to index %d not being present in the array. You fucked up here. Fix this shit. If your a player seeing this your entitled to a refund and front row seats to the execution of the  idiot that let this slide thorugh." ,i);
+				continue;
 			}
-	    	}	
+			if(t_check(p.key, str)){
+				h_cpy(&s->strings[i], p.value);	
+			}			
+		}	
 	}
-	for(int i = 0; i < settings->default_binds_count; i++){
-		struct SettingsBind *b = &settings->default_binds_list[i];
-		i_set_binding(b->type, b->action, b->key);
-	}
-	for(int i = 0; i < settings->override_binds_count; i++){
-		struct SettingsBind *b = &settings->override_binds_list[i];
-		i_set_binding(b->type, b->action, b->key);
+}
+bool e_load_engine_settings(){
+	if(settings){
+		ERR_LOG(ERR_RELOAD, "Attempted to reload engine settings while already allocated");
+		e_free_setting();
 	}
 
-	fclose(f);
-	return true;
+	settings = XCALLOC(1, sizeof(struct EngineSettings));
+
+	bool conf_win = t_config((void *)settings, INI_PATH, engine_parser); 
+
+	// Most likely if the config failes then its caught
+	// before this return to main
+	// but if it isn't main will need to crash to catch it.
+	return conf_win;
 }

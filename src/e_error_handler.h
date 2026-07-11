@@ -13,6 +13,10 @@ enum ER_CODE{
 	ERR_NO_FILE,
 	ERR_PARSE,
 	ERR_INDX,
+	ERR_NULL,
+	ERR_RELOAD,
+	ERR_FUCKED,
+	ERR_OUTOFBOUNDS,
 };
 void err_init(const char *path);
 void err_log(enum ER_CODE code, const char *file, int line, const char *func, const char *fmt, ...);

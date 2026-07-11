@@ -5,30 +5,21 @@ struct SettingsBind{
 	int action;
 	int key;
 };
-
-struct EngineSettings{
-	char *map_path;
-	char *path_to_tilesets;
-	char *tile_path;
-	char *portrait_path;
-	char *flag_path;
-	char *items_path;
-	char *stats_path;
-	char *inventory_path;
-	float tilemem_secs;
-	struct SettingsBind *default_binds_list;
-	int default_binds_count;
-	struct SettingsBind *override_binds_list;
-	int override_binds_count;
+enum EngStrings{
+	MAP_PATH,
+	TILESET_PATH,
+	TILE_PATH,
+	PORTRAIT_PATH,
+	FLAG_PATH,
+	ITEMS_PATH,
+	STATS_PATH,
+	INVENTORY_PATH,
+	INPUT_PATH,
+	ENG_STR_COUNT,
 };
-char *e_get_path_to_tilesets();
-char *e_get_map_path();
-char *e_get_tile_path();
-char *e_get_portrait_path();
-char *e_get_flag_path();
-char *e_get_items_path();
-char *e_get_stats_path();
-char *e_get_inventory_path();
+struct EngineSettings{
+	char *strings[ENG_STR_COUNT];
+};
 float e_get_tilemem_secs();
 void e_free_setting();
 bool e_load_engine_settings();
