@@ -9,6 +9,7 @@ enum KeyType{
     KEYBOARD,
     MOUSE,
     GAMEPAD,
+    TYPE_COUNT,
 };
 
 enum Action{
@@ -29,7 +30,6 @@ struct InputKey{
         GamepadButton gamepad_key;
     };
 };
-
 struct KeySet{
     struct InputKey keys[MAX_KEYS];
     
@@ -37,6 +37,13 @@ struct KeySet{
     bool is_pressed;
     bool is_held;
     bool is_released;
+};
+
+struct parser_set{
+	int bind;
+	enum Action action;
+	enum KeyType type;
+	int key;
 };
 
 bool i_input_pressed(enum Action action);
@@ -47,6 +54,3 @@ float i_input_get_mouse_x();
 float i_input_get_mouse_y();
 
 void i_update_input(enum Action action);
-
-void i_set_binding(enum KeyType type, enum Action action, int key);
-void i_default_binds();

@@ -1,6 +1,15 @@
 #include <stdio.h> 
+#include <stdbool.h>
+#include "e_error_handler.h"
 #include "g_statemachine.h"
+
+
+// I should probably write error checking for this. But i don't want to.
+// Most of this is fine. If a function is nulled then it's not really something to 
+// announce
+
 static struct StateMachine state_machine = {0};
+
 void sm_init(struct GameStateNode node){
     sm_push(node);
 } 
@@ -14,7 +23,7 @@ void sm_switch(struct GameStateNode node) {
 
 void sm_push(struct GameStateNode node) {
     if (state_machine.count >= MAX_STATE_STACK) {
-        printf("ERROR: state stack overflow\n");
+    	ERR_LOG(ERR_FUCKED, "Big nono. There shouldn't be more than that many states.");    
         return;
     }
     // push new state

@@ -1,10 +1,5 @@
 #pragma once
 #include <stdbool.h>
-struct SettingsBind{
-	int type;
-	int action;
-	int key;
-};
 enum EngStrings{
 	MAP_PATH,
 	TILESET_PATH,
@@ -20,6 +15,7 @@ enum EngStrings{
 struct EngineSettings{
 	char *strings[ENG_STR_COUNT];
 };
-float e_get_tilemem_secs();
+
+char *e_grab_str(enum EngStrings type);
 void e_free_setting();
 bool e_load_engine_settings();
