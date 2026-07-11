@@ -76,6 +76,7 @@ void e_free_setting(){
 	free(settings->flag_path);
 	free(settings->items_path);
 	free(settings->stats_path);
+	free(settings->inventory_path);
 	free(settings);
 }
 

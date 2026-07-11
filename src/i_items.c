@@ -84,9 +84,18 @@ void item_parser(struct config_pack p, void *ptr){
 bool i_load_item(int gindx){
 	int lindx = t_gindx_to_lindx(indx_man, MAX_ITEMS, gindx);
 	bool r = t_loader(gindx, indx_man, item_parser, e_get_items_path(), &items[lindx], lindx);
-	return r;
+	bool r2 = t_lset_lindx(indx_man, MAX_ITEMS, gindx, lindx);
+	return (r && r2);
 }
 
 bool i_free_item(int gindx){
-	return t_gfree_lindx(indx_man, MAX_ITEMS, gindx);
+	int lindx = t_gindx_to_lindx(indx_man, MAX_ITEMS, gindx);
+	// There needs to be error checking for all this
+	// Free strings if there are any here
+	free(items[lindx].name);	
+	free(items[lindx].description);
+	items[lindx].name = NULL;
+	items[lindx].description = NULL;
+	items[lindx] = (struct Item){0};	
+	return t_lfree_lindx(indx_man, MAX_ITEMS, lindx);
 }
