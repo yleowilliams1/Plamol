@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include "t_gindex_tool.h"
+#include "e_error_handler.h"
 /*The job of this tool is to
  * manage between local index and global indexes.
  * Local index are generally arrays which store data in memory.

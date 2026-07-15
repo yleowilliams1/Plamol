@@ -8,7 +8,7 @@
 #include "p_stats.h"
 #include "i_items.h"
 #include "t_strings.h"
-
+#include "e_error_handler.h"
 
 /*Todo
  * Write the getter functions for items.*/
@@ -49,42 +49,45 @@ static void parse_flags(char *value, uint8_t *flags){
 }
 void item_parser(struct config_pack p, void *ptr){
 	struct Item *item = (struct Item *)ptr;
-
+	if(!item){
+		ERR_LOG(ERR_FUCKED, "Took a null pointer to item parser. This shouldn't be possible!");
+	}
 	if(t_check(p.current_section, "item")){
 		if(t_check(p.key, "name")){
-			h_cpy(item->name, p.value);
+			h_cpy(&item->name, p.value);
 		} else if(t_check(p.key, "description")){
-			h_cpy(item->description, p.value);
+			h_cpy(&item->description, p.value);
 		} else if(t_check(p.key, "flags")){
 			parse_flags(p.value, &item->flags);
 		} else if(t_check(p.key, "tile_range")){
 			item->tile_range = (uint16_t)atoi(p.value);
-		}
-		return;
+		}	
 	}
 
 	if(t_check(p.current_section, "add")){
-		parse_item_dataset(p, &item->add);
-		return;
+		parse_item_dataset(p, &item->add);	
 	}
 	if(t_check(p.current_section, "use_hit")){
-		parse_item_dataset(p, &item->use_hit);
-		return;
+		parse_item_dataset(p, &item->use_hit);	
 	}
 	if(t_check(p.current_section, "use_damage")){
 		parse_item_dataset(p, &item->use_damage);
-		return;
 	}
 	if(t_check(p.current_section, "use_consume")){
 		parse_item_dataset(p, &item->use_consume);
-		return;
 	}
 }
 
 bool i_load_item(int gindx){
 	int lindx = t_gindx_to_lindx(indx_man, MAX_ITEMS, gindx);
-	bool r = t_loader(gindx, indx_man, item_parser, e_get_items_path(), &items[lindx], lindx);
+	bool r = t_loader(gindx, indx_man, item_parser, e_grab_str(ITEMS_PATH), &items[lindx], lindx);
 	bool r2 = t_lset_lindx(indx_man, MAX_ITEMS, gindx, lindx);
+
+	if(lindx != NULL_INDX && (r || r2) == false){
+		ERR_LOG(ERR_PARSE, "Failed to load item of gindx %d, with succesful lindx %d", gindx, lindx);
+	} else if ((r || r2) == false){
+		ERR_LOG(ERR_PARSE, "Faield to load item of gindx %d, with failed lindx search", gindx);
+	}
 	return (r && r2);
 }
 

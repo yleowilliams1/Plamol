@@ -9,12 +9,12 @@ Two Weeks to finish all this
 -p_stats string_to_dev_enum returns -1. This needs to be fixed in the error
 	handling section
 -i_set_binding needs an error handling doover
-
+-Port engine_settings input code/rewrite input parser code.
 --- Config system consolidation ---
 -take a look and see what can be rewritten to follow the same pattern items
 	and inventory do. (localize all config readers to use the config system)
 -make e_engine_settings and f_flags and map_tile use t_config
-
+-write a safe atoi function with error messaging in strings.h
 --- Low-risk feature completion ---
 -write inventory getters
 -write item getters
