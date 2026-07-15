@@ -85,6 +85,10 @@ void t_atoi(const char *str, int *result){
 	}
 
 	*result = (int)(sign * value);
+	if(*result == NULL_ATOI){
+		ERR_LOG(ERR_PARSE, "Holy shit, atoi successfully parsed. But the number is %d so unfortuntly it will have to return %d. Sorry the cool factor is signifantly more important than usablity. Just don't parse %d.", NULL_ATOI, NULL_ATOI + 1, NULL_ATOI);
+		*result = *result + 1;
+	}
 	return;
 }
 

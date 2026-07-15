@@ -11,7 +11,8 @@
 #include "e_error_handler.h"
 
 /*Todo
- * Write the getter functions for items.*/
+ * Write the getter functions for items and don't
+ * forget to error check them*/
 
 #define MAX_ITEMS 512
 static struct Item items[MAX_ITEMS] = {0};
@@ -24,22 +25,38 @@ const struct BitFlagDef flag_lookup[] = {
 
 static void parse_item_dataset(struct config_pack p, struct ItemDataSet *ds){
 	if(t_check(p.key, "stat")){
-		ds->stat = (uint8_t)string_to_dev_enum(p.value);
+		int stat = string_to_dev_enum(p.value);	
+		
+		if(stat == NULL_INDX || stat < 0){
+			ERR_LOG(ERR_PARSE, "Key %s returned a null enum value", p.value);
+		}
+		ds->stat = stat;
 	} else if(t_check(p.key, "amount")){
-		ds->amount = (int8_t)atoi(p.value);
+		ds->amount = NULL_ATOI;
+		t_atoi(p.value, &ds->amount);
+		// This atoi will freak the fuck out at the slightest 
+		// inconvience so no error checking
 	}
 }
 
 static void parse_flags(char *value, uint8_t *flags){
 	char buf[128];
-	strncpy(buf, value, sizeof(buf) - 1);
-	buf[sizeof(buf) - 1] = '\0';
-
+	size_t buflen;
+	t_snprintf(buf, sizeof(buf), &buflen, "%s", value);
+	
+	if(!value){ERR_LOG(ERR_PARSE, "Passed null value ptr"); return;}	
+	if(!flags){ERR_LOG(ERR_PARSE, "Passed null flags ptr"); return;}
+	// This will fuck you if you call this for two different strings.
+	// If I ever need strtok for super intensive multi-string
+	// process I need to write a t_strtok in t_strings.h
+	// But for now this is fine.
 	char *tok = strtok(buf, " ,|");
 	while(tok){
-		size_t n = sizeof(flag_lookup) / sizeof(flag_lookup[0]);
-		for(size_t i = 0; i < n; i++){
-			if(strcmp(tok, flag_lookup[i].string) == 0){
+		// Someone could manually delete the strings in the lookup table
+		// and then the strcmp probably fucks everything up but 
+		// hopefully that doesn't happen so i'm not error checking	
+		for(int i = 0; i < FLAG_COUNT; i++){
+			if(t_check(tok, flag_lookup[i].string)){
 				*flags |= flag_lookup[i].bit;
 				break;
 			}
@@ -48,6 +65,10 @@ static void parse_flags(char *value, uint8_t *flags){
 	}
 }
 void item_parser(struct config_pack p, void *ptr){
+	// Rule of thumb is no error checking in parsers since they get carried 
+	// in the called functions. Unless your calling straight standard
+	// library functions then just let the tools call error log for you.
+	// But don't forget to check error when acceessing
 	struct Item *item = (struct Item *)ptr;
 	if(!item){
 		ERR_LOG(ERR_FUCKED, "Took a null pointer to item parser. This shouldn't be possible!");
@@ -60,7 +81,8 @@ void item_parser(struct config_pack p, void *ptr){
 		} else if(t_check(p.key, "flags")){
 			parse_flags(p.value, &item->flags);
 		} else if(t_check(p.key, "tile_range")){
-			item->tile_range = (uint16_t)atoi(p.value);
+			item->tile_range = NULL_ATOI;
+			t_atoi(p.value, &item->tile_range);
 		}	
 	}
 
@@ -83,8 +105,8 @@ bool i_load_item(int gindx){
 	bool r = t_loader(gindx, indx_man, item_parser, e_grab_str(ITEMS_PATH), &items[lindx], lindx);
 	bool r2 = t_lset_lindx(indx_man, MAX_ITEMS, gindx, lindx);
 
-	if(lindx != NULL_INDX && (r || r2) == false){
-		ERR_LOG(ERR_PARSE, "Failed to load item of gindx %d, with succesful lindx %d", gindx, lindx);
+	if(lindx == NULL_INDX || lindx < 0){
+		ERR_LOG(ERR_PARSE, "Failed to load item of gindx %d, with unsuccesful lindx %d", gindx, lindx);
 	} else if ((r || r2) == false){
 		ERR_LOG(ERR_PARSE, "Faield to load item of gindx %d, with failed lindx search", gindx);
 	}
@@ -93,12 +115,18 @@ bool i_load_item(int gindx){
 
 bool i_free_item(int gindx){
 	int lindx = t_gindx_to_lindx(indx_man, MAX_ITEMS, gindx);
-	// There needs to be error checking for all this
-	// Free strings if there are any here
-	free(items[lindx].name);	
-	free(items[lindx].description);
-	items[lindx].name = NULL;
-	items[lindx].description = NULL;
+	if(lindx == NULL_INDX || lindx < 0){
+		ERR_LOG(ERR_INDX, "Failed gindx: %d conversion", gindx);
+		return false;
+	}
+	if(items[lindx].name){
+		free(items[lindx].name);	
+		items[lindx].name = NULL;
+	}
+	if(items[lindx].description){
+		free(items[lindx].description);
+		items[lindx].description = NULL;
+	}
 	items[lindx] = (struct Item){0};	
 	return t_lfree_lindx(indx_man, MAX_ITEMS, lindx);
 }

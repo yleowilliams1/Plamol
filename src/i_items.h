@@ -1,16 +1,16 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
-
 enum ItemFlags{
 	FLAG_THROWABLE,
 	FLAG_CONSUMEABLE,
+	FLAG_COUNT,
 };
 
 // If there are more than 255 stats I will commit a crime
 struct ItemDataSet{
-	uint8_t stat;
-	int8_t amount;
+	int stat;
+	int amount;
 };
 
 struct Item{
@@ -19,7 +19,7 @@ struct Item{
 	struct ItemDataSet use_damage;
 	struct ItemDataSet use_consume;
 	uint8_t flags;
-	uint16_t tile_range;
+	int tile_range;
 	char *name;
 	char *description;	
 	bool valid;
