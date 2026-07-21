@@ -248,3 +248,5 @@ The flow for writings goes like this
 
 
 First quest has to follow fallout 1 and nv first quest
+
+Base visuals off of Soviet Union art. Propaganda and non propaganda.

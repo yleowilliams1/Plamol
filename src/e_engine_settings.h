@@ -2,7 +2,6 @@
 #include <stdbool.h>
 enum EngStrings{
 	MAP_PATH,
-	TILESET_PATH,
 	TILE_PATH,
 	PORTRAIT_PATH,
 	FLAG_PATH,
