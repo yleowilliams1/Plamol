@@ -4,24 +4,27 @@ Two Weeks to finish all this
 
 
 --- Foundation fixes (block other work) ---
--Fix t_string to use double pointer so the copy mutates beyond the function
--fix i_input.c strdup to use custom copier
+DONE -Fix t_string to use double pointer so the copy mutates beyond the function
+DONE -fix i_input.c strdup to use custom copier
 -p_stats string_to_dev_enum returns -1. This needs to be fixed in the error
 	handling section
 -i_set_binding needs an error handling doover
--Port engine_settings input code/rewrite input parser code.
---- Config system consolidation ---
--take a look and see what can be rewritten to follow the same pattern items
+DONE-Port engine_settings input code/rewrite input parser code.
+
+FINISHED --- Config system consolidation ---
+DONE -take a look and see what can be rewritten to follow the same pattern items
 	and inventory do. (localize all config readers to use the config system)
--make e_engine_settings and f_flags and map_tile use t_config
--write a safe atoi function with error messaging in strings.h
+DONE -make e_engine_settings and f_flags and map_tile use t_config
+DONE -write a safe atoi function with error messaging in strings.h
+
 --- Low-risk feature completion ---
 -write inventory getters
 -write item getters
+-Don't forgot to add error checking
 
 --- Bigger standalone rewrites ---
 -rewrite asset manager
--Custom error handler which prints to terminal and logs in
+DONE -Custom error handler which prints to terminal and logs in
 	crash log and crashes with error messages.
 
 --- Deferred / low priority ---

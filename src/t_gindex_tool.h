@@ -7,6 +7,7 @@ struct local_indx{
 	int gindx; 
 };
 
+bool t_indxvalid(int size, int lindx);
 int t_find_free_lindx(struct local_indx *arr, int size);
 bool t_gset_lindx(struct local_indx *arr, int size, int gindx);
 bool t_lset_lindx(struct local_indx *arr, int size, int gindx, int lindx);

@@ -9,10 +9,7 @@
 #include "i_items.h"
 #include "t_strings.h"
 #include "e_error_handler.h"
-
-/*Todo
- * Write the getter functions for items and don't
- * forget to error check them*/
+#include "l_asset_manager.h"
 
 #define MAX_ITEMS 512
 static struct Item items[MAX_ITEMS] = {0};
@@ -64,7 +61,7 @@ static void parse_flags(char *value, uint8_t *flags){
 		tok = strtok(NULL, " ,|");
 	}
 }
-void item_parser(struct config_pack p, void *ptr){
+static void item_parser(struct config_pack p, void *ptr){
 	// Rule of thumb is no error checking in parsers since they get carried 
 	// in the called functions. Unless your calling straight standard
 	// library functions then just let the tools call error log for you.
@@ -101,19 +98,26 @@ void item_parser(struct config_pack p, void *ptr){
 }
 
 bool i_load_item(int gindx){
-	int lindx = t_gindx_to_lindx(indx_man, MAX_ITEMS, gindx);
-	bool r = t_loader(gindx, indx_man, item_parser, e_grab_str(ITEMS_PATH), &items[lindx], lindx);
-	bool r2 = t_lset_lindx(indx_man, MAX_ITEMS, gindx, lindx);
-
-	if(lindx == NULL_INDX || lindx < 0){
-		ERR_LOG(ERR_PARSE, "Failed to load item of gindx %d, with unsuccesful lindx %d", gindx, lindx);
-	} else if ((r || r2) == false){
-		ERR_LOG(ERR_PARSE, "Faield to load item of gindx %d, with failed lindx search", gindx);
-	}
-	return (r && r2);
+	
+	struct AssetLoadPackage pckg = {
+		.gindx = gindx,
+		.index_manager = indx_man,
+		.arr_cap = MAX_ITEMS,
+		.arr = items,
+		.element_size = sizeof(struct Item),
+		.function = item_parser,
+		.path = e_grab_str(ITEMS_PATH),	
+	};	
+	
+	bool success = l_load_asset(pckg);	
+	
+	return success;
 }
 
 bool i_free_item(int gindx){
+	// Don't use the asset manager
+	// free here since it can't account
+	// for malloced strings
 	int lindx = t_gindx_to_lindx(indx_man, MAX_ITEMS, gindx);
 	if(lindx == NULL_INDX || lindx < 0){
 		ERR_LOG(ERR_INDX, "Failed gindx: %d conversion", gindx);

@@ -11,12 +11,11 @@
 #include "t_config_tool.h"
 #include "e_error_handler.h"
 #include "t_strings.h"
+#include "l_asset_manager.h"
 
 #define MAX_TILES 16 
 
-void tile_parser(struct config_pack p, void *ptr);
-static bool l_load_tile(int gindx);
-
+static void tile_parser(struct config_pack p, void *ptr);
 
 static struct TileData tiles[MAX_TILES] = {0};
 static struct local_indx indx_man[MAX_TILES] = {0};
@@ -37,29 +36,38 @@ static const char *tiledata_lokup[T_COUNT] = {
 	[T_COMBAT_LOOT] = "combat_loot",
 };
 
-int t_grab_tiledata(){
-	
-}
-int t_grab_tileflag(){
-}
+bool t_free_tile(int gindx){
 
-static bool l_load_tile(int gindx){
-	
-	int lindx = t_gindx_to_lindx(indx_man, MAX_TILES, gindx);	
-	if(lindx == NULL_INDX || lindx < 0){
-		ERR_LOG(ERR_FUCKED, "lindx find failed");
-	}
-	// Zero out
-	tiles[lindx] = (struct TileData){0};
-
-	bool loaded = t_loader(gindx, indx_man, tile_parser, e_grab_str(TILE_PATH), &tiles[lindx], lindx); 	
-	bool set    = t_lset_lindx(indx_man, MAX_TILES, gindx, lindx);
-	
-	// Leave error checking for getter function
-	return (loaded && set);	
+	struct AssetFreePackage pckg = {
+		.gindx = gindx,
+		.index_manager = indx_man,
+		.arr_cap = MAX_TILES,
+		.arr = tiles,
+		.element_size = sizeof(struct TileData),
+	};
+	bool succed = t_free_asset(pckg); 
+		
+	return succed;
 }
 
-void tile_parser(struct config_pack p, void *ptr){
+bool t_load_tile(int gindx){
+	
+	struct AssetLoadPackage pckg = {
+		.gindx = gindx,
+		.index_manager = indx_man,
+		.arr_cap = MAX_TILES,
+		.arr = tiles,
+		.element_size = sizeof(struct TileData),
+		.function = tile_parser,
+		.path = e_grab_str(TILE_PATH),	
+	};
+
+	bool success = l_load_asset(pckg);
+	
+	return success;	
+}
+
+static void tile_parser(struct config_pack p, void *ptr){
 	struct TileData *tile = (struct TileData *)ptr;		
 	if(!tile){ERR_LOG(ERR_FUCKED, "Took null pointer into parser, This sohuldn't be possible");}
 

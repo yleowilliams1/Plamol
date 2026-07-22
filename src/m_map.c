@@ -99,6 +99,9 @@ void m_init(void){
 	free(meta);
 }
 void m_free(){
-	if(map_ptr){free(map_ptr);}
+	if(map_ptr){
+		free(map_ptr);
+		return;
+	}
 	ERR_LOG(ERR_NULL, "Tried to double free map");
 }

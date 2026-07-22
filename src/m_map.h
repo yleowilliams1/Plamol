@@ -1,10 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
-#pragma pack(push, 1)
 
-// Map tiles are fixed in memory. The indentifer
-// for the data is not.
 struct MapTileData{
 	int  tile_indx;
 	bool is_passable;
@@ -19,7 +16,6 @@ struct MapData{
 	int count;
 	struct MapTileData data[];
 };
-#pragma pack(pop)
 
 struct MetadataTemp{
 	int tileset;

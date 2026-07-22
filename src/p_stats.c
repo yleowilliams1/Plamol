@@ -5,6 +5,9 @@
 #include "t_config_tool.h"
 #include "p_stats.h"
 #include "e_engine_settings.h"
+#include "t_gindex_tool.h"
+#include "e_error_handler.h"
+#include "t_strings.h"
 #define SIZE 256
 
 static int base_stats[SIZE][STAT_SENT] = {0};

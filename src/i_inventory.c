@@ -19,7 +19,7 @@ static struct local_indx indx_man[ARR_SIZE] = {0};
 
 static void inventory_parser(struct config_pack p, void *ptr){
 	struct Inventory *inv = (struct Inventory *)ptr;
-	if(!inv){ERR_LOG(ERR_FUCKED, "pointer is null. Fucked up...");
+	if(!inv){ERR_LOG(ERR_FUCKED, "pointer is null. Fucked up...");}
 	if(t_check(p.current_section, "hotbar")){
 		for(int i = 0; i < HOTBAR_SIZE; i++){
 			char buf[32];
@@ -70,6 +70,7 @@ bool i_load_inventory(int global_index){
 		ERR_LOG(ERR_NULL, "Failed global to local index conversion for global indx %d", global_index);
 		return false;
 	}
+	iarr[lindx] = (struct Inventory){0};
 	bool r = t_loader(global_index, indx_man, inventory_parser, e_grab_str(INVENTORY_PATH), &iarr[lindx], lindx);
 	bool r2 = t_lset_lindx(indx_man, ARR_SIZE, global_index, lindx);
 	if(r == false|| r2 == false){

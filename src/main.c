@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -8,6 +9,7 @@
 #include "f_flags.h"
 #include "g_statemachine.h"
 #include "s_menu.h"
+#include "e_error_handler.h"
 #define TARGET_FPS 60
 
 int main(){
@@ -18,7 +20,8 @@ int main(){
 	srand(time(NULL));
 
 	// Setup everything
-	e_load_engine_settings();
+	bool parsed = e_load_engine_settings();
+		if(!parsed){ERR_LOG(ERR_FUCKED, "Engine prase failed!");}
 	f_init_flag();
 	sm_init(menu_state());
 	

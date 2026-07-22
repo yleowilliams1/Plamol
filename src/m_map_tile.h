@@ -24,3 +24,5 @@ struct TileData{
 	uint16_t tile_flags;
 };
 
+bool t_free_tile(int gindx);
+bool t_load_tile(int gindx);
