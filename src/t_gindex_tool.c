@@ -16,16 +16,25 @@ bool t_indxvalid(int size, int lindx){
 
 int t_find_free_lindx(struct local_indx *arr, int size){
 	int lindx = NULL_INDX;
+	if(!arr){ERR_LOG(ERR_INDX, "Passed null arr"); return lindx;}
+	if(size < 0){ERR_LOG(ERR_INDX, "passed size is less than zero"); return lindx;}
 	for(int i = 0; i < size; i++){
 		if(arr[i].active){continue;}
 		lindx = i;
 		break;
 	}
+	if(!t_indxvalid(size, lindx)){
+		ERR_LOG(ERR_INDX, "Failed to find valid lindx");
+		return NULL_INDX;
+	}
 	return lindx;
 }
 bool t_gset_lindx(struct local_indx *arr, int size, int gindx){
+	if(!arr){ERR_LOG(ERR_INDX, "Passed null arr"); return false;}
+	if(size < 0){ERR_LOG(ERR_INDX, "passed size is less than zero"); return false;}
+
 	int lindx = t_gindx_to_lindx(arr, size, gindx);
-	if(lindx == NULL_INDX){return false;}
+	if(!t_indxvalid(size, lindx)){ERR_LOG(ERR_INDX, "Failed to set lindx due to failed gindx to lindx conversion"); return false;}
 	arr[lindx].active = true;
 	arr[lindx].gindx = gindx;
 	return true;

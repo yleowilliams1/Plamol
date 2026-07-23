@@ -7,7 +7,7 @@ enum Stats{
 	SOC,
 	INT,
 	WIS,
-	STAT_SENT
+	BSTAT_COUNT,
 };
 
 enum Dev{
@@ -29,12 +29,7 @@ enum Dev{
 	INITIATIVE,
 	DEV_SENT
 };
-
-struct ParserDef{
-	int stat;
-	char *name;
+struct BaseStats{
+	int basestats[BSTAT_COUNT];
 };
 
-enum Dev string_to_dev_enum(char *string);
-void p_load_stat(int index);
-int p_get_dev(int index, enum Dev d);

@@ -8,74 +8,84 @@
 #include "t_gindex_tool.h"
 #include "e_error_handler.h"
 #include "t_strings.h"
-#define SIZE 256
+#include "l_asset_manager.h"
+#define STAT_CAP 256
 
-static int base_stats[SIZE][STAT_SENT] = {0};
+static void stat_parser(struct config_pack p, void *ptr);
 
-const struct ParserDef base_lookup[] = {
-	{STR, "strength"},
-	{DEX, "dexterity"},
-	{CON, "constitution"},
-	{SOC, "social"},
-	{INT, "intelligence"},
-	{WIS, "wisdom"},
+static struct BaseStats bstats[STAT_CAP] = {0};
+static struct local_indx indx_man[STAT_CAP] = {0};
+
+static const char *base_lookup[] = {
+	[STR] = "strength",
+	[DEX] = "dexterity",
+	[CON] = "constitution",
+	[SOC] = "social",
+	[INT] = "intelligence",
+	[WIS] = "wisdom",
 };
 
-const struct ParserDef dev_lookup[] = {
-        {PHYSICAL_COORDINATION,  "physical_coordination"},
-        {WORD,                   "word"},
-        {PROB_ANALYSIS,          "prob_analysis"},
-        {SPATIAL,                "spatial"},
-        {MUSICAL,                "musical"},
-        {NATURAL,                "natural"},
-        {INTERPERSONAL,          "interpersonal"},
-        {INTRAPERSONAL,          "intrapersonal"},
-        {INNOCENCE,              "innocence"},
-        {HEROISM,                "heroism"},
-        {LOVE,                   "love"},
-        {AUTHORITARIAN,          "authoritarian"},
-        {AC,                     "ac"},
-        {DR,                     "dr"},
-        {MAX_HP,                 "max_hp"},
-        {INITIATIVE,             "initiative"},
+static const char *dev_lookup[] = {
+        [PHYSICAL_COORDINATION]  = "physical_coordination",
+        [WORD]                   = "word",
+        [PROB_ANALYSIS]          = "prob_analysis",
+        [SPATIAL]                = "spatial",
+        [MUSICAL]                = "musical",
+        [NATURAL]                = "natural",
+        [INTERPERSONAL]          = "interpersonal",
+        [INTRAPERSONAL]          = "intrapersonal",
+        [INNOCENCE]              = "innocence",
+        [HEROISM]                = "heroism",
+        [LOVE]                   = "love",
+        [AUTHORITARIAN]          = "authoritarian",
+        [AC]                     = "ac",
+        [DR]                     = "dr",
+        [MAX_HP]	         = "max_hp",
+        [INITIATIVE]             = "initiative",
 };
-enum Dev string_to_dev_enum(char *string){
-	for(int i = 0; i < DEV_SENT; i++){
-		if(strcmp(dev_lookup[i].name, string) == 0){
-			return dev_lookup[i].stat;				
-		}
-	}
 
-	return -1;
+bool t_load_stat(int gindx){
+	struct AssetLoadPackage pckg = {
+		.gindx = gindx,
+		.index_manager = indx_man,
+		.arr_cap = STAT_CAP,
+		.arr = bstats,
+		.element_size = sizeof(struct BaseStats),
+		.function = stat_parser,
+		.path = e_grab_str(STATS_PATH),	
+	};
+
+	return l_load_asset(pckg);
 }
+bool t_free_tile(int gindx){
+	
+	struct AssetFreePackage pckg = {
+		.gindx = gindx,
+		.index_manager = indx_man,
+		.arr_cap = STAT_CAP,
+		.arr = bstats,
+		.element_size = sizeof(struct BaseStats),
+	};
 
-void stat_parser(struct config_pack p, void *ptr){
-	char *v = p.value;
-	int *stat = (int *)ptr;
+	return t_free_asset(pckg);
+}
+static void stat_parser(struct config_pack p, void *ptr){
+	struct BaseStats *bstat = (struct BaseStats *)ptr;
+	if(!bstat){ERR_LOG(ERR_FUCKED, "Passed null pointer to parser");}	
+	
 	if(t_check(p.current_section, "stats")){
-		for(int i = 0; i < sizeof(base_lookup) / sizeof(base_lookup[0]); i++){
-			const struct ParserDef *d = &base_lookup[i];
-			if(!t_check(p.key, d->name)){continue;}
-			stat[d->stat] = atoi(v);	
+		for(int i = 0; i < BSTAT_COUNT; i++){
+			char *str = (char *)base_lookup[i];
+
+			if(t_check(p.key, str)){
+				t_atoi(p.value, &bstat->basestats[i]);
+			}
 		}
 	}	
 }
-
-void p_load_stats(int indx){
-	char *base = e_get_stats_path();
-	size_t base_len = strlen(base);
-	bool needs_slash = (base_len == 0 || base[base_len - 1] != '/');
-	char *file = malloc(base_len + needs_slash + 10 + 4 + 1);
-	if(!file){return;}
-	strcpy(file, base);
-	if(needs_slash){file[base_len] = '/'; base_len++;}
-	sprintf(file + base_len, "%u.ini", (unsigned int)indx);
-	t_config(&base_stats[indx], file, stat_parser);
-	free(file);
-}
-
-int p_get_dev(int index, enum Dev d){
-	int *b = base_stats[index];
+int p_get_dev(int gindx, enum Dev d){
+	// Write getter here
+	
 	switch(d){
 			case PHYSICAL_COORDINATION:
 					return (int)ceil(((b[STR] + b[DEX] - b[INT]) / 2.0) / 4.0);
