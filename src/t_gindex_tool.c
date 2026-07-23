@@ -29,36 +29,50 @@ int t_find_free_lindx(struct local_indx *arr, int size){
 	}
 	return lindx;
 }
-bool t_gset_lindx(struct local_indx *arr, int size, int gindx){
-	if(!arr){ERR_LOG(ERR_INDX, "Passed null arr"); return false;}
-	if(size < 0){ERR_LOG(ERR_INDX, "passed size is less than zero"); return false;}
 
+bool h_gchecker(struct local_indx *arr, int size, int gindx, int *out){
+	if(!arr){ERR_LOG(ERR_INDX, "Passed null array"); return false;}
+	if(size < 0){ERR_LOG(ERR_INDX, "Passed size less than zero"); return false;}
+	if(!out){ERR_LOG(ERR_NULL, "Passed null out to checker"); return false;}
 	int lindx = t_gindx_to_lindx(arr, size, gindx);
-	if(!t_indxvalid(size, lindx)){ERR_LOG(ERR_INDX, "Failed to set lindx due to failed gindx to lindx conversion"); return false;}
+	if(!t_indxvalid(size, lindx)){ERR_LOG(ERR_INDX, "gindx conversion failed"); return false;}
+	return true;
+}
+bool h_lchecker(struct local_indx *arr, int size, int lindx){
+	if(!arr){ERR_LOG(ERR_INDX, "Passed null array"); return false;}
+	if(size < 0){ERR_LOG(ERR_INDX, "Passed size less than zero"); return false;}
+	if(!t_indxvalid(size, lindx)){ERR_LOG(ERR_INDX, "gindx conversion failed"); return false;}
+	return true;
+}
+bool t_gset_lindx(struct local_indx *arr, int size, int gindx){
+	int lindx = NULL_INDX;
+	if(!h_gchecker(arr, size, gindx, &lindx)){return false;}
 	arr[lindx].active = true;
 	arr[lindx].gindx = gindx;
 	return true;
 }
 bool t_lset_lindx(struct local_indx *arr, int size, int gindx, int lindx){
-	if(t_indxvalid(size, lindx)){return false;}
+	if(!h_lchecker(arr, size, lindx)){return false;}
 	arr[lindx].active = true;
 	arr[lindx].gindx = gindx;
 	return true;	
 }
 bool t_lfree_lindx(struct local_indx *arr, int size, int lindx){
-	if(t_indxvalid(size, lindx)){return false;}
+	if(!h_lchecker(arr, size, lindx)){return false;}
 	arr[lindx] = (struct local_indx){0};
 	return true;
 }
 bool t_gfree_lindx(struct local_indx *arr, int size, int gindx){
-	int lindx = t_gindx_to_lindx(arr, size, gindx);
-	if(lindx == NULL_INDX){return false;}
+	int lindx = NULL_INDX;
+	if(!h_gchecker(arr, size, gindx, &lindx)){return false;}
 	arr[lindx] = (struct local_indx){0};
 	return true;
 }
 int t_gindx_to_lindx(struct local_indx *arr, int size, int gindx){
-	int lindx = NULL_INDX;	
+	int lindx = NULL_INDX;
+	if(size < 0){ERR_LOG(ERR_INDX, "Size is less than 0"); return NULL_INDX;}	
 	for(int i = 0; i < size; i++){
+		if(!arr){ERR_LOG(ERR_NULL, "Array is NULL! Can't convert!"); continue;}
 		if(arr[i].gindx == gindx){
 			lindx = i;
 			break;
