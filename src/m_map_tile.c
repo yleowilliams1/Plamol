@@ -82,7 +82,7 @@ static void tile_parser(struct config_pack p, void *ptr){
 	}
 
 	if(t_check(p.current_section, "Flags")){
-		for(int i = 0; i < T_COUNT; i++){
+		for(int i = 0; i < FLAG_COUNT; i++){
 			char *str = (char *)flag_lookup[i];
 			if(t_check(p.key, str)){
 				int value;

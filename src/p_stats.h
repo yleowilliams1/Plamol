@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 
 enum Stats{
 	STR,
@@ -33,3 +34,4 @@ struct BaseStats{
 	int basestats[BSTAT_COUNT];
 };
 
+enum Dev string_to_dev_enum(const char *str);

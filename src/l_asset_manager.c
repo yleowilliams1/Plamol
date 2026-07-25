@@ -7,6 +7,32 @@
 #include "e_error_handler.h"
 #include "t_config_tool.h"
 
+int l_getter_checks(int gindx, bool autoload, int cap, struct local_indx *iman, Loader ldr){
+	int lindx = NULL_INDX;
+	if(autoload){
+		lindx = t_gindx_to_lindx(iman, cap, gindx);
+		if(t_indxvalid(cap, lindx)){
+			ERR_LOG(ERR_NULL, "Can't autoload alread loaded gindx %d", gindx);
+		}else{
+			bool loaded = ldr(gindx);
+			if(!loaded){ERR_LOG(ERR_FUCKED, "Failed to load gindx %d", gindx);}
+			int lindx = t_gindx_to_lindx(iman, cap, gindx);
+			if(!t_indxvalid(cap, lindx)){
+				ERR_LOG(ERR_FUCKED, "Gindx was freed since loading %d", gindx);	
+			}
+		}
+	}
+	else{
+		int lindx = t_gindx_to_lindx(iman, cap, gindx);
+		if(!t_indxvalid(cap, lindx)){
+			ERR_LOG(ERR_INDX, "Didn't preload %d! Rerunning autload", gindx);
+			return l_getter_checks(gindx, true, cap, iman, ldr);
+		}
+	}
+
+	return lindx;
+}
+
 bool l_load_asset(struct AssetLoadPackage pckg){
 	// Find free local index in the array
 	int lindx = t_find_free_lindx(pckg.index_manager, pckg.gindx);
@@ -51,3 +77,4 @@ bool t_free_asset(struct AssetFreePackage pckg){
 	}
 	return true;
 }
+

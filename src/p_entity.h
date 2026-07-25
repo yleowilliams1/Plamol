@@ -1,9 +1,16 @@
 #pragma once
 #include <stdbool.h>
+
+enum EntityData{
+	D_STAT,
+	D_INV,
+	D_COUNT,
+};
+
 struct Entity{
 	int x;
 	int y;
-	int stats;
+	int data_gindx[D_COUNT];	
 };
 
 struct Entity *p_init_entity(int tx, int ty, int stat);

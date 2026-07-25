@@ -71,7 +71,7 @@ static void engine_parser(struct config_pack p, void *ptr){
 				continue;
 			}
 			if(t_check(p.key, str)){
-				h_cpy(&s->strings[i], p.value);	
+				t_cpy(&s->strings[i], p.value);	
 			}			
 		}	
 	}

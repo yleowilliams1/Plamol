@@ -7,28 +7,35 @@ enum ItemFlags{
 	FLAG_COUNT,
 };
 
-// If there are more than 255 stats I will commit a crime
+enum ItemData{
+	S_ADD,
+	S_HIT,
+	S_DAMAGE,
+	S_CONSUME,
+	S_FLAG,
+	S_RANGE,
+	IDATA_COUNT,
+};
+enum ItemStrings{
+	S_NAME,
+	S_DESCRIPTION,
+	ISTR_COUNT,
+};
+
 struct ItemDataSet{
 	int stat;
 	int amount;
 };
 
 struct Item{
-	struct ItemDataSet add;
-	struct ItemDataSet use_hit;
-	struct ItemDataSet use_damage;
-	struct ItemDataSet use_consume;
-	uint8_t flags;
-	int tile_range;
-	char *name;
-	char *description;	
-	bool valid;
-};
-
-struct BitFlagDef{
-	char *string;
-	uint8_t bit;
+	// pack stat and amount to uint16
+	uint32_t dataset[IDATA_COUNT];
+	char *strs[ISTR_COUNT];
 };
 
 bool i_load_item(int gindx);
 bool i_free_item(int gindx);
+uint32_t i_get_pckitemdata(int gindx, enum ItemData d, bool autoload);
+char *i_get_pckitemstrs(int gindx, enum ItemStrings d, bool autoload);
+uint32_t pack_dataset(uint16_t a, uint16_t b);
+struct ItemDataSet unpack(uint32_t packed);

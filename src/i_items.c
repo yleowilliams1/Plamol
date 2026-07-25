@@ -12,92 +12,51 @@
 #include "l_asset_manager.h"
 
 #define MAX_ITEMS 512
+
+static void item_parser(struct config_pack p, void *ptr);
+
 static struct Item items[MAX_ITEMS] = {0};
 static struct local_indx indx_man[MAX_ITEMS] = {0};
 
-const struct BitFlagDef flag_lookup[] = {
-	{"throwable",   (1 << FLAG_THROWABLE)},
-	{"consumeable", (1 << FLAG_CONSUMEABLE)},
+static const char *itemdata_lokup[IDATA_COUNT] = {
+	[S_ADD] = "add",
+	[S_HIT] = "hit",
+	[S_DAMAGE] = "damage",
+	[S_CONSUME] = "consume",
+	[S_FLAG] = "flags",
+	[S_RANGE] = "range",
 };
 
-static void parse_item_dataset(struct config_pack p, struct ItemDataSet *ds){
-	if(t_check(p.key, "stat")){
-		int stat = string_to_dev_enum(p.value);	
-		
-		if(stat == NULL_INDX || stat < 0){
-			ERR_LOG(ERR_PARSE, "Key %s returned a null enum value", p.value);
+static const char *itemstrs_lokup[ISTR_COUNT] = {
+	[S_NAME] = "name",
+	[S_DESCRIPTION] = "description",
+};
+
+static const char *itemflag_lokup[FLAG_COUNT] = {
+	[FLAG_THROWABLE] = "throwable",
+	[FLAG_CONSUMEABLE] = "consumeable",
+};
+
+bool t_free_item(int gindx){
+	// Don't use the asset manager
+	// free here since it can't account
+	// for malloced strings
+	int lindx = t_gindx_to_lindx(indx_man, MAX_ITEMS, gindx);
+	if(!t_indxvalid(MAX_ITEMS, lindx)){
+		ERR_LOG(ERR_INDX, "Failed gindx: %d conversion", gindx);
+		return false;
+	}
+	for(int i = 0; i < ISTR_COUNT; i++){
+		if(items[lindx].strs[i]){
+			free(items[lindx].strs[i]);
+			items[lindx].strs[i] = NULL;
 		}
-		ds->stat = stat;
-	} else if(t_check(p.key, "amount")){
-		ds->amount = NULL_ATOI;
-		t_atoi(p.value, &ds->amount);
-		// This atoi will freak the fuck out at the slightest 
-		// inconvience so no error checking
-	}
-}
+	}	
+	items[lindx] = (struct Item){0};	
+	return t_lfree_lindx(indx_man, MAX_ITEMS, lindx);
 
-static void parse_flags(char *value, uint8_t *flags){
-	char buf[128];
-	size_t buflen;
-	t_snprintf(buf, sizeof(buf), &buflen, "%s", value);
-	
-	if(!value){ERR_LOG(ERR_PARSE, "Passed null value ptr"); return;}	
-	if(!flags){ERR_LOG(ERR_PARSE, "Passed null flags ptr"); return;}
-	// This will fuck you if you call this for two different strings.
-	// If I ever need strtok for super intensive multi-string
-	// process I need to write a t_strtok in t_strings.h
-	// But for now this is fine.
-	char *tok = strtok(buf, " ,|");
-	while(tok){
-		// Someone could manually delete the strings in the lookup table
-		// and then the strcmp probably fucks everything up but 
-		// hopefully that doesn't happen so i'm not error checking	
-		for(int i = 0; i < FLAG_COUNT; i++){
-			if(t_check(tok, flag_lookup[i].string)){
-				*flags |= flag_lookup[i].bit;
-				break;
-			}
-		}
-		tok = strtok(NULL, " ,|");
-	}
 }
-static void item_parser(struct config_pack p, void *ptr){
-	// Rule of thumb is no error checking in parsers since they get carried 
-	// in the called functions. Unless your calling straight standard
-	// library functions then just let the tools call error log for you.
-	// But don't forget to check error when acceessing
-	struct Item *item = (struct Item *)ptr;
-	if(!item){
-		ERR_LOG(ERR_FUCKED, "Took a null pointer to item parser. This shouldn't be possible!");
-	}
-	if(t_check(p.current_section, "item")){
-		if(t_check(p.key, "name")){
-			h_cpy(&item->name, p.value);
-		} else if(t_check(p.key, "description")){
-			h_cpy(&item->description, p.value);
-		} else if(t_check(p.key, "flags")){
-			parse_flags(p.value, &item->flags);
-		} else if(t_check(p.key, "tile_range")){
-			item->tile_range = NULL_ATOI;
-			t_atoi(p.value, &item->tile_range);
-		}	
-	}
-
-	if(t_check(p.current_section, "add")){
-		parse_item_dataset(p, &item->add);	
-	}
-	if(t_check(p.current_section, "use_hit")){
-		parse_item_dataset(p, &item->use_hit);	
-	}
-	if(t_check(p.current_section, "use_damage")){
-		parse_item_dataset(p, &item->use_damage);
-	}
-	if(t_check(p.current_section, "use_consume")){
-		parse_item_dataset(p, &item->use_consume);
-	}
-}
-
-bool i_load_item(int gindx){
+bool t_load_item(int gindx){
 	
 	struct AssetLoadPackage pckg = {
 		.gindx = gindx,
@@ -114,23 +73,75 @@ bool i_load_item(int gindx){
 	return success;
 }
 
-bool i_free_item(int gindx){
-	// Don't use the asset manager
-	// free here since it can't account
-	// for malloced strings
-	int lindx = t_gindx_to_lindx(indx_man, MAX_ITEMS, gindx);
-	if(lindx == NULL_INDX || lindx < 0){
-		ERR_LOG(ERR_INDX, "Failed gindx: %d conversion", gindx);
-		return false;
+uint32_t i_get_pckitemdata(int gindx, enum ItemData d, bool autoload){
+	int lindx = l_getter_checks(gindx, autoload, MAX_ITEMS, indx_man, t_load_item);
+	if(!t_indxvalid(MAX_ITEMS, lindx)){ERR_LOG(ERR_FUCKED, "Couldn't find or load gindx %d", gindx);}
+	if(d >= IDATA_COUNT){
+		ERR_LOG(ERR_FUCKED, "Sent bad itemdata enum value");
 	}
-	if(items[lindx].name){
-		free(items[lindx].name);	
-		items[lindx].name = NULL;
+	return items[lindx].dataset[d]; 
+}
+char *i_get_pckitemstrs(int gindx, enum ItemStrings d, bool autoload){
+	int lindx = l_getter_checks(gindx, autoload, MAX_ITEMS, indx_man, t_load_item);
+	if(!t_indxvalid(MAX_ITEMS, lindx)){ERR_LOG(ERR_FUCKED, "Couldn't find or load gindx %d", gindx);}
+	if(d >= ISTR_COUNT){
+		ERR_LOG(ERR_FUCKED, "Sent bad itemdata enum value");
 	}
-	if(items[lindx].description){
-		free(items[lindx].description);
-		items[lindx].description = NULL;
+	return items[lindx].strs[d]; 
+}
+
+static void item_parser(struct config_pack p, void *ptr){
+	struct Item *item = (struct Item *)ptr;
+	if(!item){ERR_LOG(ERR_FUCKED, "Took null poitner into parser, This shouldn't be possible");}
+	
+	for(int i = 0; i < IDATA_COUNT; i++){
+		if(t_check(p.current_section, (char*)itemdata_lokup[i])){
+			if(i == S_FLAG){continue;}
+			else if(i == S_RANGE){
+				if(t_check(p.key, "range_per_tiles")){
+					t_atoi(p.value, (int *)&item->dataset[i]);
+				}
+				continue;
+			}
+			else if(t_check(p.key, "Stat")){
+				int stat; 
+				t_atoi(p.value, &stat);
+				item->dataset[i] = (item->dataset[i] & 0x0000FFFF) | ((uint32_t)stat << 16);
+			}
+			else if(t_check(p.key, "Amount")){
+				int amount;
+				t_atoi(p.value, &amount);
+				item->dataset[i] = (item->dataset[i] & 0xFFFF0000) | (amount & 0xFFFF);
+			}	
+		}
 	}
-	items[lindx] = (struct Item){0};	
-	return t_lfree_lindx(indx_man, MAX_ITEMS, lindx);
+	if(t_check(p.current_section, "Strings")){
+		for(int i = 0; i < ISTR_COUNT; i++){
+			if(t_check(p.key, (char*)itemstrs_lokup[i])){
+				t_cpy(&item->strs[i], p.value);
+			}
+		}
+	}
+	if(t_check(p.current_section, (char*)itemdata_lokup[S_FLAG])){
+		for(int i = 0; i < FLAG_COUNT; i++){
+			char *str = (char *)itemflag_lokup[i];
+			if(t_check(p.key, str)){
+				int value;
+				t_atoi(p.value, &value);
+				if(value < 0){ERR_LOG(ERR_PARSE, "Tried to parse flag %s with value of less than 0", str);}
+				if(value > 0){item->dataset[S_FLAG] |= (1 << i);}
+			}
+		}	
+	}
+}
+
+uint32_t pack_dataset(uint16_t a, uint16_t b){
+	return((uint32_t) a << 16) | b;
+}
+struct ItemDataSet unpack(uint32_t packed){
+	struct ItemDataSet set = {0};
+	set.stat = (packed >> 16) & 0xFFFF;
+	set.amount = packed & 0xFFFF;	
+
+	return set;	
 }

@@ -57,7 +57,7 @@ bool t_load_stat(int gindx){
 
 	return l_load_asset(pckg);
 }
-bool t_free_tile(int gindx){
+bool t_free_stat(int gindx){
 	
 	struct AssetFreePackage pckg = {
 		.gindx = gindx,
@@ -83,9 +83,42 @@ static void stat_parser(struct config_pack p, void *ptr){
 		}
 	}	
 }
-int p_get_dev(int gindx, enum Dev d){
-	// Write getter here
-	
+int p_get_dev(int gindx, enum Dev d, bool autoload){
+	// The caller basically just needs to trust this. If it fails it returns a 
+	// default value and taht gets used.
+	int *b = NULL;
+	if(autoload){
+		int lindx = t_gindx_to_lindx(indx_man, STAT_CAP ,gindx);	
+		// Lindx should be NULL
+		if(lindx != NULL_INDX){
+			ERR_LOG(ERR_NULL, "Tried to autoload gindx %d when already loaded", gindx);
+			b = bstats[lindx].basestats;
+		}
+		else{
+			// lindx proved its not loaded
+			bool loaded = t_load_stat(gindx);
+			// Good thing is this most likely won't
+			// pass at least of the writing of this
+			// comment the program will exit if 
+			// any of these loaded things failed.
+			if(!loaded){ERR_LOG(ERR_FUCKED, "Failed to load gindx %d", gindx);}	
+			// This isn't super efficent but I can't be bothered to clean it up
+			// so it's whatever. It's like tiny loop it doesn't matter.
+			int lindx = t_gindx_to_lindx(indx_man, STAT_CAP, gindx);
+			if(lindx == NULL_INDX){ERR_LOG(ERR_FUCKED, "Most likely gindx %d was freed since loading.", gindx);}
+			b = bstats[lindx].basestats;
+		}
+	}
+	else {
+		int lindx = t_gindx_to_lindx(indx_man, STAT_CAP, gindx);
+		if(lindx == NULL_INDX){
+			ERR_LOG(ERR_INDX, "Tried to get derived stat with autoload toggled off, and didn't preload. gindx %d", gindx);
+			// Re-run the function with autload set to true this time.
+			return p_get_dev(gindx, d, true);
+		}
+		b = bstats[lindx].basestats;
+	}
+		
 	switch(d){
 			case PHYSICAL_COORDINATION:
 					return (int)ceil(((b[STR] + b[DEX] - b[INT]) / 2.0) / 4.0);
