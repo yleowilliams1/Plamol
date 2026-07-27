@@ -1,0 +1,323 @@
+================================================================================
+BUG REPORT - CRPG Engine Codebase
+================================================================================
+Generated from a read-through of all 40 uploaded source files. Ordered roughly
+by severity/blast radius, not by file. Each entry has: the file, the bug, why
+it's a bug, and a suggested fix direction.
+
+A NOTE ON ERR_LOG BEFORE YOU READ THIS:
+  ERR_FUCKED and ERR_ALLOC both map to LVL_CRASH in e_error_handler.c, and
+  LVL_CRASH calls abort() after logging. So "ERR_LOG(ERR_FUCKED, ...)" calls
+  ARE fatal and DO stop execution - code that looks like it "falls through"
+  after one of those specific calls is actually fine at runtime (the process
+  dies first). ERR_INDX, ERR_NULL, ERR_RELOAD, ERR_PARSE, ERR_OUTOFBOUNDS,
+  ERR_OK, ERR_NO_FILE are all non-fatal (WARNING or CRITICAL), so code that
+  "falls through" after THOSE is a real bug if the caller assumed otherwise.
+  I've taken this into account below and only flagged fall-through paths that
+  are actually reachable.
+
+================================================================================
+1. CRITICAL - t_indxvalid() has inverted logic and it breaks nearly everything
+================================================================================
+File: t_gindex_tool.c / t_gindex_tool.h
+
+    bool t_indxvalid(int size, int lindx){
+        return (lindx < 0 || lindx >= size);
+    }
+
+This returns TRUE when the index is OUT OF BOUNDS (i.e. invalid), and FALSE
+when the index is fine. That's the opposite of what the name promises, and
+almost every call site in the codebase uses it as if true meant "this index
+is good":
+
+    if(!t_indxvalid(size, lindx)){
+        ERR_LOG(ERR_INDX, "Failed to find valid lindx");
+        return NULL_INDX;
+    }
+
+Given the real behavior, this logs an error and bails out precisely when a
+GOOD index was found, and sails through silently when a bad one was found.
+
+This single function is used everywhere: t_find_free_lindx, h_gchecker,
+h_lchecker (t_gindex_tool.c), l_getter_checks, l_load_asset, t_free_asset
+(l_asset_manager.c), i_get_pckitemdata, i_get_pckitemstrs (i_items.c),
+i_get_inv_proto (i_inventory.c), p_get_dev (p_stats.c). Every one of these
+call sites assumes "true = valid."
+
+Concretely, this means l_load_asset (the core function that loads EVERY
+asset type - tiles, items, stats, inventories) currently aborts the program
+on every successful load:
+
+    int lindx = t_find_free_lindx(pckg.index_manager, pckg.gindx); // success -> good lindx
+    if(!t_indxvalid(pckg.arr_cap, lindx)){                          // good lindx -> t_indxvalid=false -> !false=true
+        ERR_LOG(ERR_FUCKED, "Asset array at path %s is full", pckg.path); // CRASH
+    }
+
+This is fatal (ERR_FUCKED = abort), so as it stands the asset loading system
+cannot function at all.
+
+The one place that treats it "correctly" per its literal current behavior is
+t_lindx_to_gindx in the same file:
+
+    if(t_indxvalid(size, lindx)){
+        return gindx; // gindx is still NULL_INDX here, so this returns NULL_INDX on bad index - correct
+    }
+    return arr[lindx].gindx; // reached when index is GOOD - correct
+
+...but this only "works" because this one call site happens to use the
+function's literal (inverted) meaning while every other call site assumes
+the opposite meaning. That inconsistency across the codebase is the real
+problem, independent of which single meaning is "correct."
+
+FIX: Decide on one meaning and make it consistent everywhere. Cleanest option
+is probably to rename to something unambiguous, e.g. t_indx_out_of_range(),
+keep the current body, and flip the condition at every call site listed
+above (drop the "!"). Alternatively, flip the body to true=valid and leave
+call sites as-is - but that requires auditing t_lindx_to_gindx since it's
+currently written for the opposite convention. Either way, every call site
+needs to be checked by hand once the fix lands.
+
+--------------------------------------------------------------------------------
+2. HIGH - p_entity.c does not compile
+--------------------------------------------------------------------------------
+File: p_entity.c
+
+    struct Entity *p_init_entity(int tx, int ty, int stat){
+        struct Entity *e = calloc(1, sizeof(struct Entity));
+        e->x = tx;
+        e->y = ty;
+        e->stats = stat;   // <-- no such member
+        return e;
+    }
+
+struct Entity (in p_entity.h) has members x, y, and data_gindx[D_COUNT]. There
+is no "stats" field. This won't compile as-is.
+
+FIX: Almost certainly meant e->data_gindx[D_STAT] = stat;
+
+Also note: p_init_entity does not check calloc's return value before
+dereferencing e - if it returns NULL this is a crash. Every other allocation
+in the codebase goes through XMALLOC/XCALLOC (which log + abort on failure);
+this is the one spot using raw calloc() directly.
+
+--------------------------------------------------------------------------------
+3. HIGH - m_map.c: heap buffer overflow in parse_map (function.N sections)
+--------------------------------------------------------------------------------
+File: m_map.c
+
+map_ptr->data is a flexible array member, allocated in m_init() to hold
+exactly meta->count entries:
+
+    size_t size = sizeof(struct MapData) + meta->count * sizeof(struct MapTileData);
+    map_ptr = XCALLOC(1, size);
+
+But the bounds check in parse_map's "function.%d" branch checks against
+MAX_FUNCTIONS (512), not meta->count:
+
+    if(sscanf(p.current_section, "function.%d", &func_indx) == 1){
+        if(func_indx < 0 || func_indx >= MAX_FUNCTIONS){return;}
+        ...
+        m->data[func_indx].start_x = ...   // out of bounds if func_indx >= meta->count
+
+Any map .ini with meta.count smaller than 512, but a function.N section
+where N is between meta->count and 511, writes past the end of the
+allocation. This is a real heap overflow driven entirely by data-file
+content, not just a theoretical edge case - any hand-edited or malformed
+map file triggers it.
+
+FIX: Bound-check against m->count (or meta->count, same value) instead of
+the fixed MAX_FUNCTIONS.
+
+--------------------------------------------------------------------------------
+4. HIGH - m_map.c: pallete index from map file used with no bounds check
+--------------------------------------------------------------------------------
+File: m_map.c, parse_map()
+
+    } else if(t_check(p.key, "pallete")){
+        int pallete;
+        t_atoi(p.value, &pallete);
+        m->data[func_indx].tile_indx = g_pallete[pallete].tile_indx;
+        m->data[func_indx].tile_texture_index = g_pallete[pallete].tile_texture_index;
+
+g_pallete is a fixed array of MAX_STRUCTS (512) entries. The parallel branch
+just above this one (for "palletes.%d" sections) DOES bound-check
+struct_indx against MAX_STRUCTS - this one doesn't check "pallete" at all.
+A negative or oversized value read from the map file indexes g_pallete out
+of bounds directly (read, not write, but still undefined behavior and can
+corrupt data used to populate the map).
+
+FIX: if(pallete < 0 || pallete >= MAX_STRUCTS){ ERR_LOG(...); return; }
+before using it as an index.
+
+--------------------------------------------------------------------------------
+5. MEDIUM - w_window_manager.c: wcnfx scales by the wrong axis
+--------------------------------------------------------------------------------
+File: w_window_manager.c
+
+    float wcnfx(float num){
+        float x = w_relative_scale_y;   // should be w_relative_scale_x
+        return num * x;
+    }
+
+wcnfx is the "scale by X axis" variant, but it multiplies by
+w_relative_scale_y. Compare with wcniy (the integer Y variant), which
+correctly uses w_relative_scale_y - and wcnix, which correctly uses
+w_relative_scale_x. wcnfx alone looks like a copy-paste slip. Anything
+scaled horizontally via wcnfx will actually scale by the vertical ratio
+instead, which will look wrong on any non-square aspect ratio change.
+
+FIX: float x = w_relative_scale_x;
+
+--------------------------------------------------------------------------------
+6. MEDIUM - t_strings.c: t_atoi silently corrupts one specific legitimate value
+--------------------------------------------------------------------------------
+File: t_strings.c
+
+    *result = (int)(sign * value);
+    if(*result == NULL_ATOI){   // NULL_ATOI = 0x55AA = 21930
+        ERR_LOG(ERR_PARSE, "...");
+        *result = *result + 1;
+    }
+
+ERR_PARSE is non-fatal (LVL_CRITICAL, not LVL_CRASH), so this actually
+executes: any config value that legitimately parses to exactly 21930 gets
+silently rewritten to 21931. This reads like an intentional joke ("the cool
+factor is significantly more important than usability") but it's a live
+data-corruption path. If 21930 ever shows up as a legitimate stat value,
+damage number, or index in a data file, it will be silently wrong and very
+hard to trace back to this function.
+
+FIX: Decide if this is meant to stay as an easter egg (if so, it's working
+as intended, just be aware) or remove it. If it stays, at minimum it should
+be extremely well-documented near NULL_ATOI's definition so nobody burns
+hours debugging a "why is my value off by one" mystery later.
+
+--------------------------------------------------------------------------------
+7. MEDIUM - i_input.c: ac_lokup maps "action" config key to the wrong enum
+--------------------------------------------------------------------------------
+File: i_input.c
+
+    static enum Action ac_lokup(char *str){
+        if(t_check(str, "walk_left")){return A_WALK_LEFT;}
+        if(t_check(str, "walk_right")){return A_WALK_RIGHT;}
+        if(t_check(str, "walk_up")){return A_WALK_UP;}
+        if(t_check(str, "walk_down")){return A_WALK_DOWN;}
+        if(t_check(str, "action")){return A_WALK_DOWN;}   // should be A_ACTION
+        return INVALID_ENUM;
+    }
+
+Binding Action=action in the input config resolves to A_WALK_DOWN instead of
+A_ACTION. As it stands, there is no config string that maps to A_ACTION at
+all, meaning the "use/interact" action can never be bound from the config
+file, and binding "action" will instead silently overwrite whatever key was
+meant for walking down.
+
+FIX: if(t_check(str, "action")){return A_ACTION;}
+
+--------------------------------------------------------------------------------
+8. LOW/MEDIUM - i_input.c: i_init_input() is never called
+--------------------------------------------------------------------------------
+Files: i_input.c, main.c
+
+i_init_input() parses the input config and calls i_set_binding() for every
+valid entry. Nothing in main.c (or anywhere else in either batch) calls it.
+Since input[].is_bound starts false and only i_set_binding() sets it true,
+every call to i_input_pressed/held/released will return false unconditionally
+until this is wired in.
+
+This may simply be missing from main.c's setup sequence rather than a logic
+bug, but flagging it since "nothing responds to input" is exactly the kind
+of thing that's a pain to debug without knowing to check here first.
+
+FIX: Call i_init_input() during startup in main.c, alongside f_init_flag()
+and sm_init().
+
+--------------------------------------------------------------------------------
+9. LOW - m_map.c: m_free() logs a false-positive "double free" warning on the
+   very first map load
+--------------------------------------------------------------------------------
+File: m_map.c
+
+    void m_init(void){
+        ...
+        m_free();   // called unconditionally, even before any map has ever loaded
+        map_ptr = XCALLOC(1, size);
+        ...
+    }
+
+    void m_free(){
+        if(map_ptr){ free(map_ptr); return; }
+        ERR_LOG(ERR_NULL, "Tried to double free map");   // non-fatal, so this prints every time
+    }
+
+map_ptr starts NULL (static). On the very first call to m_init(), the
+unconditional m_free() call hits the NULL branch and logs "Tried to double
+free map" even though nothing has been freed and nothing is wrong. ERR_NULL
+is non-fatal so execution continues fine, but this is a guaranteed
+false-positive warning on every fresh run, which will be confusing to anyone
+reading logs later ("wait, did we actually double-free something?").
+
+FIX: Only call m_free() in m_init() if map_ptr is already non-NULL, e.g.
+"if(map_ptr){ m_free(); }" at the call site, or make m_free()'s warning
+conditional/removed for the "already NULL" case.
+
+--------------------------------------------------------------------------------
+10. LOW - t_config_tool.c: t_config continues after logging non-fatal-looking
+    errors that are actually fatal (informational only - not a bug)
+--------------------------------------------------------------------------------
+File: t_config_tool.c
+
+    if(!path){ERR_LOG(ERR_FUCKED, "Passed NULL path to config");}
+    FILE *f = fopen(path, "r");
+    if(!f){ERR_LOG(ERR_FUCKED, "Failed to open path %s", path);}
+    while(fgets(pack.line, sizeof(pack.line), f)){ ... }
+
+At first glance this looks like a null-pointer-into-fgets bug, since there's
+no explicit return after the ERR_LOG calls. However, ERR_FUCKED is fatal
+(aborts via LVL_CRASH), so in practice fgets() is never reached with a bad
+file/path - the process dies at the ERR_LOG call first. Listed here only so
+it isn't independently "fixed" later under a false assumption; the current
+behavior (crash the whole program on a missing config file) is a legitimate
+design choice, just worth being aware that's what happens rather than a
+graceful error return.
+
+--------------------------------------------------------------------------------
+11. LOW - s_graphics.c and s_action.c are missing/empty
+--------------------------------------------------------------------------------
+Files: s_graphics.h, s_action.h (no corresponding .c files were provided)
+
+graphics_state() and action_state() are declared in their headers but no
+definitions were included in either batch. If they genuinely don't exist yet
+anywhere in the project, anything that calls them will fail to link. If they
+just weren't included in the upload, disregard this entry.
+
+--------------------------------------------------------------------------------
+12. INFO - main.c references a file not present in either batch
+--------------------------------------------------------------------------------
+File: main.c
+
+    #include "r_asset_manager.h"
+    ...
+    r_cleanup_textures();
+
+Neither r_asset_manager.h nor r_asset_manager.c appeared in batch 1 or batch
+2. Flagging in case it's simply missing from the upload rather than an
+actual gap in the project - if it's missing, it'll need to be included for
+a complete picture/documentation pass.
+
+--------------------------------------------------------------------------------
+13. INFO - i_input.c: keybind overflow silently drops the oldest binding
+--------------------------------------------------------------------------------
+File: i_input.c, i_set_binding()
+
+When more than MAX_KEYS (4) keys are bound to the same action, the function
+shifts out the oldest binding and appends the new one, with no log/warning
+of any kind. This appears to be an intentional design choice (comment
+above ac_lokup mentions "out of bounds key setup" as a known rough edge),
+but it's silent, so if someone binds a 5th key to an action expecting all 5
+to work, they'll lose the first one with zero indication why. Not a
+correctness bug, just a footgun worth a log line.
+
+================================================================================
+END OF REPORT
+================================================================================
