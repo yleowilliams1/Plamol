@@ -10,14 +10,79 @@
 #include "t_gindex_tool.h"
 #include "e_error_handler.h"
 #include "t_strings.h"
-#define ARR_SIZE 128
-/*Todo
- * Write the getter functions
- * Have safe attoi with the print functions inm string.h*/
-static struct Inventory iarr [ARR_SIZE] = {0};
-static struct local_indx indx_man[ARR_SIZE] = {0};
+#include "l_asset_manager.h"
 
-static void inventory_parser(struct config_pack p, void *ptr){
+#define INV_CAP 128
+
+static void inv_parser(struct config_pack p, void *ptr);
+
+static struct Inventory iarr [INV_CAP] = {0};
+static struct local_indx indx_man[INV_CAP] = {0};
+
+bool i_free_inventory(int gindx){
+
+	struct AssetFreePackage pckg = {
+		.gindx = gindx,
+		.index_manager = indx_man,
+		.arr_cap = INV_CAP,
+		.arr = iarr,
+		.element_size = sizeof(struct Inventory),
+	};
+
+	return t_free_asset(pckg);
+}
+bool i_load_inventory(int gindx){
+	
+	struct AssetLoadPackage pckg = {
+		.gindx = gindx,
+		.index_manager = indx_man,
+		.arr_cap = INV_CAP,
+		.arr = iarr,
+		.element_size = sizeof(struct Inventory),
+		.function = inv_parser,
+		.path = e_grab_str(INVENTORY_PATH),
+	};
+
+	return l_load_asset(pckg);
+}
+
+struct Inventory i_get_inv_proto(int gindx, bool autoload){
+	struct Inventory inv = {0};
+	int lindx = l_getter_checks(gindx, autoload, INV_CAP, indx_man, i_load_inventory);
+	if(!t_indxvalid(INV_CAP, lindx)){
+		ERR_LOG(ERR_NULL, "Couldn't find or load %d", gindx); 
+		return inv;
+	}
+
+	inv = iarr[lindx];
+	return inv;
+}
+
+struct DervBonusMatrix i_get_bonus_matrx(int gindx, bool autoload){
+	struct DervBonusMatrix matrx = {0};
+	struct Inventory inv = i_get_inv_proto(gindx, autoload);
+	
+	for(int i = 0; i < HOTBAR_SIZE; i++){
+		// Kind of complicated: Loop through through
+		// the hotbar_items and grab the the additive value for 
+		// items in hotbar in packed format. 
+		// Then unpack the data into the stat and amount;
+		uint32_t packed = i_get_pckitemdata(inv.hotbar_items[i], S_ADD, true);
+		struct ItemDataSet data = unpack(packed);	
+		// Now we have the data and the amount 
+		// and stat we can add to the matrix
+		// also the stat can't be out of boudns it gets 
+		// checked at the item parser
+		matrx.derv[data.stat] = data.amount;
+	}
+	
+	// Note this both loades the inventory and
+	// the item into memory. So 
+	// the caller needs to free it if possible.
+	return matrx;
+}
+
+static void inv_parser(struct config_pack p, void *ptr){
 	struct Inventory *inv = (struct Inventory *)ptr;
 	if(!inv){ERR_LOG(ERR_FUCKED, "pointer is null. Fucked up...");}
 	if(t_check(p.current_section, "hotbar")){
@@ -48,39 +113,6 @@ static void inventory_parser(struct config_pack p, void *ptr){
 			}
 		}	
 	}
-}
-
-
-bool i_free_inventory(int global_indx){
-	int lindx = t_gindx_to_lindx(indx_man, ARR_SIZE, global_indx);
-	if(lindx == NULL_INDX){
-		ERR_LOG(ERR_NULL, "Failed global to local index conversion for global indx %d", global_indx);
-		return false;
-	}
-	// Free strings if there are any here
-	iarr[lindx] = (struct Inventory){0}; 
-	return t_lfree_lindx(indx_man, ARR_SIZE, lindx);
-}
-bool i_load_inventory(int global_index){
-	int lindx = t_gindx_to_lindx(indx_man, ARR_SIZE, global_index);
-	if(lindx == NULL_INDX){
-		// Most likely lindx is NULL due to outofbounds,
-		// of course it's not unlikely it's something else.
-		// If it's NULL it will have already produced an error message.	
-		ERR_LOG(ERR_NULL, "Failed global to local index conversion for global indx %d", global_index);
-		return false;
-	}
-	iarr[lindx] = (struct Inventory){0};
-	bool r = t_loader(global_index, indx_man, inventory_parser, e_grab_str(INVENTORY_PATH), &iarr[lindx], lindx);
-	bool r2 = t_lset_lindx(indx_man, ARR_SIZE, global_index, lindx);
-	if(r == false|| r2 == false){
-		ERR_LOG(ERR_PARSE, "Failed to free inventory global index &", global_index);	
-	}
-	return (r && r2);
-}
-int i_grab_stat_bonus(enum Stats stat, int indx){
-}
-int i_grab_dev_bonus(enum Dev dev, int indx){
 }
 
 

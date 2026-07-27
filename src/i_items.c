@@ -90,6 +90,17 @@ char *i_get_pckitemstrs(int gindx, enum ItemStrings d, bool autoload){
 	return items[lindx].strs[d]; 
 }
 
+uint32_t pack_dataset(uint16_t a, uint16_t b){
+	return((uint32_t) a << 16) | b;
+}
+struct ItemDataSet unpack(uint32_t packed){
+	struct ItemDataSet set = {0};
+	set.stat = (packed >> 16) & 0xFFFF;
+	set.amount = packed & 0xFFFF;	
+
+	return set;	
+}
+
 static void item_parser(struct config_pack p, void *ptr){
 	struct Item *item = (struct Item *)ptr;
 	if(!item){ERR_LOG(ERR_FUCKED, "Took null poitner into parser, This shouldn't be possible");}
@@ -106,6 +117,10 @@ static void item_parser(struct config_pack p, void *ptr){
 			else if(t_check(p.key, "Stat")){
 				int stat; 
 				t_atoi(p.value, &stat);
+				// Check stat is inbounds
+				if(stat >= DERV_CAP || stat < 0){
+					continue;
+				}
 				item->dataset[i] = (item->dataset[i] & 0x0000FFFF) | ((uint32_t)stat << 16);
 			}
 			else if(t_check(p.key, "Amount")){
@@ -133,15 +148,4 @@ static void item_parser(struct config_pack p, void *ptr){
 			}
 		}	
 	}
-}
-
-uint32_t pack_dataset(uint16_t a, uint16_t b){
-	return((uint32_t) a << 16) | b;
-}
-struct ItemDataSet unpack(uint32_t packed){
-	struct ItemDataSet set = {0};
-	set.stat = (packed >> 16) & 0xFFFF;
-	set.amount = packed & 0xFFFF;	
-
-	return set;	
 }

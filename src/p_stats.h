@@ -28,7 +28,7 @@ enum Dev{
 	DR,
 	MAX_HP,
 	INITIATIVE,
-	DEV_SENT
+	DERV_CAP
 };
 struct BaseStats{
 	int basestats[BSTAT_COUNT];

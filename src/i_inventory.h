@@ -1,18 +1,23 @@
 #pragma once
 #include <stdbool.h>
+#include "p_stats.h"
 
 #define HOTBAR_SIZE 8
 #define INVENTORY_SIZE 32
+
 enum Stats;
 enum Dev;
+
+struct DervBonusMatrix{
+	int derv[DERV_CAP];
+};
+
 struct Inventory{
 	int hotbar_items[HOTBAR_SIZE];
 	int inventory[INVENTORY_SIZE];
-	int global_index;
-	bool active; 
 };
 
 bool i_load_inventory(int global_index);
 bool i_free_inventory(int global_index);
-int i_grab_stat_bonus(enum Stats stat, int indx);
-int i_grab_dev_bonus(enum Dev dev, int indx);
+struct Inventory i_get_inv_proto(int gindx, bool autoload);
+struct DervBonusMatrix i_get_bonus_matrx(int gindx, bool autoload);

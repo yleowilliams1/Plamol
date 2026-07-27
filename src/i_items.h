@@ -33,8 +33,8 @@ struct Item{
 	char *strs[ISTR_COUNT];
 };
 
-bool i_load_item(int gindx);
-bool i_free_item(int gindx);
+bool t_free_item(int gindx);
+bool t_load_item(int gindx);
 uint32_t i_get_pckitemdata(int gindx, enum ItemData d, bool autoload);
 char *i_get_pckitemstrs(int gindx, enum ItemStrings d, bool autoload);
 uint32_t pack_dataset(uint16_t a, uint16_t b);
