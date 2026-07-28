@@ -9,6 +9,8 @@
 #include "g_statemachine.h"
 #include "s_menu.h"
 #include "e_error_handler.h"
+#include "t_testing.h"
+
 #define TARGET_FPS 60
 
 int main(){
@@ -17,13 +19,10 @@ int main(){
 	SetTargetFPS(TARGET_FPS);
 
 	srand(time(NULL));
-
-	// Setup everything
-	bool parsed = e_load_engine_settings();
-	if(!parsed){ERR_LOG(ERR_FUCKED, "Engine prase failed!");}
-	f_init_flag();
-	sm_init(menu_state());
 	
+	t_initalize_tests();
+	return 0;
+
 	while (!WindowShouldClose()){
 		w_update_relative_scale();	
 		sm_update();

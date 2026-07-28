@@ -54,3 +54,5 @@ float i_input_get_mouse_x();
 float i_input_get_mouse_y();
 
 void i_update_input(enum Action action);
+
+void i_init_input();

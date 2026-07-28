@@ -25,7 +25,7 @@ static const char *base_lookup[] = {
 	[WIS] = "wisdom",
 };
 
-static const char *dev_lookup[] = {
+static const char *dev_lookup[DERV_CAP] = {
         [PHYSICAL_COORDINATION]  = "physical_coordination",
         [WORD]                   = "word",
         [PROB_ANALYSIS]          = "prob_analysis",

@@ -12,7 +12,7 @@
 
 static struct EngineSettings *settings;
 
-const char *str_lokup[ENG_STR_COUNT] = {
+static const char *str_lokup[ENG_STR_COUNT] = {
 	[MAP_PATH] = "map_path",
 	[TILE_PATH] = "tile_path",
 	[PORTRAIT_PATH] = "portrait_path",
