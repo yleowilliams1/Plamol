@@ -17,12 +17,13 @@ enum TileInfo{
 	T_COMBAT,
 	T_LOOT,
 	T_COMBAT_LOOT,
+	T_FLAGS,
 	T_COUNT,
 };
 struct TileData{
-	int indexes[T_COUNT];
-	uint16_t tile_flags;
+	int data[T_COUNT];
 };
 
 bool t_free_tile(int gindx);
 bool t_load_tile(int gindx);
+int t_grab_tiledata(int gindx, enum TileInfo t, bool autoload);

@@ -68,6 +68,14 @@ bool t_load_tile(int gindx){
 	return success;	
 }
 
+int t_grab_tiledata(int gindx, enum TileInfo t, bool autoload){
+	int lindx = l_getter_checks(gindx, autoload, MAX_TILES, indx_man, t_load_tile); 
+	if(!t_indxvalid(MAX_TILES, lindx)){
+		ERR_LOG(ERR_FUCKED, "Couldn't find or load %d", gindx);
+	}
+	
+	return tiles[lindx].data[t];
+}
 static void tile_parser(struct config_pack p, void *ptr){
 	struct TileData *tile = (struct TileData *)ptr;		
 	if(!tile){ERR_LOG(ERR_FUCKED, "Took null pointer into parser, This sohuldn't be possible");}
@@ -76,21 +84,19 @@ static void tile_parser(struct config_pack p, void *ptr){
 		for(int i = 0; i < T_COUNT; i++){
 			char *str = (char *)tiledata_lokup[i];
 			// string cannot be null
-			if(t_check(p.key, str)){
-				t_atoi(p.value, &tile->indexes[i]);
-			}
+			if(!t_check(p.key, str)){continue;}
+			t_atoi(p.value, &tile->data[i]);
 		}
 	}
-
 	if(t_check(p.current_section, "Flags")){
 		for(int i = 0; i < FLAG_COUNT; i++){
 			char *str = (char *)flag_lookup[i];
-			if(t_check(p.key, str)){
-				int value;
-				t_atoi(p.value, &value);
-				if(value < 0){ERR_LOG(ERR_PARSE, "Tried to parse flag %s with value of less than 0", str);}
-				if(value > 0){tile->tile_flags |= (1 << i);}
-			}		
+			if(!t_check(p.key, str)){continue;}
+			
+			int value;
+			t_atoi(p.value, &value);
+			if(value < 0){ERR_LOG(ERR_PARSE, "Tried to parse flag %s with value of less than 0", str);}
+			if(value > 0){tile->data[T_FLAGS]|= (1 << i);}
 		}	
 	}
 }

@@ -8,102 +8,139 @@
 #include "e_engine_settings.h"
 #include "e_error_handler.h"
 #include "t_strings.h"
+#include "t_gindex_tool.h"
+#include "l_asset_manager.h"
+
+#define MAP_CAP 16
 
 #define MAX_STRUCTS 512
 #define MAX_FUNCTIONS 512
 
-struct MapTileData g_pallete[MAX_STRUCTS] = {0};
-static struct MapData *map_ptr = NULL;
+static void map_parser(struct config_pack p, void *ptr);
 
-void parse_map(struct config_pack p, void *ptr){
+static struct MapData maps[MAP_CAP] = {0};
+static struct local_indx iman[MAP_CAP] = {0};
+
+static struct MapSegment g_pallete[MAX_STRUCTS] = {0};
+
+static const char *metadata_lokup[M_META_COUNT] = {
+	[M_TILESET] = "tileset",
+	[M_SEGMENT_CAP] = "segment_size",
+	[M_NORTH_EXIT] = "north_map",
+	[M_SOUTH_EXIT] = "south_map",
+	[M_WEST_EXIT] = "west_map",
+	[M_EAST_EXIT] = "east_map",
+};
+
+static const char *seg_flag_lokup[SEGFLAG_COUNT] = {
+	[F_PASSABLE] = "passable",
+	[F_HURT] = "hurt",
+	[F_WATER] = "water",
+	[F_DIRT] = "dirt",
+
+};
+bool m_free_map(int gindx){
+	struct AssetFreePackage pckg = {
+		.gindx = gindx,
+		.index_manager = iman,
+		.arr_cap = MAP_CAP,
+		.arr = maps,
+		.element_size = sizeof(struct MapData),		
+	};
+
+	return t_free_asset(pckg);
+}
+
+bool m_load_map(int gindx){
+	struct AssetLoadPackage pckg = {
+		.gindx = gindx,
+		.index_manager = iman,
+		.arr_cap = MAP_CAP,
+		.arr = maps,
+		.element_size = sizeof(struct MapData),
+		.function = map_parser,
+		.path = e_grab_str(MAP_PATH),
+		.init = NULL,
+	};
+
+	return l_load_asset(pckg);
+}
+
+bool m_get_metadata(int gindx, bool autoload, enum MetadataProperties m, int *out){
+	int lindx = l_getter_checks(gindx, autoload, MAP_CAP, iman, m_load_map);
+	if(!t_indxvalid(MAP_CAP, lindx)){ERR_LOG(ERR_NULL, "Failed to find map %d", gindx); return false;}
+	
+	*out = maps[lindx].meta[m];
+	return true;
+}
+bool m_get_seg(int gindx, bool autoload, enum SegmentProperties m, int segment, int *out){
+	int lindx = l_getter_checks(gindx, autoload, MAP_CAP, iman, m_load_map);
+	if(!t_indxvalid(MAP_CAP, lindx)){ERR_LOG(ERR_NULL, "Failed to find map %d", gindx); return false;}
+	
+	*out = maps[lindx].seg[segment].data[m];
+	return true;
+}
+
+static void map_parser(struct config_pack p, void *ptr){
 	
 	struct MapData *m = (struct MapData*)ptr;	
 	if(!m){
-		ERR_LOG(ERR_FUCKED, "Passed null map to parser. Shouldn't be possible");		
+		ERR_LOG(ERR_FUCKED, "Passed null map to parser. Shouldn't be possible");	
 	}
+	
+	if(t_check(p.current_section, "metadata")){
+		for(int i = 0; i < M_META_COUNT; i++){
+			if(!t_check(p.key, (char *)metadata_lokup[i])){continue;}
+			t_atoi(p.value, &m->meta[i]);	
+		}
+	}
+	if(m->meta[M_SEGMENT_CAP] <= 0){ERR_LOG(ERR_FUCKED, "%d is not a valid Segment Cap! Either rewrite of reorder the ini file so that M_SEGMENT_CAP is at the top of the file", m->meta[M_SEGMENT_CAP]);}
+
 	// Scan palletes
 	int struct_indx;
-	// You should probably rewrite 
-	// t_check to take a integer pointer so i don't
-	// have this ugly thing.
 	if(sscanf(p.current_section, "palletes.%d", &struct_indx) == 1){
-		if(struct_indx < 0 || struct_indx >= m->count){return;}
-		struct MapTileData *slot = &g_pallete[struct_indx];	
+		if(struct_indx < 0 || struct_indx >= m->meta[M_SEGMENT_CAP]){return;}
+		
+		struct MapSegment *slot = &g_pallete[struct_indx];	
 		if(t_check(p.key, "tile_indx")){
-			t_atoi(p.value, &slot->tile_indx);
+			t_atoi(p.value, &slot->data[SEG_TILEGINDX]);
 		} else if(t_check(p.key, "tile_texture_index")){
-			t_atoi(p.value, &slot->tile_texture_index);
+			t_atoi(p.value, &slot->data[SEG_TILETEXTURE_GINDX]);
+		}
+		// flags
+		for(int i = 0; i < SEGFLAG_COUNT; i++){
+			if(!t_check(p.key, (char *)seg_flag_lokup[i])){continue;};
+			int value;
+			t_atoi(p.value, &value);
+			if(value < 0){ERR_LOG(ERR_PARSE, "Tried to parse flag %s with value of less than 0", seg_flag_lokup[i]);}
+			if(value > 0){slot->data[SEG_FLAG] |= (1 << i);}
 		}
 		return;	
 	}
+
 	// This will access older pallete memory
 	// if you access a unset pallet. Thats an issue.
 	// Too bad!
 	int func_indx;
 	if(sscanf(p.current_section, "function.%d", &func_indx) == 1){
-		if(func_indx < 0 || func_indx >= m->count){return;}
+		if(func_indx < 0 || func_indx >= m->meta[M_SEGMENT_CAP]){return;}
+		struct MapSegment *seg = &m->seg[func_indx];
 		if(t_check(p.key, "start_x")){
-			t_atoi(p.value, &m->data[func_indx].start_x);
+			t_atoi(p.value, &seg->data[SEG_START_X]);
 		} else if(t_check(p.key, "start_y")){
-			t_atoi(p.value, &m->data[func_indx].start_y);
+			t_atoi(p.value, &seg->data[SEG_START_Y]);
 		} else if(t_check(p.key, "end_x")){
-			t_atoi(p.value, &m->data[func_indx].end_x);
+			t_atoi(p.value, &seg->data[SEG_END_X]);
 		} else if(t_check(p.key, "end_y")){
-			t_atoi(p.value, &m->data[func_indx].end_y);
+			t_atoi(p.value, &seg->data[SEG_END_Y]);
 		} else if(t_check(p.key, "pallete")){
 			int pallete; 
 			t_atoi(p.value, &pallete);
 			if(pallete < 0 || pallete >= MAX_STRUCTS){ERR_LOG(ERR_PARSE, "INVALID PALLETE INDEX"); return;}
-			m->data[func_indx].tile_indx = g_pallete[pallete].tile_indx;
-			m->data[func_indx].tile_texture_index = g_pallete[pallete].tile_texture_index;		
-		} else if(t_check(p.key, "passable")){
-			int passable; 
-			t_atoi(p.value, &passable);
-			if(passable > 0){passable = 1;}
-			if(passable < 0){passable = 0;}
-			m->data[func_indx].is_passable = passable;
+			seg->data[SEG_TILEGINDX] = g_pallete[pallete].data[SEG_TILEGINDX];
+			seg->data[SEG_TILETEXTURE_GINDX]= g_pallete[pallete].data[SEG_TILETEXTURE_GINDX];		
+			seg->data[SEG_FLAG] = g_pallete[pallete].data[SEG_FLAG];
 		}
 		return;
 	}	
-}
-void parse_meta(struct config_pack p, void *ptr){
-	struct MetadataTemp *m = (struct MetadataTemp*)ptr;
-	if(!m){ERR_LOG(ERR_FUCKED, "Passed null pointer this sucks. Your fucked up here!");}
-	if(t_check(p.current_section, "metadata")){
-		if(t_check(p.key, "count")){
-			t_atoi(p.value, &m->count);
-		} else if(t_check(p.key, "tileset")){
-			t_atoi(p.value, &m->tileset);
-		}
-		return;
-	}
-}
-void m_init(void){
-	char *filepath = e_grab_str(MAP_PATH);
-	if(!filepath){ERR_LOG(ERR_FUCKED, "e_grab_str return NULL for MAP_PATH enum");}
-	struct MetadataTemp *meta = XCALLOC(1 ,sizeof(struct MetadataTemp));
-	
-	// Get meta data first	
-	bool win = t_config(meta, filepath, parse_meta);
-	if(!win){ERR_LOG(ERR_FUCKED, "t_config failed to parse metadata for map");}
-	size_t size = sizeof(struct MapData) + meta->count * sizeof(struct MapTileData);
-	
-	// Override the current path
-	if(map_ptr){m_free();}	
-
-	map_ptr = XCALLOC(1, size);
-	map_ptr->count = meta->count;
-	map_ptr->tileset = meta->tileset;
-	
-	bool win_2 = t_config(map_ptr, (char *)filepath, parse_map);
-	if(!win_2){ERR_LOG(ERR_FUCKED, "t_config failed to parse map");}	
-	free(meta);
-}
-void m_free(){
-	if(map_ptr){
-		free(map_ptr);
-		map_ptr = NULL;
-		return;
-	}
-	ERR_LOG(ERR_NULL, "Tried to double free map");
 }
