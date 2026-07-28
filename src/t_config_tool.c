@@ -62,7 +62,6 @@ bool t_config(void *ptr, char *path, ParserType func){
 	   		if(v != pack.value){
 				memmove(pack.value, v, len + 1); // +1 to include the null terminator
 	    		}
-			if(!ptr){ERR_LOG(ERR_FUCKED, "Passed NULL ptr to config");}
 	    		if(!func){ERR_LOG(ERR_FUCKED, "Passed NULL function ptr to config");}
 			func(pack, ptr);	
 		}

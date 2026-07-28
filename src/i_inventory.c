@@ -82,7 +82,7 @@ struct DervBonusMatrix i_get_bonus_matrx(int gindx, bool autoload){
 		// and stat we can add to the matrix
 		// also the stat can't be out of boudns it gets 
 		// checked at the item parser
-		matrx.derv[data.stat] = data.amount;
+		matrx.derv[data.stat] += data.amount;
 	}
 	
 	// Note this both loades the inventory and
