@@ -30,11 +30,26 @@ bool t_config(void *ptr, char *path, ParserType func){
 	
 	FILE *f = fopen(path, "r");
 	if(!f){ERR_LOG(ERR_FUCKED, "Failed to open path %s", path);}
-
+ 
 	while(fgets(pack.line, sizeof(pack.line), f)){
 		if(pack.line[0] == '\n' || pack.line[0] == '#' || pack.line[0] == ';'){continue;}
 		if(pack.line[0] == '['){sscanf(pack.line, "[%63[^]]]", pack.current_section); continue;}
 		if(sscanf(pack.line, "%63[^=]=%127[^\n]", pack.key, pack.value) == 2){
+			// Trim key the same way value is trimmed below.
+			// %63[^=] captures everything up to '=' literally,
+			// including any space/tab before it (e.g. "flag_path " from "flag_path = x"),
+			// which breaks every t_check() strcmp against a clean lookup string.
+			char *k = pack.key;
+			while(*k == ' ' || *k == '\t'){k++;}
+			size_t klen = strlen(k);
+			while(klen > 0 && (k[klen-1] == ' ' || k[klen-1] == '\t' || k[klen-1] == '\r')){
+				klen--;
+			}
+			k[klen] = '\0';
+			if(k != pack.key){
+				memmove(pack.key, k, klen + 1);
+			}
+ 
 			char *v = pack.value;
 	    		while(*v == ' ' || *v == '\t'){v++;}
 	    		size_t len = strlen(v);
@@ -43,7 +58,7 @@ bool t_config(void *ptr, char *path, ParserType func){
 	    		}
 	    	
 			v[len] = '\0';
-
+ 
 	   		if(v != pack.value){
 				memmove(pack.value, v, len + 1); // +1 to include the null terminator
 	    		}
@@ -55,7 +70,6 @@ bool t_config(void *ptr, char *path, ParserType func){
 	fclose(f);
 	return true;
 }
-
 char *t_ini_plus_indx(char *base,int indx){
 	if(!base){
 		ERR_LOG(ERR_FUCKED, "Called with NULL base path");

@@ -20,7 +20,7 @@ int main(){
 
 	// Setup everything
 	bool parsed = e_load_engine_settings();
-		if(!parsed){ERR_LOG(ERR_FUCKED, "Engine prase failed!");}
+	if(!parsed){ERR_LOG(ERR_FUCKED, "Engine prase failed!");}
 	f_init_flag();
 	sm_init(menu_state());
 	

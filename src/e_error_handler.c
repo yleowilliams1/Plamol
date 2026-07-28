@@ -97,8 +97,8 @@ void err_log(enum ER_CODE code, const char *file, int line, const char *func, co
 	
 	// Terminal
 	if(isatty(fileno(stderr))){
-		fprintf(stderr, "[%s:%s%s%s] %s (%s)\n", 
-			str_code, lvl_col(lvl), str_lvl, COLOR_RESET, msg, func);
+fprintf(stderr, "[%s:%s%s%s] %s (%s:%d in %s())\n", 
+	str_code, lvl_col(lvl), str_lvl, COLOR_RESET, msg, file, line, func);	
 	}
 	else{
 		fprintf(stderr, "[%s:%s] %s (%s)\n", str_code, str_lvl, msg, func);
