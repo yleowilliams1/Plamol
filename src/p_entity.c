@@ -11,12 +11,7 @@
 // Write parser later
 
 struct Entity *p_init_entity(int tx, int ty, int stat){
-	struct Entity *e = calloc(1, sizeof(struct Entity));
-	e->x = tx;
-	e->y = ty;
-	e->stats = stat;
-	
-	return e;
+	return NULL;
 }
 void p_free(struct Entity *e){
 	free(e);

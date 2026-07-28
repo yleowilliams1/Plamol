@@ -27,7 +27,7 @@ void parse_map(struct config_pack p, void *ptr){
 	// t_check to take a integer pointer so i don't
 	// have this ugly thing.
 	if(sscanf(p.current_section, "palletes.%d", &struct_indx) == 1){
-		if(struct_indx < 0 || struct_indx >= MAX_STRUCTS){return;}
+		if(struct_indx < 0 || struct_indx >= m->count){return;}
 		struct MapTileData *slot = &g_pallete[struct_indx];	
 		if(t_check(p.key, "tile_indx")){
 			t_atoi(p.value, &slot->tile_indx);
@@ -53,6 +53,7 @@ void parse_map(struct config_pack p, void *ptr){
 		} else if(t_check(p.key, "pallete")){
 			int pallete; 
 			t_atoi(p.value, &pallete);
+			if(pallete < 0 || pallete >= MAX_STRUCTS){ERR_LOG(ERR_PARSE, "INVALID PALLETE INDEX"); return;}
 			m->data[func_indx].tile_indx = g_pallete[pallete].tile_indx;
 			m->data[func_indx].tile_texture_index = g_pallete[pallete].tile_texture_index;		
 		} else if(t_check(p.key, "passable")){
@@ -88,7 +89,7 @@ void m_init(void){
 	size_t size = sizeof(struct MapData) + meta->count * sizeof(struct MapTileData);
 	
 	// Override the current path
-	m_free();	
+	if(map_ptr){m_free();}	
 
 	map_ptr = XCALLOC(1, size);
 	map_ptr->count = meta->count;

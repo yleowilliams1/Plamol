@@ -19,7 +19,7 @@ static enum Action ac_lokup(char *str){
 	if(t_check(str, "walk_right")){return A_WALK_RIGHT;}
 	if(t_check(str, "walk_up")){return A_WALK_UP;}
 	if(t_check(str, "walk_down")){return A_WALK_DOWN;}
-	if(t_check(str, "action")){return A_WALK_DOWN;}
+	if(t_check(str, "action")){return A_ACTION;}
 	return INVALID_ENUM;	
 }
 static enum KeyType ty_lokup(char *str){
@@ -186,6 +186,7 @@ void i_set_binding(enum KeyType type, enum Action action, int key){
 		}
 	}
 	/* All slots full — shift out the oldest and append the new key */
+	ERR_LOG(ERR_PARSE, "Put more than %d keys in, overiding the oldest and appending the newst key. This is a config bug.", MAX_KEYS);
 	for(int i = 0; i < MAX_KEYS - 1; i++){
 		input[action].keys[i] = input[action].keys[i + 1];
 	}

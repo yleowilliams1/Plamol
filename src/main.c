@@ -5,7 +5,6 @@
 #include <raylib.h>
 #include "w_window_manager.h"
 #include "e_engine_settings.h"
-#include "r_asset_manager.h"
 #include "f_flags.h"
 #include "g_statemachine.h"
 #include "s_menu.h"
@@ -37,7 +36,6 @@ int main(){
 
 	e_free_setting();
 	f_free_flag();
-	r_cleanup_textures();
 	CloseWindow();
 	return 0;
 }

@@ -23,7 +23,7 @@ float wcnf(float num){
 }
 
 float wcnfx(float num){
-	float x = w_relative_scale_y;
+	float x = w_relative_scale_x;
 	return num * x;
 }
 float wcnfy(float num){

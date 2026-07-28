@@ -11,7 +11,7 @@
  * index.*/
 
 bool t_indxvalid(int size, int lindx){
-	return (lindx < 0 || lindx >= size);
+	return (lindx > 0 || lindx < size);
 }
 
 int t_find_free_lindx(struct local_indx *arr, int size){
@@ -82,7 +82,7 @@ int t_gindx_to_lindx(struct local_indx *arr, int size, int gindx){
 }
 int t_lindx_to_gindx(struct local_indx *arr, int size, int lindx){
 	int gindx = NULL_INDX;
-	if(t_indxvalid(size, lindx)){
+	if(!t_indxvalid(size, lindx)){
 		return gindx;
 	}
 	return arr[lindx].gindx;
