@@ -8,6 +8,7 @@
 #include "i_items.h"
 #include "p_stats.h"
 #include "m_map.h"
+#include "m_map_tile.h"
 
 #define FLAG_NAMES_SIZE 6
 static const char *str_lokup[ENG_STR_COUNT] = { 
@@ -31,6 +32,18 @@ enum item_gindx{
 	ITEM_TWO,
 	ITEM_THREE,
 	ITEM_GINDX_COUNT,
+};
+enum map_gindx{
+	MAP_ONE,
+	MAP_TWO,
+	MAP_THREE,
+	MAP_GINDX_COUNT,
+};
+enum tiles_gindx{
+	TILE_ONE,
+	TILE_TWO,
+	TILE_THREE,
+	TILE_GINDX_COUNT,
 };
 static struct Inventory inventory_expected[INV_GINDX_COUNT] = {
 	[INV_ONE] = {
@@ -146,4 +159,24 @@ void t_initalize_tests(){
 		ERR_LOG(ERR_OK, "Inventory %d bonus matrix: [ %s]", i, matbuf);
 	}
 	// Do tiles first
+	for(int i = 0; i < MAP_GINDX_COUNT; i++){
+		int tileset, seg_cap;
+		int n_exit, s_exit, w_exit, e_exit;
+		
+		m_get_metadata(i, true, M_TILESET, &tileset);
+		m_get_metadata(i, true, M_SEGMENT_CAP, &seg_cap);
+		m_get_metadata(i, true, M_NORTH_EXIT, &n_exit);
+		m_get_metadata(i, true, M_SOUTH_EXIT, &s_exit);
+		m_get_metadata(i, true, M_WEST_EXIT, &w_exit);
+		m_get_metadata(i, true, M_EAST_EXIT, &e_exit);
+		
+		ERR_LOG(ERR_OK, "Map [%d]: Tileset %d: SegmentSize %d: NorthExit %d: SouthExit %d: WestExit %d: EastExit %d:", i, tileset, seg_cap, n_exit, s_exit, w_exit, e_exit);
+	}
+	for(int i = 0; i < TILE_GINDX_COUNT; i++){
+		int d[TILEINFO_COUNT];
+		for(int j = 0; j < TILEINFO_COUNT; j++){
+			d[j] = t_grab_tiledata(i, j, true);	
+		}
+		ERR_LOG(ERR_OK, "Tile [%d]: Portrait %d: Text %d: Combat %d: Loot %d: Combat Loot %d: Flag %d:", i, d[T_PORTRAIT], d[T_TEXT], d[T_COMBAT], d[T_LOOT], d[T_COMBAT_LOOT], d[T_FLAGS]);	
+	}	
 }

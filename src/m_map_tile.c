@@ -20,15 +20,15 @@ static void tile_parser(struct config_pack p, void *ptr);
 static struct TileData tiles[MAX_TILES] = {0};
 static struct local_indx indx_man[MAX_TILES] = {0};
 
-static const char *flag_lookup[FLAG_COUNT] = {
-	[FLAG_LOOK] = "look",
-	[FLAG_INTERACT] = "interact",
-	[FLAG_LOOTABLE] = "lootable",
-	[FLAG_DIALOGUE] = "dialogue", 
-	[FLAG_COMBAT] = "combat", 
+static const char *flag_lookup[TFLAG_COUNT] = {
+	[TFLAG_LOOK] = "look",
+	[TFLAG_INTERACT] = "interact",
+	[TFLAG_LOOTABLE] = "lootable",
+	[TFLAG_DIALOGUE] = "dialogue", 
+	[TFLAG_COMBAT] = "combat", 
 };
 
-static const char *tiledata_lokup[T_COUNT] = {
+static const char *tiledata_lokup[TILEINFO_COUNT] = {
 	[T_PORTRAIT] = "portrait",
 	[T_TEXT]     = "text",
 	[T_COMBAT]   = "combat",
@@ -81,7 +81,7 @@ static void tile_parser(struct config_pack p, void *ptr){
 	if(!tile){ERR_LOG(ERR_FUCKED, "Took null pointer into parser, This sohuldn't be possible");}
 
 	if(t_check(p.current_section, "DataIndexes")){
-		for(int i = 0; i < T_COUNT; i++){
+		for(int i = 0; i < TILEINFO_COUNT; i++){
 			char *str = (char *)tiledata_lokup[i];
 			// string cannot be null
 			if(!t_check(p.key, str)){continue;}
@@ -89,7 +89,7 @@ static void tile_parser(struct config_pack p, void *ptr){
 		}
 	}
 	if(t_check(p.current_section, "Flags")){
-		for(int i = 0; i < FLAG_COUNT; i++){
+		for(int i = 0; i < TFLAG_COUNT; i++){
 			char *str = (char *)flag_lookup[i];
 			if(!t_check(p.key, str)){continue;}
 			

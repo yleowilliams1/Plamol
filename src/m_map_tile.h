@@ -3,12 +3,12 @@
 #include <stdint.h>
 #include <limits.h>
 enum Flags{
-	FLAG_LOOK,
-	FLAG_INTERACT,
-	FLAG_LOOTABLE,
-	FLAG_DIALOGUE,
-	FLAG_COMBAT,
-	FLAG_COUNT,
+	TFLAG_LOOK,
+	TFLAG_INTERACT,
+	TFLAG_LOOTABLE,
+	TFLAG_DIALOGUE,
+	TFLAG_COMBAT,
+	TFLAG_COUNT,
 };
 
 enum TileInfo{
@@ -18,10 +18,10 @@ enum TileInfo{
 	T_LOOT,
 	T_COMBAT_LOOT,
 	T_FLAGS,
-	T_COUNT,
+	TILEINFO_COUNT,
 };
 struct TileData{
-	int data[T_COUNT];
+	int data[TILEINFO_COUNT];
 };
 
 bool t_free_tile(int gindx);
