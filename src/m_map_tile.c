@@ -60,6 +60,7 @@ bool t_load_tile(int gindx){
 		.element_size = sizeof(struct TileData),
 		.function = tile_parser,
 		.path = e_grab_str(TILE_PATH),	
+		.init = NULL,
 	};
 
 	bool success = l_load_asset(pckg);

@@ -7,6 +7,7 @@
 #include "t_strings.h"
 #include "e_error_handler.h"
 #include "t_gindex_tool.h"
+#include "w_window_manager.h"
 #define INVALID_ENUM 10000
 static struct KeySet input[A_COUNT] = {0};
 void i_set_binding(enum KeyType type, enum Action action, int key);
@@ -47,11 +48,11 @@ bool i_input_released(enum Action action) {
 }
 
 float i_input_get_mouse_x() {
-    return GetMouseX();
+    return wcnfx(GetMouseX());
 }
 
 float i_input_get_mouse_y() {
-    return GetMouseY();
+    return wcnfy(GetMouseY());
 }
 
 static void input_parser(struct config_pack p, void *ptr){
@@ -90,7 +91,7 @@ static void input_parser(struct config_pack p, void *ptr){
 	else if(t_check(p.key, "Key")){
 		// Check if it's already initalized
 		if(active_set->key != -1){return;}
-		active_set->key = atoi(p.value);
+		t_atoi(p.value, &active_set->key);
 		
 	}
 }
@@ -154,6 +155,12 @@ void i_update_input(enum Action action) {
             key_set->is_held     |= IsGamepadButtonDown(0, raylib_key_enum);
             key_set->is_released |= IsGamepadButtonReleased(0, raylib_key_enum);
         }
+	  if(input_key->type == MOUSE) {
+	      raylib_key_enum = input_key->mouse_key;
+	      key_set->is_pressed  |= IsMouseButtonPressed(raylib_key_enum);
+	      key_set->is_held     |= IsMouseButtonDown(raylib_key_enum);
+	      key_set->is_released |= IsMouseButtonReleased(raylib_key_enum);
+	  }
     }
 }
 

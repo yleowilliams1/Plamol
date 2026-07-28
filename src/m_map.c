@@ -41,7 +41,7 @@ void parse_map(struct config_pack p, void *ptr){
 	// Too bad!
 	int func_indx;
 	if(sscanf(p.current_section, "function.%d", &func_indx) == 1){
-		if(func_indx < 0 || func_indx >= MAX_FUNCTIONS){return;}
+		if(func_indx < 0 || func_indx >= m->count){return;}
 		if(t_check(p.key, "start_x")){
 			t_atoi(p.value, &m->data[func_indx].start_x);
 		} else if(t_check(p.key, "start_y")){
@@ -81,7 +81,7 @@ void parse_meta(struct config_pack p, void *ptr){
 void m_init(void){
 	char *filepath = e_grab_str(MAP_PATH);
 	if(!filepath){ERR_LOG(ERR_FUCKED, "e_grab_str return NULL for MAP_PATH enum");}
-	struct MetadataTemp *meta = XMALLOC(sizeof(struct MetadataTemp));
+	struct MetadataTemp *meta = XCALLOC(1 ,sizeof(struct MetadataTemp));
 	
 	// Get meta data first	
 	bool win = t_config(meta, filepath, parse_meta);
@@ -102,6 +102,7 @@ void m_init(void){
 void m_free(){
 	if(map_ptr){
 		free(map_ptr);
+		map_ptr = NULL;
 		return;
 	}
 	ERR_LOG(ERR_NULL, "Tried to double free map");

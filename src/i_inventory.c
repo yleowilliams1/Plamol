@@ -13,12 +13,17 @@
 #include "l_asset_manager.h"
 
 #define INV_CAP 128
+#define EMPTY_SLOT -1
 
 static void inv_parser(struct config_pack p, void *ptr);
 
 static struct Inventory iarr [INV_CAP] = {0};
 static struct local_indx indx_man[INV_CAP] = {0};
-
+static void inv_init(void *ptr){
+	struct Inventory *inv = (struct Inventory *)ptr;
+	for(int i = 0; i < HOTBAR_SIZE; i++){ inv->hotbar_items[i] = EMPTY_SLOT; }
+	for(int i = 0; i < INVENTORY_SIZE; i++){ inv->inventory[i] = EMPTY_SLOT; }
+}
 bool i_free_inventory(int gindx){
 
 	struct AssetFreePackage pckg = {
@@ -32,7 +37,6 @@ bool i_free_inventory(int gindx){
 	return t_free_asset(pckg);
 }
 bool i_load_inventory(int gindx){
-	
 	struct AssetLoadPackage pckg = {
 		.gindx = gindx,
 		.index_manager = indx_man,
@@ -41,6 +45,7 @@ bool i_load_inventory(int gindx){
 		.element_size = sizeof(struct Inventory),
 		.function = inv_parser,
 		.path = e_grab_str(INVENTORY_PATH),
+		.init = inv_init,
 	};
 
 	return l_load_asset(pckg);
@@ -63,6 +68,10 @@ struct DervBonusMatrix i_get_bonus_matrx(int gindx, bool autoload){
 	struct Inventory inv = i_get_inv_proto(gindx, autoload);
 	
 	for(int i = 0; i < HOTBAR_SIZE; i++){
+		if(inv.hotbar_items[i] == EMPTY_SLOT){
+			continue;
+		}
+		
 		// Kind of complicated: Loop through through
 		// the hotbar_items and grab the the additive value for 
 		// items in hotbar in packed format. 

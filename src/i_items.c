@@ -66,6 +66,7 @@ bool t_load_item(int gindx){
 		.element_size = sizeof(struct Item),
 		.function = item_parser,
 		.path = e_grab_str(ITEMS_PATH),	
+		.init = NULL,
 	};	
 	
 	bool success = l_load_asset(pckg);	

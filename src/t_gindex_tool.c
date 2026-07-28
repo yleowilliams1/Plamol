@@ -11,7 +11,7 @@
  * index.*/
 
 bool t_indxvalid(int size, int lindx){
-	return (lindx > 0 || lindx < size);
+	return (lindx >= 0 && lindx < size);
 }
 
 int t_find_free_lindx(struct local_indx *arr, int size){
@@ -36,6 +36,7 @@ bool h_gchecker(struct local_indx *arr, int size, int gindx, int *out){
 	if(!out){ERR_LOG(ERR_NULL, "Passed null out to checker"); return false;}
 	int lindx = t_gindx_to_lindx(arr, size, gindx);
 	if(!t_indxvalid(size, lindx)){ERR_LOG(ERR_INDX, "gindx conversion failed"); return false;}
+	*out = lindx;
 	return true;
 }
 bool h_lchecker(struct local_indx *arr, int size, int lindx){

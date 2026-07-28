@@ -16,14 +16,14 @@ int l_getter_checks(int gindx, bool autoload, int cap, struct local_indx *iman, 
 		}else{
 			bool loaded = ldr(gindx);
 			if(!loaded){ERR_LOG(ERR_FUCKED, "Failed to load gindx %d", gindx);}
-			int lindx = t_gindx_to_lindx(iman, cap, gindx);
+			lindx = t_gindx_to_lindx(iman, cap, gindx);
 			if(!t_indxvalid(cap, lindx)){
 				ERR_LOG(ERR_FUCKED, "Gindx was freed since loading %d", gindx);	
 			}
 		}
 	}
 	else{
-		int lindx = t_gindx_to_lindx(iman, cap, gindx);
+		lindx = t_gindx_to_lindx(iman, cap, gindx);
 		if(!t_indxvalid(cap, lindx)){
 			ERR_LOG(ERR_INDX, "Didn't preload %d! Rerunning autload", gindx);
 			return l_getter_checks(gindx, true, cap, iman, ldr);
@@ -35,7 +35,7 @@ int l_getter_checks(int gindx, bool autoload, int cap, struct local_indx *iman, 
 
 bool l_load_asset(struct AssetLoadPackage pckg){
 	// Find free local index in the array
-	int lindx = t_find_free_lindx(pckg.index_manager, pckg.gindx);
+	int lindx = t_find_free_lindx(pckg.index_manager, pckg.arr_cap);
 	if(!t_indxvalid(pckg.arr_cap, lindx)){
 		ERR_LOG(ERR_FUCKED, "Asset array at path %s is full", pckg.path);
 	}
@@ -44,7 +44,10 @@ bool l_load_asset(struct AssetLoadPackage pckg){
 	
 	// Compute the byte address of the lindx-th element
 	void *slot = (char *)pckg.arr + (size_t)lindx * pckg.element_size;
-
+	// Call initalizer if there is one
+	if(pckg.init){
+		pckg.init(slot);
+	}
 	// Hand over parsing to t_config loader
 	bool loaded = t_loader(pckg.gindx, pckg.index_manager, pckg.function, pckg.path, slot, lindx);
 	// Free the from the index manager 

@@ -19,7 +19,7 @@ void w_update_relative_scale(){
 float wcnf(float num){
 	float x = w_relative_scale_x;
 	float y = w_relative_scale_y;
-	return (x > y) ? num * x: y;
+	return (x > y) ? num * y: num * x;
 }
 
 float wcnfx(float num){
@@ -33,7 +33,7 @@ float wcnfy(float num){
 int wcni(int num){
 	float x = w_relative_scale_x;
 	float y = w_relative_scale_y;
-	return (int)((x > y) ? num * x: y);
+	return (int)((x > y) ? num * y: num * x);
 }
 int wcnix(int num){
 	float x = w_relative_scale_x;

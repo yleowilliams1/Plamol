@@ -38,7 +38,7 @@ void f_free_flag(){
 	free(fm);
 	fm = NULL;
 }
-static int32_t flag_hash(const char *name){
+static uint32_t flag_hash(const char *name){
 	// DON'T PASS NULL POINTERS. 
 	uint32_t hash = 2166136261u;
 	while(*name){

@@ -6,6 +6,8 @@
 
 
 typedef bool (*Loader)(int gindx);
+typedef void (*Initializer)(void *slot);
+
 
 struct local_indx;
 
@@ -17,6 +19,7 @@ struct AssetLoadPackage{
 	size_t element_size;
 	ParserType function;
 	char *path;
+	Initializer init;
 };
 
 struct AssetFreePackage{

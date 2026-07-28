@@ -53,6 +53,7 @@ bool t_load_stat(int gindx){
 		.element_size = sizeof(struct BaseStats),
 		.function = stat_parser,
 		.path = e_grab_str(STATS_PATH),	
+		.init = NULL,
 	};
 
 	return l_load_asset(pckg);
