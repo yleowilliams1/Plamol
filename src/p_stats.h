@@ -34,4 +34,6 @@ struct BaseStats{
 	int basestats[BSTAT_COUNT];
 };
 
-enum Dev string_to_dev_enum(const char *str);
+bool t_load_stat(int gindx);
+bool t_free_stat(int gindx);
+bool p_get_dev(int gindx, enum Dev d, bool autoload, int *out);

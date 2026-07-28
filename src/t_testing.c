@@ -145,6 +145,5 @@ void t_initalize_tests(){
 
 		ERR_LOG(ERR_OK, "Inventory %d bonus matrix: [ %s]", i, matbuf);
 	}
-	// Can't do much for map. Perhpas write later.
-	m_init();
+	// Do tiles first
 }
