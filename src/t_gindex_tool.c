@@ -74,7 +74,7 @@ int t_gindx_to_lindx(struct local_indx *arr, int size, int gindx){
 	if(size < 0){ERR_LOG(ERR_INDX, "Size is less than 0"); return NULL_INDX;}	
 	for(int i = 0; i < size; i++){
 		if(!arr){ERR_LOG(ERR_NULL, "Array is NULL! Can't convert!"); continue;}
-		if(arr[i].gindx == gindx){
+		if(arr[i].gindx == gindx && arr[i].active){
 			lindx = i;
 			break;
 		}

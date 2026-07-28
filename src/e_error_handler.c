@@ -19,7 +19,7 @@ static FILE *log_file = NULL;
  * */
 static enum ER_LVL severity(enum ER_CODE code){
 	switch(code){
-		case ERR_OK:	return LVL_WARNING;
+		case ERR_OK:	return LVL_FINE;
 		case ERR_ALLOC: return LVL_CRASH;
 		case ERR_NO_FILE: return LVL_CRITICAL;
 		case ERR_PARSE:   return LVL_CRITICAL;
@@ -33,6 +33,7 @@ static enum ER_LVL severity(enum ER_CODE code){
 }
 static const char *sev_label(enum ER_LVL lvl){
 	switch(lvl){
+		case LVL_FINE: return "FINE";
 		case LVL_WARNING: return "WARNING";
 		case LVL_CRITICAL: return "CRITICAL";
 		case LVL_CRASH: return "CRASH";
@@ -55,6 +56,7 @@ static const char *code_label(enum ER_CODE code){
 }
 static const char *lvl_col(enum ER_LVL lvl){
 	switch(lvl){
+		case LVL_FINE: return COLOR_GREEN;
 		case LVL_WARNING: return COLOR_YELLOW;
 		case LVL_CRITICAL: return COLOR_RED;
 		case LVL_CRASH: return COLOR_RED;

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 enum ER_LVL{
+	LVL_FINE,
 	LVL_WARNING,
 	LVL_CRITICAL,
 	LVL_CRASH,

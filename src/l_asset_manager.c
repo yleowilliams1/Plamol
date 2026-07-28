@@ -11,9 +11,7 @@ int l_getter_checks(int gindx, bool autoload, int cap, struct local_indx *iman, 
 	int lindx = NULL_INDX;
 	if(autoload){
 		lindx = t_gindx_to_lindx(iman, cap, gindx);
-		if(t_indxvalid(cap, lindx)){
-			ERR_LOG(ERR_NULL, "Can't autoload alread loaded gindx %d", gindx);
-		}else{
+		if(!t_indxvalid(cap, lindx)){
 			bool loaded = ldr(gindx);
 			if(!loaded){ERR_LOG(ERR_FUCKED, "Failed to load gindx %d", gindx);}
 			lindx = t_gindx_to_lindx(iman, cap, gindx);

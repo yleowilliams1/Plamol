@@ -100,6 +100,7 @@ bool t_loader(int gindx, struct local_indx *iman, ParserType func, char *path, v
 	// Can't be null
 	char *file = t_ini_plus_indx(path, gindx);
 
+	ERR_LOG(ERR_OK, "Loading %s", file);
 	if(t_config(ptr, file, func)){
 		free(file);
 		return true;

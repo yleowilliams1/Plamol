@@ -118,10 +118,10 @@ static bool t_vsnprintf(char *buf, size_t bufsize, size_t *out_len, const char *
 	if(bufsize > 0 && buf[bufsize - 1] != '\0' && would_write >= bufsize){
 		buf[bufsize - 1] = '\0';
 	}
-	if(would_write >= bufsize){
-		ERR_LOG(ERR_PARSE, "The string has been truncated.");
-		return false;
-	}
+	if(buf != NULL && bufsize > 0 && would_write >= bufsize){
+        	ERR_LOG(ERR_PARSE, "The string has been truncated.");
+        	return false;
+    	}
 	return true;
 }
 bool t_snprintf(char *buf, size_t bufsize, size_t *out_len, const char *fmt, ...){
