@@ -1,19 +1,34 @@
 #pragma once
 #include <stdbool.h>
+#include <stdint.h>
 
-enum EntityData{
-	D_STAT,
-	D_INV,
-	D_COUNT,
+enum EntityFlags{
+	ENT_COMBAT,
+	ENT_SPRITE,
+	ENT_TEXT,
+	ENT_LOOT,
+	ENT_PLAYER,
+	ENT_HOSTILE,
+	ENT_STAT,
+	ENT_INV,
+	ENTITY_FLAG_COUNT,
+};
+
+enum EntityComponents{
+	E_SPRITE,
+	E_TEXT,
+	E_LOOT,
+	E_POSX,
+	E_POSY,
+	E_STAT,
+	E_INV,
+	ENTCOM_COUNT,
 };
 
 struct Entity{
-	int x;
-	int y;
-	int data_gindx[D_COUNT];	
+	int data[ENTCOM_COUNT];
+	uint32_t flags;
 };
-
-struct Entity *p_init_entity(int tx, int ty, int stat);
-void p_free(struct Entity *e);
-void p_move_x(struct Entity *e, bool can_move, int dir);
-void p_move_y(struct Entity *e, bool can_move, int dir);
+bool e_free_entity(int gindx);
+bool e_load_entity(int gindx);
+struct Entity e_grab_entity(int gindx, bool autoload);

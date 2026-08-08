@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #define MAX_SEGS 256 
+#define ENTITY_SIZE 256
 
 enum SegmentFlags{
 	F_PASSABLE,
@@ -30,18 +31,26 @@ enum MetadataProperties{
 	M_SOUTH_EXIT,
 	M_WEST_EXIT,
 	M_EAST_EXIT,
+	M_ENTITY_COUNT,
 	M_META_COUNT,
 };
 
 struct MapSegment{
 	int data[SEGPROP_COUNT]; 
 };
+struct MapEntityData{
+	int gindx;
+	int x;
+	int y;
+	int GUID;
+	bool valid;
+};
 struct MapData{
 	int meta[M_META_COUNT];
 	struct MapSegment seg[MAX_SEGS];
+	struct MapEntityData entities[ENTITY_SIZE];
 };
 
 bool m_free_map(int gindx);
 bool m_load_map(int gindx);
-bool m_get_metadata(int gindx, bool autoload, enum MetadataProperties m, int *out);
-bool m_get_seg(int gindx, bool autoload, enum SegmentProperties m, int segment, int *out);
+struct MapData m_get_map(int gindx, bool autoload);

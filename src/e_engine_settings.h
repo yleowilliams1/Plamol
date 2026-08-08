@@ -9,6 +9,9 @@ enum EngStrings{
 	STATS_PATH,
 	INVENTORY_PATH,
 	INPUT_PATH,
+	GAMESTATE_PATH,
+	ENTITIES_PATH,
+	LOOT_PATH,
 	ENG_STR_COUNT,
 };
 struct EngineSettings{

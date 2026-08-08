@@ -11,6 +11,8 @@
 #include "l_asset_manager.h"
 #define STAT_CAP 256
 
+// Stats are mutable
+
 static void stat_parser(struct config_pack p, void *ptr);
 
 static struct BaseStats bstats[STAT_CAP] = {0};
@@ -24,6 +26,12 @@ static const char *base_lookup[] = {
 	[INT] = "intelligence",
 	[WIS] = "wisdom",
 };
+
+struct BaseStats s_grab_stats(int gindx, bool autoload){
+	int lindx = l_getter_checks(gindx, autoload, STAT_CAP, indx_man, t_load_stat);
+	if(!t_indxvalid(STAT_CAP, lindx)){ERR_LOG(ERR_FUCKED, "Couldn't load or find gindx %d", gindx);}
+	return bstats[lindx];
+}
 
 static const char *dev_lookup[DERV_CAP] = {
         [PHYSICAL_COORDINATION]  = "physical_coordination",
@@ -84,12 +92,7 @@ static void stat_parser(struct config_pack p, void *ptr){
 		}
 	}	
 }
-bool p_get_dev(int gindx, enum Dev d, bool autoload, int *out){
-	int lindx = l_getter_checks(gindx, autoload, STAT_CAP, indx_man, t_load_stat);
-	if(!t_indxvalid(STAT_CAP, lindx)){ERR_LOG(ERR_INDX, "Failed to find %d", gindx); return false;}
-
-	int *b = bstats[lindx].basestats; 
-
+bool p_get_dev(int *b, enum Dev d, int *out){
 	switch(d){
 		case PHYSICAL_COORDINATION:
 			*out = (int)ceil(((b[STR] + b[DEX] - b[INT]) / 2.0) / 4.0);

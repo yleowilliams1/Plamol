@@ -59,3 +59,10 @@ void sm_draw() {
         state_machine.stack[state_machine.count - 1].on_render();
     }
 }
+void sm_free(){
+	if(state_machine.count == 0) return;
+
+	if(state_machine.stack[state_machine.count - 1].on_exit){
+		state_machine.stack[state_machine.count - 1].on_exit();
+	}
+}

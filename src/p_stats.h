@@ -36,4 +36,5 @@ struct BaseStats{
 
 bool t_load_stat(int gindx);
 bool t_free_stat(int gindx);
-bool p_get_dev(int gindx, enum Dev d, bool autoload, int *out);
+struct BaseStats s_grab_stats(int gindx, bool autoload);
+bool p_get_dev(int *b, enum Dev d, int *out);

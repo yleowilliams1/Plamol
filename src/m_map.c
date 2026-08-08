@@ -12,11 +12,13 @@
 #include "l_asset_manager.h"
 
 #define MAP_CAP 16
-
 #define MAX_STRUCTS 512
 #define MAX_FUNCTIONS 512
 
+// Maps are immutable
+
 static void map_parser(struct config_pack p, void *ptr);
+static void map_init(void *ptr);
 
 static struct MapData maps[MAP_CAP] = {0};
 static struct local_indx iman[MAP_CAP] = {0};
@@ -30,6 +32,7 @@ static const char *metadata_lokup[M_META_COUNT] = {
 	[M_SOUTH_EXIT] = "south_map",
 	[M_WEST_EXIT] = "west_map",
 	[M_EAST_EXIT] = "east_map",
+	[M_ENTITY_COUNT] = "entity_count",
 };
 
 static const char *seg_flag_lokup[SEGFLAG_COUNT] = {
@@ -60,27 +63,24 @@ bool m_load_map(int gindx){
 		.element_size = sizeof(struct MapData),
 		.function = map_parser,
 		.path = e_grab_str(MAP_PATH),
-		.init = NULL,
+		.init = map_init,
 	};
 
 	return l_load_asset(pckg);
 }
-
-bool m_get_metadata(int gindx, bool autoload, enum MetadataProperties m, int *out){
-	int lindx = l_getter_checks(gindx, autoload, MAP_CAP, iman, m_load_map);
-	if(!t_indxvalid(MAP_CAP, lindx)){ERR_LOG(ERR_NULL, "Failed to find map %d", gindx); return false;}
-	
-	*out = maps[lindx].meta[m];
-	return true;
+static void map_init(void *ptr){
+	struct MapData *m = (struct MapData *)ptr;
+	for(int i = 0; i < ENTITY_SIZE; i++){
+		m->entities[i] = (struct MapEntityData){0};
+	}
 }
-bool m_get_seg(int gindx, bool autoload, enum SegmentProperties m, int segment, int *out){
+struct MapData m_get_map(int gindx, bool autoload){
+	struct MapData map = {0};
 	int lindx = l_getter_checks(gindx, autoload, MAP_CAP, iman, m_load_map);
-	if(!t_indxvalid(MAP_CAP, lindx)){ERR_LOG(ERR_NULL, "Failed to find map %d", gindx); return false;}
-	
-	*out = maps[lindx].seg[segment].data[m];
-	return true;
+	if(!t_indxvalid(MAP_CAP, lindx)){ERR_LOG(ERR_NULL, "Couldn't find or load gindx %d", gindx); return map;}
+	map = maps[lindx];
+	return map;
 }
-
 static void map_parser(struct config_pack p, void *ptr){
 	
 	struct MapData *m = (struct MapData*)ptr;	
@@ -142,5 +142,24 @@ static void map_parser(struct config_pack p, void *ptr){
 			seg->data[SEG_FLAG] = g_pallete[pallete].data[SEG_FLAG];
 		}
 		return;
-	}	
+	}
+	int entity_indx;
+	if(sscanf(p.current_section, "entities.%d", &entity_indx) == 1){
+		if(entity_indx < 0 || entity_indx >= ENTITY_SIZE){return;}
+		if(t_check(p.key, "gindx")){
+			t_atoi(p.value, &m->entities->gindx);
+		} else if(t_check(p.key, "x")){
+			t_atoi(p.value, &m->entities->x);	
+		} else if(t_check(p.key, "y")){
+			t_atoi(p.value, &m->entities->y);
+		} else if(t_check(p.key, "empty")){
+			int val;
+			t_atoi(p.value, &val);
+			if(val <= 0){m->entities->valid = true;}
+		} else if(t_check(p.key, "GUID")){
+			t_atoi(p.value, &m->entities->GUID);
+		}
+		
+		return;
+	}
 }

@@ -10,6 +10,7 @@
 #include "s_menu.h"
 #include "e_error_handler.h"
 #include "t_testing.h"
+#include "g_gamestate_manager.h"
 
 #define TARGET_FPS 60
 
@@ -20,9 +21,8 @@ int main(){
 
 	srand(time(NULL));
 	
-	t_initalize_tests();
-	return 0;
-
+	//t_initalize_tests();
+	sm_init(menu_state());
 	while (!WindowShouldClose()){
 		w_update_relative_scale();	
 		sm_update();
@@ -35,6 +35,7 @@ int main(){
 
 	e_free_setting();
 	f_free_flag();
+	sm_free();
 	CloseWindow();
 	return 0;
 }

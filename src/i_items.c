@@ -13,6 +13,8 @@
 
 #define MAX_ITEMS 512
 
+// Items are immutable so fuck you!
+
 static void item_parser(struct config_pack p, void *ptr);
 
 static struct Item items[MAX_ITEMS] = {0};
