@@ -8,7 +8,7 @@
 #include "t_config_tool.h"
 struct FlagManager *fm = NULL;
 static void flag_parser(struct config_pack p, void *ptr){
-	// Overkill but who fucking cares.
+	// Overkill but who cares.
 	bool bval = (t_check(p.value, "1") || t_check(p.value, "true"));
 	flag_set(p.key, bval);
 }
@@ -55,7 +55,7 @@ void flag_set(const char *name, bool value){
 		ERR_LOG(ERR_FUCKED, "Passed NULL name to flag setter during parsing. This really really really shouldn't happen. ");
 	}
 	if(!fm){
-		ERR_LOG(ERR_FUCKED, "Tried to call before flag was loaded. BIG FUCKIN NONO. This really shouldn't have happened.");
+		ERR_LOG(ERR_FUCKED, "Tried to call before flag was loaded. This really shouldn't have happened.");
 	}	
 	uint32_t hash = flag_hash(name);
 	for(int i = 0; i < fm->count; i++){
@@ -75,7 +75,7 @@ bool flag_get(const char *name){
 		return false;
 	}
 	if(!fm){
-		ERR_LOG(ERR_FUCKED, "Big nono. Can't call flag get while flag is NULL. Get fucked");
+		ERR_LOG(ERR_FUCKED, "Big nono. Can't call flag get while flag is NULL");
 	}
 	uint32_t hash = flag_hash(name);
 	for(int i = 0; i < fm->count; i++){

@@ -13,7 +13,7 @@
 
 #define MAX_ITEMS 512
 
-// Items are immutable so fuck you!
+// Items are immutable !
 
 static void item_parser(struct config_pack p, void *ptr);
 

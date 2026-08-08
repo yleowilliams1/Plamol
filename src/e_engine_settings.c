@@ -39,7 +39,6 @@ char *e_grab_str(enum EngStrings type){
 	char *str = settings->strings[type];
 	if(!str){
 		ERR_LOG(ERR_NULL, "Tried to access engine strings while engine strings aren't loaded.");
-		ERR_LOG(ERR_FUCKED, "String lookup failed due to index %d not being present in the array. You fucked up here. Fix this shit. If your a player seeing this your entitled to a refund and front row seats to the execution of the  idiot that let this slide thorugh." , (int)type);
 				return NULL;
 	}
 
@@ -70,7 +69,7 @@ static void engine_parser(struct config_pack p, void *ptr){
 		for(int i = 0; i < ENG_STR_COUNT; i++){
 			char *str = (char *)str_lokup[i];
 			if(!str){
-				ERR_LOG(ERR_FUCKED, "String lookup failed due to index %d not being present in the array. You fucked up here. Fix this shit. If your a player seeing this your entitled to a refund and front row seats to the execution of the  idiot that let this slide thorugh." ,i);
+				ERR_LOG(ERR_FUCKED, "String lookup failed due to index %d not being present in the array.", i); 
 				continue;
 			}
 			if(t_check(p.key, str)){

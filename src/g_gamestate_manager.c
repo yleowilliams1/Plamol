@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "g_gamestate_manager.h"
 #include "e_engine_settings.h"
 #include "e_error_handler.h"

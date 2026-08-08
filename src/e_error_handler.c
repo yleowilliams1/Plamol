@@ -15,7 +15,7 @@ static FILE *log_file = NULL;
 
 
 /*Todo
- * Make this error thing protable to windows. Right now the posix functions will fail silently and fuck you.
+ * Make this error thing protable to windows. Right now the posix functions will fail silently.
  * */
 static enum ER_LVL severity(enum ER_CODE code){
 	switch(code){
@@ -78,7 +78,7 @@ static void fatal_crash(void){
 void err_init(const char *path){
 	log_file = fopen(path, "a");
 	if(!log_file){
-		printf("FUCK OFF. THE ERROR HANDLER LOG FILE FAILED. YOU FUCKING IDIOT IF YOU SEE THIS YOU ARE FIRED.\n");
+		printf("THE ERROR HANDLER LOG FILE FAILED\n");
 	}
 }
 
