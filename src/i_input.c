@@ -129,6 +129,7 @@ void i_init_input(){
 		}
 		i_set_binding(s->type, s->action, s->key);
 	}
+	ERR_LOG(ERR_OK, "Loaded input");
 }
 void i_update_input(enum Action action) {
     struct KeySet* key_set = &input[action];

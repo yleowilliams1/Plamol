@@ -34,6 +34,7 @@ bool i_free_inventory(int gindx){
 		.element_size = sizeof(struct Inventory),
 	};
 
+	ERR_LOG(ERR_OK, "Freed inventory");
 	return t_free_asset(pckg);
 }
 bool i_load_inventory(int gindx){
@@ -47,7 +48,8 @@ bool i_load_inventory(int gindx){
 		.path = e_grab_str(INVENTORY_PATH),
 		.init = inv_init,
 	};
-
+	
+	ERR_LOG(ERR_OK, "Loaded inventory");
 	return l_load_asset(pckg);
 }
 

@@ -94,6 +94,31 @@ char *t_ini_plus_indx(char *base,int indx){
 	
 	return file;
 }
+char *t_glb_plus_indx(char *base,int indx){
+	if(!base){
+		ERR_LOG(ERR_FUCKED, "Called with NULL base path");
+	}
+	size_t base_len = strlen(base);
+	bool needs_slash = (base_len == 0 || base[base_len - 1] != '/');
+	
+	size_t needed = 0;
+	const char *fmt = needs_slash ? "%s/%u.glb" : "%s%u.glb";
+
+	if(!t_snprintf(NULL, 0, &needed, fmt, base, (unsigned int)indx)){
+		ERR_LOG(ERR_FUCKED, "failed to compute length");
+	}
+
+	char *file = XMALLOC(needed + 1);
+	if(!file){
+		ERR_LOG(ERR_FUCKED, "No clue how this is being called. XMALLOC didn't crash and returned a NULL file?");
+	}
+	if(!t_snprintf(file, needed + 1, NULL, fmt, base, (unsigned int)indx)){
+		free(file);
+		ERR_LOG(ERR_FUCKED, "Failed to write buffer");
+	}
+	
+	return file;
+}
 bool t_loader(int gindx, struct local_indx *iman, ParserType func, char *path, void *ptr, int lindx){
 	if(lindx == NULL_INDX){ERR_LOG(ERR_PARSE, "Passed NULL lindx"); return false;}
 	// Can't be null

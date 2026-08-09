@@ -23,25 +23,17 @@ static void map_init(void *ptr);
 static struct MapData maps[MAP_CAP] = {0};
 static struct local_indx iman[MAP_CAP] = {0};
 
-static struct MapSegment g_pallete[MAX_STRUCTS] = {0};
 
 static const char *metadata_lokup[M_META_COUNT] = {
-	[M_TILESET] = "tileset",
-	[M_SEGMENT_CAP] = "segment_size",
 	[M_NORTH_EXIT] = "north_map",
 	[M_SOUTH_EXIT] = "south_map",
 	[M_WEST_EXIT] = "west_map",
 	[M_EAST_EXIT] = "east_map",
 	[M_ENTITY_COUNT] = "entity_count",
+	[M_MAP_MESH] = "map_mesh_gindx",
+	[M_MAP_GINDX] = "map_gindx",
 };
 
-static const char *seg_flag_lokup[SEGFLAG_COUNT] = {
-	[F_PASSABLE] = "passable",
-	[F_HURT] = "hurt",
-	[F_WATER] = "water",
-	[F_DIRT] = "dirt",
-
-};
 bool m_free_map(int gindx){
 	struct AssetFreePackage pckg = {
 		.gindx = gindx,
@@ -50,7 +42,8 @@ bool m_free_map(int gindx){
 		.arr = maps,
 		.element_size = sizeof(struct MapData),		
 	};
-
+	
+	ERR_LOG(ERR_OK, "Freed map %d", gindx);
 	return t_free_asset(pckg);
 }
 
@@ -65,7 +58,8 @@ bool m_load_map(int gindx){
 		.path = e_grab_str(MAP_PATH),
 		.init = map_init,
 	};
-
+	
+	ERR_LOG(ERR_OK, "Loaded map %d", gindx);
 	return l_load_asset(pckg);
 }
 static void map_init(void *ptr){
@@ -94,64 +88,16 @@ static void map_parser(struct config_pack p, void *ptr){
 			t_atoi(p.value, &m->meta[i]);	
 		}
 	}
-	if(m->meta[M_SEGMENT_CAP] <= 0){ERR_LOG(ERR_FUCKED, "%d is not a valid Segment Cap! Either rewrite of reorder the ini file so that M_SEGMENT_CAP is at the top of the file", m->meta[M_SEGMENT_CAP]);}
 
-	// Scan palletes
-	int struct_indx;
-	if(sscanf(p.current_section, "palletes.%d", &struct_indx) == 1){
-		if(struct_indx < 0 || struct_indx >= m->meta[M_SEGMENT_CAP]){return;}
-		
-		struct MapSegment *slot = &g_pallete[struct_indx];	
-		if(t_check(p.key, "tile_indx")){
-			t_atoi(p.value, &slot->data[SEG_TILEGINDX]);
-		} else if(t_check(p.key, "tile_texture_index")){
-			t_atoi(p.value, &slot->data[SEG_TILETEXTURE_GINDX]);
-		}
-		// flags
-		for(int i = 0; i < SEGFLAG_COUNT; i++){
-			if(!t_check(p.key, (char *)seg_flag_lokup[i])){continue;};
-			int value;
-			t_atoi(p.value, &value);
-			if(value < 0){ERR_LOG(ERR_PARSE, "Tried to parse flag %s with value of less than 0", seg_flag_lokup[i]);}
-			if(value > 0){slot->data[SEG_FLAG] |= (1 << i);}
-		}
-		return;	
-	}
-
-	// This will access older pallete memory
-	// if you access a unset pallet. Thats an issue.
-	// Too bad!
-	int func_indx;
-	if(sscanf(p.current_section, "function.%d", &func_indx) == 1){
-		if(func_indx < 0 || func_indx >= m->meta[M_SEGMENT_CAP]){return;}
-		struct MapSegment *seg = &m->seg[func_indx];
-		if(t_check(p.key, "start_x")){
-			t_atoi(p.value, &seg->data[SEG_START_X]);
-		} else if(t_check(p.key, "start_y")){
-			t_atoi(p.value, &seg->data[SEG_START_Y]);
-		} else if(t_check(p.key, "end_x")){
-			t_atoi(p.value, &seg->data[SEG_END_X]);
-		} else if(t_check(p.key, "end_y")){
-			t_atoi(p.value, &seg->data[SEG_END_Y]);
-		} else if(t_check(p.key, "pallete")){
-			int pallete; 
-			t_atoi(p.value, &pallete);
-			if(pallete < 0 || pallete >= MAX_STRUCTS){ERR_LOG(ERR_PARSE, "INVALID PALLETE INDEX"); return;}
-			seg->data[SEG_TILEGINDX] = g_pallete[pallete].data[SEG_TILEGINDX];
-			seg->data[SEG_TILETEXTURE_GINDX]= g_pallete[pallete].data[SEG_TILETEXTURE_GINDX];		
-			seg->data[SEG_FLAG] = g_pallete[pallete].data[SEG_FLAG];
-		}
-		return;
-	}
 	int entity_indx;
 	if(sscanf(p.current_section, "entities.%d", &entity_indx) == 1){
 		if(entity_indx < 0 || entity_indx >= ENTITY_SIZE){return;}
 		if(t_check(p.key, "gindx")){
 			t_atoi(p.value, &m->entities->gindx);
-		} else if(t_check(p.key, "x")){
-			t_atoi(p.value, &m->entities->x);	
-		} else if(t_check(p.key, "y")){
-			t_atoi(p.value, &m->entities->y);
+		} else if(t_check(p.key, "spawn_x")){
+			t_atoi(p.value, &m->entities->spawn_x);	
+		} else if(t_check(p.key, "spawn_y")){
+			t_atoi(p.value, &m->entities->spawn_y);
 		} else if(t_check(p.key, "empty")){
 			int val;
 			t_atoi(p.value, &val);

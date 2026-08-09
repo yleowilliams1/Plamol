@@ -24,6 +24,7 @@ static const char *str_lokup[ENG_STR_COUNT] = {
 	[GAMESTATE_PATH] = "gamestate_path",
 	[ENTITIES_PATH] = "entites_path",
 	[LOOT_PATH] = "loot_path",
+	[MAP_MESHES] = "map_meshes",
 };
 
 char *e_grab_str(enum EngStrings type){
@@ -38,7 +39,7 @@ char *e_grab_str(enum EngStrings type){
 	}
 	char *str = settings->strings[type];
 	if(!str){
-		ERR_LOG(ERR_NULL, "Tried to access engine strings while engine strings aren't loaded.");
+		ERR_LOG(ERR_NULL, "Tried to access engine strings while engine string %d aren't loaded.", type);
 				return NULL;
 	}
 
@@ -56,6 +57,9 @@ void e_free_setting(){
 		free(settings->strings[i]);
 		settings->strings[i] = NULL;
 	}
+	
+	ERR_LOG(ERR_OK, "Freed Settings succesfully!");
+	
 	free(settings);
 	settings = NULL;
 }
@@ -87,7 +91,8 @@ bool e_load_engine_settings(){
 	settings = XCALLOC(1, sizeof(struct EngineSettings));
 
 	bool conf_win = t_config((void *)settings, INI_PATH, engine_parser); 
-
+	
+	ERR_LOG(ERR_OK, "Succesfully Loaded engine settings!");
 	// Most likely if the config failes then its caught
 	// before this return to main
 	// but if it isn't main will need to crash to catch it.

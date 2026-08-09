@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "e_error_handler.h"
 #include "t_math.h"
 #include "p_entity_instance.h"
 
 bool e_consume_item(struct EntityInstance *e){
+	ERR_LOG(ERR_OK, "Consumed item");	
 	return true;
 }
 bool e_move_entity(struct EntityInstance *e, vf2 norm_input, float speed, float delta, bool can_move){

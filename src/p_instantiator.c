@@ -45,8 +45,8 @@ bool p_instantiate_entities(struct MapData m){
 		if(e->e.flags & ENT_INV){e->i = i_get_inv_proto(e->e.data[E_INV], true);}
 		if(e->e.flags & ENT_STAT){e->s = s_grab_stats(e->e.data[E_STAT], true);}
 
-		e->e.data[E_POSX] = m.entities[i].x;
-		e->e.data[E_POSY] = m.entities[i].y;
+		e->e.data[E_POSX] = m.entities[i].spawn_x;
+		e->e.data[E_POSY] = m.entities[i].spawn_y;
 		
 
 		// Eventually you want to keep

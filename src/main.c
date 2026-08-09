@@ -7,9 +7,8 @@
 #include "e_engine_settings.h"
 #include "f_flags.h"
 #include "g_statemachine.h"
-#include "s_menu.h"
+#include "s_game.h"
 #include "e_error_handler.h"
-#include "t_testing.h"
 #include "g_gamestate_manager.h"
 
 #define TARGET_FPS 60
@@ -22,7 +21,7 @@ int main(){
 	srand(time(NULL));
 	
 	//t_initalize_tests();
-	sm_init(menu_state());
+	sm_init(game_state());
 	while (!WindowShouldClose()){
 		w_update_relative_scale();	
 		sm_update();

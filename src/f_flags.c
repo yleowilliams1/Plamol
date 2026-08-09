@@ -29,6 +29,7 @@ void f_init_flag(){
 		
 	t_config(NULL, path, flag_parser);		
 	// t_config will crash if it fails so don't check.
+	ERR_LOG(ERR_OK, "Succesfully initalized flags!");
 }
 void f_free_flag(){
 	if(!fm){
@@ -37,6 +38,7 @@ void f_free_flag(){
 	}
 	free(fm);
 	fm = NULL;
+	ERR_LOG(ERR_OK, "Succesfully freed flags!");
 }
 static uint32_t flag_hash(const char *name){
 	// DON'T PASS NULL POINTERS. 
@@ -64,6 +66,8 @@ void flag_set(const char *name, bool value){
 			return;
 		}
 	}
+
+	ERR_LOG(ERR_OK, "Succesfully set flag %s to %d", name, value);
 	if(fm->count >= MAX_FLAGS){return;}
 	fm->flags[fm->count].hash = hash;
 	fm->flags[fm->count].value = value;

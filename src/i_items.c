@@ -55,6 +55,7 @@ bool t_free_item(int gindx){
 		}
 	}	
 	items[lindx] = (struct Item){0};	
+	ERR_LOG(ERR_OK, "freed item %d!", gindx);
 	return t_lfree_lindx(indx_man, MAX_ITEMS, lindx);
 
 }
@@ -73,6 +74,7 @@ bool t_load_item(int gindx){
 	
 	bool success = l_load_asset(pckg);	
 	
+	ERR_LOG(ERR_OK, "Loaded Item %d!", gindx);
 	return success;
 }
 

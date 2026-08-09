@@ -52,6 +52,7 @@ bool e_free_entity(int gindx){
 		.element_size = sizeof(struct Entity),
 	};
 	
+	ERR_LOG(ERR_OK, "Freed entity %d", gindx);
 	return t_free_asset(pckg);
 }
 
@@ -67,7 +68,8 @@ bool e_load_entity(int gindx){
 		.path = e_grab_str(ENTITIES_PATH),
 		.init = NULL,
 	};
-
+	
+	ERR_LOG(ERR_OK, "Loaded entity %d", gindx);
 	return l_load_asset(pckg);
 }
 struct Entity e_grab_entity(int gindx, bool autoload){
