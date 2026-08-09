@@ -17,6 +17,7 @@ struct EntityInstance{
 	struct BaseStats s;
 };
 
+void e_draw_entity_pool(struct EntityInstance *pool, int size);
 bool e_consume_item(struct EntityInstance *e);
 bool e_move_entity(struct EntityInstance *e, vf2 norm_input, float speed, float delta, bool can_move);
 bool e_mod_health(struct EntityInstance *e, int amount);

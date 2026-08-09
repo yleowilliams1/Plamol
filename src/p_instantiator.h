@@ -9,6 +9,7 @@ enum Dev;
 struct MapData;
 
 struct EntityInstance *grab_entity(int GUID);
+int grab_entity_pool_size();
 bool p_instantiate_entities(struct MapData m);
-bool p_evict_entity(int persistent_id);
-bool p_derive_mutablestats(int gindx, enum Dev d, bool autoload, int *out);
+struct EntityInstance *grab_entity_pool();
+bool p_clear_entity_pool();

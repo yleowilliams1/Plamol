@@ -1,9 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <raylib.h>
 #include "e_error_handler.h"
 #include "t_math.h"
 #include "p_entity_instance.h"
+#include "t_strings.h"
+
+void e_draw_entity_pool(struct EntityInstance *pool, int size){
+	if(!pool){return;}
+	// Optimize later
+	for(int i = 0; i < size; i++){
+		if(!pool[i].valid){continue;}
+		char buf[64];
+		t_snprintf(buf, sizeof(buf), NULL, "%d", pool[i].GUID); 
+		DrawText(buf ,pool[i].e.data[E_POSX], pool[i].e.data[E_POSY], 12.0f, RED);
+	}
+}
 
 bool e_consume_item(struct EntityInstance *e){
 	ERR_LOG(ERR_OK, "Consumed item");	

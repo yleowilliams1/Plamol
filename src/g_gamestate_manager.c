@@ -6,6 +6,8 @@
 #include "e_error_handler.h"
 #include "t_config_tool.h"
 #include "t_strings.h"
+#include "p_instantiator.h"
+#include "p_entity_instance.h"
 
 static void gamestate_parser(struct config_pack, void *ptr);
 
@@ -24,6 +26,7 @@ void g_load_gamestate(){
 	gstate.map = m_get_map(gstate.gindx_strtmap, true);
 	l_load_map_model(gstate.map.meta[M_MAP_MESH]);
 	gstate.cam = (Camera){ { 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 50.0f, CAMERA_ORTHOGRAPHIC};	
+	p_instantiate_entities(gstate.map);
 	ERR_LOG(ERR_OK, "Succesfully loaded gamestate!");
 }
 
@@ -31,6 +34,7 @@ void  g_draw_gamestate(){
 	BeginDrawing();
 		ClearBackground(BLACK);
 		l_draw_map_model(gstate.cam);
+		e_draw_entity_pool(grab_entity_pool(), grab_entity_pool_size());
 	EndDrawing();
 }
 

@@ -24,10 +24,17 @@ struct EntityInstance *grab_entity(int GUID){
 	return NULL;
 }
 
+struct EntityInstance *grab_entity_pool(){
+	return einst;
+}
+int grab_entity_pool_size(){
+	return E_POOL_SIZE;
+}
 bool p_instantiate_entities(struct MapData m){
 	// All entities get loaded
 	// Don't forget to write the temp
 	// save data
+	p_clear_entity_pool();
 	int ent_cnt = m.meta[M_ENTITY_COUNT];	
 
 	for(int i = 0; i < ent_cnt; i++){
@@ -57,7 +64,8 @@ bool p_instantiate_entities(struct MapData m){
 		i_free_inventory(e->e.data[E_INV]);
 		t_free_stat(e->e.data[E_STAT]);
 	}
-
+	
+	ERR_LOG(ERR_OK, "Instantated entities!");
 	return true;
 }
 bool p_clear_entity_pool(){
@@ -65,6 +73,7 @@ bool p_clear_entity_pool(){
 		if(!einst[i].valid){continue;}
 		einst[i] = (struct EntityInstance){0};	
 	}
+	ERR_LOG(ERR_OK, "Cleared entity pool.");
 	return true;
 }
 static bool find_einst_lindx(int *out){

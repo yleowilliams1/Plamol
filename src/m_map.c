@@ -93,17 +93,17 @@ static void map_parser(struct config_pack p, void *ptr){
 	if(sscanf(p.current_section, "entities.%d", &entity_indx) == 1){
 		if(entity_indx < 0 || entity_indx >= ENTITY_SIZE){return;}
 		if(t_check(p.key, "gindx")){
-			t_atoi(p.value, &m->entities->gindx);
+			t_atoi(p.value, &m->entities[entity_indx].gindx);
 		} else if(t_check(p.key, "spawn_x")){
-			t_atoi(p.value, &m->entities->spawn_x);	
+			t_atoi(p.value, &m->entities[entity_indx].spawn_x);	
 		} else if(t_check(p.key, "spawn_y")){
-			t_atoi(p.value, &m->entities->spawn_y);
+			t_atoi(p.value, &m->entities[entity_indx].spawn_y);
 		} else if(t_check(p.key, "empty")){
 			int val;
 			t_atoi(p.value, &val);
-			if(val <= 0){m->entities->valid = true;}
+			if(val <= 0){m->entities[entity_indx].valid = true;}
 		} else if(t_check(p.key, "GUID")){
-			t_atoi(p.value, &m->entities->GUID);
+			t_atoi(p.value, &m->entities[entity_indx].GUID);
 		}
 		
 		return;
