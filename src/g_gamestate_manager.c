@@ -33,8 +33,10 @@ void g_load_gamestate(){
 void  g_draw_gamestate(){
 	BeginDrawing();
 		ClearBackground(BLACK);
-		l_draw_map_model(gstate.cam);
-		e_draw_entity_pool(grab_entity_pool(), grab_entity_pool_size());
+		BeginMode3D(gstate.cam);
+			l_draw_map_model();
+			e_draw_entity_pool(grab_entity_pool(), grab_entity_pool_size());
+		EndMode3D();
 	EndDrawing();
 }
 

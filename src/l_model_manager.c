@@ -15,10 +15,8 @@ void l_load_map_model(int gindx){
 	ERR_LOG(ERR_OK, "Loaded map model %d at path %s", gindx, combined_path);
 }
 
-void l_draw_map_model(Camera cam){
-	BeginMode3D(cam);
+void l_draw_map_model(){
 	DrawModel(loaded_map.model, (Vector3){0, 0, 0}, 1.0f, WHITE);
-	EndMode3D();
 }
 
 

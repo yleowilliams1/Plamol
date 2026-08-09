@@ -7,4 +7,4 @@ struct LoadedMapModel{
 };
 
 void l_load_map_model(int gindx);
-void l_draw_map_model(Camera cam);
+void l_draw_map_model();

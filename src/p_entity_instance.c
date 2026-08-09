@@ -12,9 +12,8 @@ void e_draw_entity_pool(struct EntityInstance *pool, int size){
 	// Optimize later
 	for(int i = 0; i < size; i++){
 		if(!pool[i].valid){continue;}
-		char buf[64];
-		t_snprintf(buf, sizeof(buf), NULL, "%d", pool[i].GUID); 
-		DrawText(buf ,pool[i].e.data[E_POSX], pool[i].e.data[E_POSY], 12.0f, RED);
+		Vector3 pos = {pool[i].e.data[E_POSX], 0, pool[i].e.data[E_POSY]};
+		DrawSphere(pos, 0.8f, RED);
 	}
 }
 
