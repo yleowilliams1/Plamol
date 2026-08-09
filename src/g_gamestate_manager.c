@@ -15,6 +15,8 @@ void g_load_gamestate(){
 	if(!win){ERR_LOG(ERR_PARSE, "Failed to parse gamestate %s", path);}
 }
 
+void g_
+
 static void gamestate_parser(struct config_pack p, void *ptr){
 	if(t_check(p.current_section, "Map")){
 		if(t_check(p.key, "starting_map_gindx")){

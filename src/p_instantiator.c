@@ -6,6 +6,7 @@
 #include "i_inventory.h"
 #include "m_map.h"
 #include "p_entity.h"
+#include "p_entity_instance.h"
 #include "p_stats.h"
 #include "p_instantiator.h"
 #define E_POOL_SIZE 256
@@ -13,6 +14,15 @@
 static struct EntityInstance einst[E_POOL_SIZE] = {0};
 
 static bool find_einst_lindx(int *out);
+
+struct EntityInstance *grab_entity(int GUID){
+	for(int i = 0; i < E_POOL_SIZE; i++){
+		if(einst[i].GUID == GUID){return &einst[i];}
+	}
+	
+	ERR_LOG(ERR_NULL, "GUID %d is not loaded!", GUID);
+	return NULL;
+}
 
 bool p_instantiate_entities(struct MapData m){
 	// All entities get loaded

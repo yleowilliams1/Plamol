@@ -8,16 +8,7 @@ enum Dev;
 
 struct MapData;
 
-struct EntityInstance{
-	int entity_gindx;
-	int GUID;
-	bool valid;
-	bool dirty;
-	struct Entity e;
-	struct Inventory i;
-	struct BaseStats s;	
-};
-
+struct EntityInstance *grab_entity(int GUID);
 bool p_instantiate_entities(struct MapData m);
 bool p_evict_entity(int persistent_id);
 bool p_derive_mutablestats(int gindx, enum Dev d, bool autoload, int *out);
