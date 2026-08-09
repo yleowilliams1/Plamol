@@ -1,5 +1,6 @@
 #include <raylib.h>
 #include <stdio.h>
+#include <rlgl.h>
 #include "l_model_manager.h"
 #include "g_gamestate_manager.h"
 #include "e_engine_settings.h"
@@ -39,6 +40,9 @@ void  g_draw_gamestate(){
 	BeginDrawing();
 		ClearBackground(BLACK);
 		BeginMode3D(gstate.cam);
+			rlSetClipPlanes(0.001f, 1000.0f);
+
+			
 			l_draw_map_model();
 			e_draw_entity_pool(grab_entity_pool(), grab_entity_pool_size());
 		EndMode3D();
