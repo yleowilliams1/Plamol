@@ -23,6 +23,9 @@ typedef struct vf3{
 	float z;
 }vf3;
 
+v3 v3_cross(v3 a, v3 b);
+vf3 vf3_cross(vf3 a, vf3 b);
+
 bool v2_is_nor(v2 *src);
 bool vf2_is_nor(vf2 *src);
 bool v3_is_nor(v3 *src);

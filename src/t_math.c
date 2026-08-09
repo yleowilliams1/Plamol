@@ -5,6 +5,22 @@
 
 static bool src_chk(void *src);
 
+v3 v3_cross(v3 a, v3 b){
+	v3 result;
+	result.x = a.y * b.z - a.z * b.y;
+	result.y = a.z * b.x - a.x * b.z;
+	result.z = a.x * b.y - a.y * b.x;
+	return result;
+}
+
+vf3 vf3_cross(vf3 a, vf3 b){
+	vf3 result;
+	result.x = a.y * b.z - a.z * b.y;
+	result.y = a.z * b.x - a.x * b.z;
+	result.z = a.x * b.y - a.y * b.x;
+	return result;
+}
+
 bool v2_is_nor(v2 *src){
     if(!src_chk(src)){return false;}
     double mag_sq = src->x * src->x + src->y * src->y;

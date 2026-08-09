@@ -8,6 +8,7 @@
 #include "t_strings.h"
 #include "p_instantiator.h"
 #include "p_entity_instance.h"
+#include "i_input_handler.h"
 
 static void gamestate_parser(struct config_pack, void *ptr);
 
@@ -30,6 +31,10 @@ void g_load_gamestate(){
 	ERR_LOG(ERR_OK, "Succesfully loaded gamestate!");
 }
 
+
+void g_update_gamestate(){
+	update_input_handler();	
+}
 void  g_draw_gamestate(){
 	BeginDrawing();
 		ClearBackground(BLACK);

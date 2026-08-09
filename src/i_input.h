@@ -18,6 +18,7 @@ enum Action{
     A_WALK_UP,
     A_WALK_DOWN,
     A_ACTION,
+    A_PAN,
     A_COUNT,
 };
 

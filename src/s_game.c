@@ -19,6 +19,7 @@ void game_exit(void){
 	f_free_flag();
 }
 void game_update(void){
+	g_update_gamestate();
 }
 void game_render(void){
 	g_draw_gamestate();

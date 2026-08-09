@@ -9,6 +9,7 @@ struct GameState{
 };
 
 void g_load_gamestate();
+void g_update_gamestate();
 Camera *grab_cam();
 void g_draw_gamestate();
 

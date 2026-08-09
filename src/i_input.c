@@ -21,6 +21,7 @@ static enum Action ac_lokup(char *str){
 	if(t_check(str, "walk_up")){return A_WALK_UP;}
 	if(t_check(str, "walk_down")){return A_WALK_DOWN;}
 	if(t_check(str, "action")){return A_ACTION;}
+	if(t_check(str, "pan")){return A_PAN;}
 	return INVALID_ENUM;	
 }
 static enum KeyType ty_lokup(char *str){

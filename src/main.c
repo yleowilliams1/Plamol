@@ -20,16 +20,19 @@ int main(){
 
 	srand(time(NULL));
 	
+	printf("Up %d \n", KEY_W);
+	printf("Down %d\n", KEY_S);
+	printf("Left %d\n", KEY_A);
+	printf("Right %d\n", KEY_D);
+	printf("Action %d\n", KEY_E);
+	printf("Pan %d\n", MOUSE_BUTTON_MIDDLE);
+
 	//t_initalize_tests();
 	sm_init(game_state());
 	while (!WindowShouldClose()){
 		w_update_relative_scale();	
 		sm_update();
-		
-		BeginDrawing();
-			ClearBackground(DARKGRAY);
-			sm_draw();
-		EndDrawing();
+		sm_draw();
 	}
 
 	e_free_setting();
