@@ -42,11 +42,11 @@ void g_update_gamestate(){
 void  g_draw_gamestate(){
 	BeginDrawing();
 		ClearBackground(BLACK);
-		//BeginMode2D(gstate.cam);
+		BeginMode2D(gstate.cam);
 			m_draw_map(&gstate.map, 10000);
 			e_draw_entity_pool(grab_entity_pool(), grab_entity_pool_size());
 				
-		//EndMode2D();
+		EndMode2D();
 	EndDrawing();
 }
 
