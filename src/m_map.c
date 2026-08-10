@@ -123,13 +123,16 @@ bool m_load_map(int gindx){
 	ERR_LOG(ERR_OK, "Loaded map %d", gindx);
 	return meta_loaded && runtime_loaded;
 }
-
 static void runtime_init(void *ptr){
 	struct MapRuntime *m = (struct MapRuntime *)ptr;
 	if(!m || !g_loading_meta){ERR_LOG(ERR_FUCKED, "Failed to load map asset passed null pointer to init");}
 	m->e = XMALLOC(g_loading_meta->meta[M_ENTITY_COUNT] * sizeof(struct MapEntityData));
 	m->i = XMALLOC(g_loading_meta->meta[M_INTERACTABLE_COUNT] * sizeof(struct MapInteractableData));
 	m->s = XMALLOC(g_loading_meta->meta[M_SEGMENT_COUNT] * sizeof(struct MapSegmentData));
+
+	memset(m->e, 0, g_loading_meta->meta[M_ENTITY_COUNT] * sizeof(struct MapEntityData));
+	memset(m->i, 0, g_loading_meta->meta[M_INTERACTABLE_COUNT] * sizeof(struct MapInteractableData));
+	memset(m->s, 0, g_loading_meta->meta[M_SEGMENT_COUNT] * sizeof(struct MapSegmentData));
 }
 static void metadata_parser(struct config_pack p, void *ptr){
 	struct MapMetadata *m = (struct MapMetadata*)ptr;	
