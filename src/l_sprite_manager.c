@@ -100,7 +100,7 @@ void l_reset_sprite(int gindx, int new_animation){
 }
 Vector2 l_grab_sprite_scale(int gindx, bool autoload){
 	struct SpriteData *spr = l_grab_sprite(gindx, autoload);
-	return (Vector2){.x = spr->texture.width, .y = spr->texture.height};
+	return (Vector2){.x = 32, .y = 64};
 }
 static struct SpriteData *l_grab_sprite(int gindx, bool autoload){
 	int lindx = l_getter_checks(gindx, autoload, SPRITE_CAP, iman, l_load_sprite);

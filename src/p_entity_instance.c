@@ -12,8 +12,8 @@ void e_draw_entity_pool(struct EntityInstance *pool, int size){
 	// Optimize later
 	for(int i = 0; i < size; i++){
 		if(!pool[i].valid){continue;}
-		Vector3 pos = {pool[i].e.data[E_POSX], 0, pool[i].e.data[E_POSY]};
-		DrawSphere(pos, 0.8f, RED);
+		Vector2 pos = {pool[i].e.data[E_POSX], pool[i].e.data[E_POSY]};
+		DrawCircle(pos.x, pos.y, 0.8f, RED);
 	}
 }
 

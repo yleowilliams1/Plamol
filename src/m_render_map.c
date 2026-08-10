@@ -55,13 +55,6 @@ static void draw_segment(struct MapSegmentData *seg, int player_z){
 	if(seg->flags & (1 << WALL_IS_SOUTH)) for(int tx = x0; tx <= x1; tx++) draw_wall_tile(seg, tx, y1);
 	if(seg->flags & (1 << WALL_IS_WEST))  for(int ty = y0; ty <= y1; ty++) draw_wall_tile(seg, x0, ty);
 	if(seg->flags & (1 << WALL_IS_EAST))  for(int ty = y0; ty <= y1; ty++) draw_wall_tile(seg, x1, ty);
-
-printf("seg z=%d flags=0x%X floor_gindx=%d wall_gindx=%d visible=%d has_floors=%d has_walls_rec=%d\n",
-	seg->z, seg->flags, seg->floor_gindx, seg->wall_gindx,
-	!!(seg->flags & (1 << INVISIBLE)),
-	!!(seg->flags & (1 << HAS_FLOORS_REC)),
-	!!(seg->flags & (1 << HAS_WALLS_REC)));
-
 }
 
 static void draw_interactable(struct MapInteractableData *ia, int player_z){

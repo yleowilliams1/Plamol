@@ -9,6 +9,8 @@
 #include "p_entity_instance.h"
 #include "i_input_handler.h"
 #include "m_render_map.h"
+#include "l_sprite_manager.h"
+
 static void gamestate_parser(struct config_pack, void *ptr);
 
 struct GameState gstate = {0};
@@ -40,10 +42,11 @@ void g_update_gamestate(){
 void  g_draw_gamestate(){
 	BeginDrawing();
 		ClearBackground(BLACK);
-		BeginMode2D(gstate.cam);
+		//BeginMode2D(gstate.cam);
 			m_draw_map(&gstate.map, 10000);
 			e_draw_entity_pool(grab_entity_pool(), grab_entity_pool_size());
-		EndMode2D();
+				
+		//EndMode2D();
 	EndDrawing();
 }
 
