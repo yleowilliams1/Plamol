@@ -14,6 +14,7 @@ static struct EngineSettings *settings;
 
 static const char *str_lokup[ENG_STR_COUNT] = {
 	[MAP_PATH] = "map_path",
+	[MAP_METADATA_PATH] = "map_metadata_path",
 	[TILE_PATH] = "tile_path",
 	[PORTRAIT_PATH] = "portrait_path",
 	[FLAG_PATH] = "flag_path",
@@ -39,7 +40,7 @@ char *e_grab_str(enum EngStrings type){
 	}
 	char *str = settings->strings[type];
 	if(!str){
-		ERR_LOG(ERR_NULL, "Tried to access engine strings while engine string %d aren't loaded.", type);
+		ERR_LOG(ERR_FUCKED, "Tried to access engine strings while engine string %d:%s failed to load.", type, str_lokup[type]);
 				return NULL;
 	}
 
