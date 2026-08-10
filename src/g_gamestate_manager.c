@@ -29,6 +29,7 @@ void g_load_gamestate(){
 	// Setup camera
 	gstate.cam = (Camera2D){0};
 	gstate.cam.zoom = 1.0f;
+	gstate.cam.offset = (Vector2){ GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f };
 	ERR_LOG(ERR_OK, "Succesfully loaded gamestate!");
 }
 
@@ -40,9 +41,9 @@ void  g_draw_gamestate(){
 	BeginDrawing();
 		ClearBackground(BLACK);
 		BeginMode2D(gstate.cam);
-			m_draw_map(&gstate.map);
+			m_draw_map(&gstate.map, 10000);
 			e_draw_entity_pool(grab_entity_pool(), grab_entity_pool_size());
-		EndMode3D();
+		EndMode2D();
 	EndDrawing();
 }
 

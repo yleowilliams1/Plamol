@@ -1,4 +1,4 @@
 #!/bin/bash
 
-path="e_engine_settings.c e_error_handler.c f_flags.c g_gamestate_manager.c g_statemachine.c i_input.c i_input_handler.c i_inventory.c i_items.c l_asset_manager.c l_model_manager.c m_map.c main.c p_combat.c p_entity.c p_entity_instance.c p_instantiator.c p_loot_data.c p_stats.c s_game.c s_menu.c s_text_data.c t_config_tool.c t_gindex_tool.c t_math.c t_strings.c w_window_manager.c"
+path="e_engine_settings.c e_error_handler.c f_flags.c g_gamestate_manager.c g_statemachine.c i_input.c i_input_handler.c i_inventory.c i_items.c l_asset_manager.c l_sprite_manager.c m_map.c m_render_map.c main.c p_combat.c p_entity.c p_entity_instance.c p_instantiator.c p_loot_data.c p_stats.c s_game.c s_menu.c s_text_data.c t_config_tool.c t_gindex_tool.c t_math.c t_strings.c w_window_manager.c"
 gcc $(printf "src/%s " $path) -o game -lraylib -lm

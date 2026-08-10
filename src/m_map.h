@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 enum SegmentFlags{
-	IS_VISIBLE, // Visiblity
+	INVISIBLE, // Visiblity
 	IS_WALLS, // Means from start to end is all walls
 	WALL_IS_NORTH,// Means is walls will draw wall facing north
 	WALL_IS_SOUTH,// Means is walls will draw wall facing south

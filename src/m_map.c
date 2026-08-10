@@ -44,7 +44,7 @@ static const char *metadata_lokup[M_META_COUNT] = {
 	[M_HEIGHT] = "height",
 };
 static const char *segment_flag_lokup[SEGMENT_FLAGS_COUNT] = {
-	[IS_VISIBLE] = "is_visible",
+	[INVISIBLE] = "invisible",
 	[IS_WALLS] = "is_wall",
 	[WALL_IS_NORTH] = "wall_is_north",
 	[WALL_IS_SOUTH] = "wall_is_south",
@@ -57,6 +57,7 @@ static const char *segment_flag_lokup[SEGMENT_FLAGS_COUNT] = {
 	[ALWAYS_ABOVE_PLAYER] = "always_above_player",
 	[SHOULD_MERGE_WALL] = "should_merge_wall",
 	[SHOULD_MERGE_FLOOR] = "should_merge_floor",
+	[HIDE_IF_ABOVE_PLAYER] = "hide_if_above_player",
 };
 
 bool m_free_map(int gindx){

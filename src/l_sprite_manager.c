@@ -15,7 +15,20 @@ static void sprite_parser(struct config_pack p, void *ptr);
 
 static struct local_indx iman[SPRITE_CAP] = {0};
 static struct SpriteData sprites[SPRITE_CAP] = {0};
+static void set_frame_rec(struct SpriteData *spr){
+	int frames_in_row = spr->metadata.animated ? spr->metadata.frame_x[spr->runtime.current_animation] : 1;
+	if(frames_in_row <= 0){ERR_LOG(ERR_FUCKED, "Invalid frame count for animation %d", spr->runtime.current_animation); return;}
 
+	float frame_w = (float)spr->texture.width / frames_in_row;
+	float frame_h = (float)spr->texture.height / (spr->metadata.animations_y > 0 ? spr->metadata.animations_y : 1);
+
+	spr->runtime.frame_rec = (Rectangle){
+		.x = spr->runtime.current_frame * frame_w,
+		.y = spr->runtime.current_animation * frame_h,
+		.width = frame_w,
+		.height = frame_h,
+	};
+}
 bool l_free_sprite(int gindx){
 	int lindx = t_gindx_to_lindx(iman, SPRITE_CAP, gindx);
 	if(!t_indxvalid(SPRITE_CAP, lindx)){ERR_LOG(ERR_INDX, "failed gindx %d conversion", gindx); return false;}	
@@ -45,6 +58,7 @@ bool l_load_sprite(int gindx){
 	sprites[lindx].texture = LoadTexture(path);
 	
 	sprites[lindx].runtime = (struct SpriteRuntime){0};
+	set_frame_rec(&sprites[lindx]);
 	ERR_LOG(ERR_OK, "Loaded sprite %d", gindx);
 	free(path);
 	return success;
@@ -61,18 +75,7 @@ void l_play_sprite(int gindx, int autoload){
 		}
 	}
 
-	int frames_in_row = spr->metadata.frame_x[spr->runtime.current_animation];
-	if(frames_in_row <= 0){ERR_LOG(ERR_FUCKED, "Invalid frame count for animation %d", spr->runtime.current_animation); return;}
-
-	float frame_w = (float)spr->texture.width / frames_in_row;
-	float frame_h = (float)spr->texture.height / spr->metadata.animations_y;
-
-	spr->runtime.frame_rec = (Rectangle){
-		.x = spr->runtime.current_frame * frame_w,
-		.y = spr->runtime.current_animation * frame_h,
-		.width = frame_w,
-		.height = frame_h,
-	};
+	set_frame_rec(spr);
 }
 void l_draw_sprite(int gindx, bool autoload, Vector2 position){
 	struct SpriteData *spr = l_grab_sprite(gindx, autoload);
@@ -95,9 +98,9 @@ void l_reset_sprite(int gindx, int new_animation){
 	spr->runtime.current_frame = 0;
 	spr->runtime.current_animation = new_animation;
 }
-Vector2 *l_grab_sprite_pos(int gindx, bool autoload){
+Vector2 l_grab_sprite_scale(int gindx, bool autoload){
 	struct SpriteData *spr = l_grab_sprite(gindx, autoload);
-	return &spr->runtime.position;
+	return (Vector2){.x = spr->texture.width, .y = spr->texture.height};
 }
 static struct SpriteData *l_grab_sprite(int gindx, bool autoload){
 	int lindx = l_getter_checks(gindx, autoload, SPRITE_CAP, iman, l_load_sprite);

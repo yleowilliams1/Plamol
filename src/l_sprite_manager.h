@@ -30,4 +30,4 @@ bool l_load_sprite(int gindx);
 void l_player_sprite(int gindx, int autoload);
 void l_draw_sprite(int gindx, bool autoload, Vector2 position);
 void l_reset_sprite(int gindx, int new_animation);
-Vector2 *l_grab_sprite_pos(int gindx, bool autoload);
+Vector2 l_grab_sprite_scale(int gindx, bool autoload);
