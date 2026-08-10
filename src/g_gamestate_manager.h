@@ -4,7 +4,7 @@
 
 struct GameState{
 	int gindx_strtmap;
-	struct MapData map;
+	struct MapPack map;
 	Camera2D cam;
 };
 

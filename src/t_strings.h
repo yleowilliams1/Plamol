@@ -6,3 +6,4 @@ char *t_strdup(const char *s);
 void t_cpy(char **str, char *val);
 bool t_snprintf(char *buf, size_t bufsize, size_t *out_len, const char *fmt, ...);
 void t_atoi(const char *str, int *result);
+void t_atof(const char *str, float *result);

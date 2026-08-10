@@ -94,7 +94,7 @@ char *t_ini_plus_indx(char *base,int indx){
 	
 	return file;
 }
-char *t_glb_plus_indx(char *base,int indx){
+char *t_png_plus_indx(char *base,int indx){
 	if(!base){
 		ERR_LOG(ERR_FUCKED, "Called with NULL base path");
 	}
@@ -102,7 +102,7 @@ char *t_glb_plus_indx(char *base,int indx){
 	bool needs_slash = (base_len == 0 || base[base_len - 1] != '/');
 	
 	size_t needed = 0;
-	const char *fmt = needs_slash ? "%s/%u.glb" : "%s%u.glb";
+	const char *fmt = needs_slash ? "%s/%u.png" : "%s%u.png";
 
 	if(!t_snprintf(NULL, 0, &needed, fmt, base, (unsigned int)indx)){
 		ERR_LOG(ERR_FUCKED, "failed to compute length");

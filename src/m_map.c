@@ -126,9 +126,9 @@ bool m_load_map(int gindx){
 static void runtime_init(void *ptr){
 	struct MapRuntime *m = (struct MapRuntime *)ptr;
 	if(!m || !g_loading_meta){ERR_LOG(ERR_FUCKED, "Failed to load map asset passed null pointer to init");}
-	m->e = malloc(g_loading_meta->meta[M_ENTITY_COUNT] * sizeof(struct MapEntityData));
-	m->i = malloc(g_loading_meta->meta[M_INTERACTABLE_COUNT] * sizeof(struct MapInteractableData));
-	m->s = malloc(g_loading_meta->meta[M_SEGMENT_COUNT] * sizeof(struct MapSegmentData));
+	m->e = XMALLOC(g_loading_meta->meta[M_ENTITY_COUNT] * sizeof(struct MapEntityData));
+	m->i = XMALLOC(g_loading_meta->meta[M_INTERACTABLE_COUNT] * sizeof(struct MapInteractableData));
+	m->s = XMALLOC(g_loading_meta->meta[M_SEGMENT_COUNT] * sizeof(struct MapSegmentData));
 }
 static void metadata_parser(struct config_pack p, void *ptr){
 	struct MapMetadata *m = (struct MapMetadata*)ptr;	

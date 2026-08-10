@@ -30,30 +30,29 @@ struct EntityInstance *grab_entity_pool(){
 int grab_entity_pool_size(){
 	return E_POOL_SIZE;
 }
-bool p_instantiate_entities(struct MapData m){
+bool p_instantiate_entities(struct MapPack m){
 	// All entities get loaded
 	// Don't forget to write the temp
 	// save data
 	p_clear_entity_pool();
-	int ent_cnt = m.meta[M_ENTITY_COUNT];	
+	int ent_cnt = m.m.meta[M_ENTITY_COUNT];	
 
 	for(int i = 0; i < ent_cnt; i++){
-		if(!m.entities[i].valid){continue;}
 		int lindx;	
 		bool found = find_einst_lindx(&lindx);	
 		if(!found){return false;}
 		
 		struct EntityInstance *e = &einst[lindx];
-
-		e->entity_gindx = m.entities[i].gindx;	
-		e->GUID = m.entities[i].GUID;
+		struct MapEntityData *d = &m.d.e[i];
+		e->entity_gindx = d->gindx;	
+		e->GUID = d->GUID;
 
 		e->e = e_grab_entity(einst[lindx].entity_gindx, true);
 		if(e->e.flags & ENT_INV){e->i = i_get_inv_proto(e->e.data[E_INV], true);}
 		if(e->e.flags & ENT_STAT){e->s = s_grab_stats(e->e.data[E_STAT], true);}
 
-		e->e.data[E_POSX] = m.entities[i].spawn_x;
-		e->e.data[E_POSY] = m.entities[i].spawn_y;
+		e->e.data[E_POSX] = d->world_spawn_x; 
+		e->e.data[E_POSY] = d->world_spawn_y; 
 		
 
 		// Eventually you want to keep

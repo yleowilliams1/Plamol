@@ -26,6 +26,8 @@ static const char *str_lokup[ENG_STR_COUNT] = {
 	[ENTITIES_PATH] = "entites_path",
 	[LOOT_PATH] = "loot_path",
 	[MAP_MESHES] = "map_meshes",
+	[SPRITE_PATH] = "sprite_path",
+	[SPRITE_META_PATH] = "sprite_meta_path",
 };
 
 char *e_grab_str(enum EngStrings type){

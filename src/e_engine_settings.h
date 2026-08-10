@@ -14,6 +14,8 @@ enum EngStrings{
 	ENTITIES_PATH,
 	LOOT_PATH,
 	MAP_MESHES,
+	SPRITE_PATH,
+	SPRITE_META_PATH,
 	ENG_STR_COUNT,
 };
 struct EngineSettings{

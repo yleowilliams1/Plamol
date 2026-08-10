@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <math.h>
 #include "t_strings.h"
 #include "e_error_handler.h"
 
@@ -91,7 +92,49 @@ void t_atoi(const char *str, int *result){
 	}
 	return;
 }
-
+void t_atof(const char *str, float *result){
+	if(str == NULL || result == NULL){
+		ERR_LOG(ERR_NULL, "Called t_atof with null str or null result");
+		return;
+	}
+	while (isspace((unsigned char)*str)){
+		str++;
+	}
+	if(*str == '\0'){
+		ERR_LOG(ERR_PARSE, "string is empty");
+		return;
+	}
+ 
+	errno = 0;
+	char *endptr = NULL;
+	float value = strtof(str, &endptr);
+ 
+	// strtof leaves endptr == str if it couldn't parse anything at all.
+	if(endptr == str){
+		ERR_LOG(ERR_PARSE, "Invalid character in str");
+		return;
+	}
+	if(errno == ERANGE){
+		if(value == HUGE_VALF || value == -HUGE_VALF){
+			ERR_LOG(ERR_PARSE, "Overflow! Overflow! when converting!");
+		} else {
+			// value underflowed to +-0 or a subnormal
+			ERR_LOG(ERR_PARSE, "Underflow! Underflow! when converting!");
+		}
+		return;
+	}
+ 
+	while(isspace((unsigned char)*endptr)){
+		endptr++;
+	}
+	if(*endptr != '\0'){
+		ERR_LOG(ERR_PARSE, "Invalid character in str");
+		return;
+	}
+ 
+	*result = value;
+	return;
+}
 static bool t_vsnprintf(char *buf, size_t bufsize, size_t *out_len, const char *fmt, va_list ap){
 	if(!fmt){
 		if(buf != NULL && bufsize > 0){buf[0] = '\0';}

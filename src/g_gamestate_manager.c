@@ -1,7 +1,5 @@
 #include <raylib.h>
 #include <stdio.h>
-#include <rlgl.h>
-#include "l_model_manager.h"
 #include "g_gamestate_manager.h"
 #include "e_engine_settings.h"
 #include "e_error_handler.h"
@@ -10,7 +8,7 @@
 #include "p_instantiator.h"
 #include "p_entity_instance.h"
 #include "i_input_handler.h"
-
+#include "m_render_map.h"
 static void gamestate_parser(struct config_pack, void *ptr);
 
 struct GameState gstate = {0};
@@ -26,7 +24,6 @@ void g_load_gamestate(){
 	
 	m_load_map(gstate.gindx_strtmap);
 	gstate.map = m_get_map(gstate.gindx_strtmap, true);
-	l_load_map_model(gstate.map.meta[M_MAP_MESH]);
 	p_instantiate_entities(gstate.map);
 	
 	// Setup camera
@@ -43,7 +40,7 @@ void  g_draw_gamestate(){
 	BeginDrawing();
 		ClearBackground(BLACK);
 		BeginMode2D(gstate.cam);
-			l_draw_map_model();
+			m_draw_map(&gstate.map);
 			e_draw_entity_pool(grab_entity_pool(), grab_entity_pool_size());
 		EndMode3D();
 	EndDrawing();
