@@ -123,7 +123,7 @@ static void sprite_parser(struct config_pack p, void *ptr){
 	}
 }
 static Rectangle compute_frame_rec(struct SpriteData *spr, int frame, int animation){
-	int frames_in_row = spr->metadata.animated ? spr->metadata.frame_x[animation] : 1;
+	int frames_in_row = spr->metadata.animated > 0 ? spr->metadata.frame_x[animation] : 1;
 	if(frames_in_row <= 0){ERR_LOG(ERR_FUCKED, "Invalid frame count for animation %d", animation); frames_in_row = 1;}
 
 	float frame_w = (float)spr->texture.width / frames_in_row;
