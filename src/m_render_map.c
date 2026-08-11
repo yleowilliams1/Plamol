@@ -5,7 +5,7 @@
 #include "m_render_map.h"
 #include "m_map.h"
 #include "e_error_handler.h"
-
+#include "p_entity_instance.h"
 // One z level must equal the on-screen rise of one wall block or stacked
 // levels won't sit flush. Measured against data/sprites/1.png: a floor drawn
 // at z+1 lands exactly on the wall tops at 56, not 100.
@@ -17,8 +17,8 @@
 static void draw_floor(const struct MapDecompTile *tile, v2 tpos);
 static void draw_props(const struct MapDecompTile *tile, v2 tpos, int player_z);
 static bool fcheck(uint32_t flag, enum TileFlags type);
-
-void m_draw_map(struct MapPack *m, int player_z){
+static Vector2 m_tile_to_world(int tile_x, int tile_y, int tile_z);
+void m_draw_map(struct MapPack *m, int player_z, struct EntityInstance *pool, int ent_size){
 	if(!m || !m->d.t){return;}
 	int w = m->m.meta[M_WIDTH];
 	int h = m->m.meta[M_HEIGHT];
@@ -47,10 +47,14 @@ void m_draw_map(struct MapPack *m, int player_z){
 			draw_props(&m->d.t[y * w + x], indx, player_z);
 		}
 	}
+	if(!pool){ERR_LOG(ERR_NULL, "Entity pool empty");return;}
+	for(int i = 0; i < ent_size; i++){
+		if(!pool[i].valid){continue;}	
+	}
 }
 
 // Centre of the tile, in world space.
-Vector2 m_tile_to_world(int tile_x, int tile_y, int tile_z){
+static Vector2 m_tile_to_world(int tile_x, int tile_y, int tile_z){
 	Vector2 world;
 	world.x = (float)(tile_x - tile_y) * (TILE_X / 2.0f);
 	world.y = (float)(tile_x + tile_y) * (TILE_Y / 2.0f);
@@ -72,7 +76,16 @@ static void draw_floor(const struct MapDecompTile *tile, v2 tpos){
 static void draw_props(const struct MapDecompTile *tile, v2 tpos, int player_z){
 	if(!tile){return;}
 	if(fcheck(tile->flags, T_INVISIBLE)){return;}
-
+	if(fcheck(tile->flags, T_HAS_INTERACTABLE)){
+		if(tile->interactable_gindx < 0){
+			ERR_LOG(ERR_PARSE, "Tile %d.%d has T_HAS_INTERACTABLE but interactable_gindx is %d", tpos.x, tpos.y, tile->interactable_gindx);
+		} else {
+			int animation = fcheck(tile->flags, T_IS_CORNER) ? 0: 1;
+			l_draw_sprite(tile->interactable_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->interactable_z), animation, tile->dir);
+			// Don't draw the wall
+			return;
+		}
+	}
 	// Each element validates itself now. Previously one bad gindx anywhere
 	// on the tile threw away the whole tile, floor included.
 	if(fcheck(tile->flags, T_HAS_WALL)){
@@ -82,16 +95,6 @@ static void draw_props(const struct MapDecompTile *tile, v2 tpos, int player_z){
 			// Animation 0 is corners and 1 is straights
 			int animation = fcheck(tile->flags, T_IS_CORNER) ? 0 : 1;
 			l_draw_sprite(tile->wall_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->wall_z), animation, tile->dir);
-		}
-	}
-	// This was never drawn. Decompression stamps the flag, the gindx and the
-	// z onto the tile, tile_checker validated the gindx, and then nothing
-	// ever read them back out.
-	if(fcheck(tile->flags, T_HAS_INTERACTABLE)){
-		if(tile->interactable_gindx < 0){
-			ERR_LOG(ERR_PARSE, "Tile %d.%d has T_HAS_INTERACTABLE but interactable_gindx is %d", tpos.x, tpos.y, tile->interactable_gindx);
-		} else {
-			l_draw_sprite(tile->interactable_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->interactable_z), 0, 0);
 		}
 	}
 }

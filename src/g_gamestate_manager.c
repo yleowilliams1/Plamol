@@ -43,9 +43,7 @@ void  g_draw_gamestate(){
 	BeginDrawing();
 		ClearBackground(BLACK);
 		BeginMode2D(gstate.cam);
-			m_draw_map(&gstate.map, gstate.player_z);
-			e_draw_entity_pool(grab_entity_pool(), grab_entity_pool_size());
-				
+			m_draw_map(&gstate.map, gstate.player_z, grab_entity_pool(), grab_entity_pool_size());
 		EndMode2D();
 	EndDrawing();
 }

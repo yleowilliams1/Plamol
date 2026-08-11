@@ -9,22 +9,6 @@
 #include "m_render_map.h"
 #include "l_sprite_manager.h"
 
-void e_draw_entity_pool(struct EntityInstance *pool, int size){
-	if(!pool){return;}
-	// Optimize later
-	for(int i = 0; i < size; i++){
-		if(!pool[i].valid){continue;}
-		// E_POSX/E_POSY are TILE coordinates. Using them directly as world
-		// coordinates put every entity in a sub-pixel clump at the origin.
-		Vector2 pos = m_tile_to_world(pool[i].e.data[E_POSX], pool[i].e.data[E_POSY], 0);
-		if(pool[i].e.flags & (1 << ENT_SPRITE)){
-			l_draw_sprite(pool[i].e.data[E_SPRITE], true, pos, 0, 0);
-		} else {
-			DrawCircleV(pos, 6.0f, RED);
-		}
-	}
-}
-
 bool e_consume_item(struct EntityInstance *e){
 	ERR_LOG(ERR_OK, "Consumed item");	
 	return true;
