@@ -59,11 +59,6 @@ void l_draw_sprite(int gindx, bool autoload, Vector2 position, int animation, in
 		(float)spr->metadata.origin[animation][frame].x,
 		(float)spr->metadata.origin[animation][frame].y,
 	};
-	Vector2 new_pos = {
-		.x = position.x - origin.x,
-		.y = position.y - origin.y,
-	};
-
 	Rectangle dest = {
 		.x = position.x, 
 		.y = position.y,
@@ -71,8 +66,9 @@ void l_draw_sprite(int gindx, bool autoload, Vector2 position, int animation, in
 		.height = source.height,
 	};
 
+	// DrawTexturePro already subtracts origin from dest, so the sprite's
+	// anchor lands exactly on position. No manual offset needed.
 	DrawTexturePro(spr->texture, source, dest, origin, 0.0f, WHITE);
-	DrawCircleV(new_pos, 3.0f, RED);
 }
 
 static struct SpriteData *l_grab_sprite(int gindx, bool autoload){
@@ -123,11 +119,20 @@ static void sprite_parser(struct config_pack p, void *ptr){
 	}
 }
 static Rectangle compute_frame_rec(struct SpriteData *spr, int frame, int animation){
-	int frames_in_row = spr->metadata.animated > 0 ? spr->metadata.frame_x[animation] : 1;
+	int rows = spr->metadata.animations_y > 0 ? spr->metadata.animations_y : 1;
+	if(animation < 0 || animation >= rows){
+		ERR_LOG(ERR_INDX, "Animation %d out of range (sheet has %d rows), clamping", animation, rows);
+		animation = 0;
+	}
+	int frames_in_row = spr->metadata.animated ? spr->metadata.frame_x[animation] : 1;
 	if(frames_in_row <= 0){ERR_LOG(ERR_FUCKED, "Invalid frame count for animation %d", animation); frames_in_row = 1;}
+	if(frame < 0 || frame >= frames_in_row){
+		ERR_LOG(ERR_INDX, "Frame %d out of range (animation %d has %d frames), clamping", frame, animation, frames_in_row);
+		frame = 0;
+	}
 
 	float frame_w = (float)spr->texture.width / frames_in_row;
-	float frame_h = (float)spr->texture.height / (spr->metadata.animations_y > 0 ? spr->metadata.animations_y : 1);
+	float frame_h = (float)spr->texture.height / rows;
 
 	return (Rectangle){
 		.x = frame * frame_w,

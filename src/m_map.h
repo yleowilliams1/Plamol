@@ -31,14 +31,19 @@ enum TileFlags{
 	T_ALWAYS_ABOVE,
 	T_MERGE_WALL,
 	T_MERGE_FLOOR,
+	T_HIDE_IF_ABOVE,
 };
 // This is specifically 
 // signifying the outward facing plane
+// dir is passed straight to l_draw_sprite as the FRAME INDEX, for both the
+// corner row and the straight row, so this order must match the sheet's
+// left-to-right frame order. It does.
 enum WallDirections{
 	W_NORTH,
 	W_SOUTH,
 	W_EAST,
 	W_WEST,
+	W_DIR_COUNT,
 };
 struct MapSegmentData{
 	uint32_t flags;	

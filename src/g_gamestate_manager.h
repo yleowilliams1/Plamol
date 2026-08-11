@@ -6,6 +6,7 @@ struct GameState{
 	int gindx_strtmap;
 	struct MapPack map;
 	Camera2D cam;
+	int player_z;
 };
 
 void g_load_gamestate();
