@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include <raylib.h>
 #include "e_engine_settings.h"
 #include "t_gindex_tool.h"
@@ -100,9 +101,18 @@ static void sprite_parser(struct config_pack p, void *ptr){
 			if(frame_count_indx >= MAX_ANIMATIONS){ERR_LOG(ERR_PARSE, "Frame count exceeded MAX_ANIMATIONS %d", MAX_ANIMATIONS); return;}
 			t_atoi(p.value, &spr->metadata.frame_x[frame_count_indx]);
 		}
+		// sscanf returns the number of successful CONVERSIONS, not whether the
+		// whole format matched. "origin.anim[0].frame[0].y" still yields 2 for
+		// the ".x" format below, because both %d convert before the trailing
+		// literal fails to match. Both branches therefore fired on every line,
+		// and the .y line overwrote .x with the y value. %n records how much of
+		// the key was consumed; compare it against the length to require a full
+		// match. (%n does not count toward the return value.)
 		int animation_indx_x;
 		int frame_indx_x;
-		if(sscanf(p.key, "origin.anim[%d].frame[%d].x", &animation_indx_x, &frame_indx_x) == 2){
+		int eaten_x = -1;
+		size_t key_len = strlen(p.key);
+		if(sscanf(p.key, "origin.anim[%d].frame[%d].x%n", &animation_indx_x, &frame_indx_x, &eaten_x) == 2 && eaten_x == (int)key_len){
 			if(frame_indx_x >= MAX_FRAMES){ERR_LOG(ERR_PARSE, "Can't parse frame_indx %d, larger than MAX_FRAMES", frame_indx_x); return;}			
 			if(frame_indx_x < 0){return;}
 			if(animation_indx_x >= MAX_ANIMATIONS || animation_indx_x < 0){return;}
@@ -110,7 +120,8 @@ static void sprite_parser(struct config_pack p, void *ptr){
 		}
 		int animation_indx_y;
 		int frame_indx_y;
-		if(sscanf(p.key, "origin.anim[%d].frame[%d].y", &animation_indx_y, &frame_indx_y) == 2){
+		int eaten_y = -1;
+		if(sscanf(p.key, "origin.anim[%d].frame[%d].y%n", &animation_indx_y, &frame_indx_y, &eaten_y) == 2 && eaten_y == (int)key_len){
 			if(frame_indx_y >= MAX_FRAMES){ERR_LOG(ERR_PARSE, "Can't parse frame_indx %d, larger than MAX_FRAMES", frame_indx_y); return;}			
 			if(frame_indx_y < 0){return;}
 			if(animation_indx_y >= MAX_ANIMATIONS || animation_indx_y < 0){return;}

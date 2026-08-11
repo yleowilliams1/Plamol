@@ -1,350 +1,56 @@
-diff --git a/src/g_gamestate_manager.c b/src/g_gamestate_manager.c
-index d99b062..c1a6067 100644
---- a/src/g_gamestate_manager.c
-+++ b/src/g_gamestate_manager.c
-@@ -43,7 +43,7 @@ void  g_draw_gamestate(){
- 	BeginDrawing();
- 		ClearBackground(BLACK);
- 		BeginMode2D(gstate.cam);
--			m_draw_map(&gstate.map, 10000);
-+			m_draw_map(&gstate.map, gstate.player_z);
- 			e_draw_entity_pool(grab_entity_pool(), grab_entity_pool_size());
- 				
- 		EndMode2D();
-diff --git a/src/g_gamestate_manager.h b/src/g_gamestate_manager.h
-index 8b1f0dd..a8d058e 100644
---- a/src/g_gamestate_manager.h
-+++ b/src/g_gamestate_manager.h
-@@ -6,6 +6,7 @@ struct GameState{
- 	int gindx_strtmap;
- 	struct MapPack map;
- 	Camera2D cam;
-+	int player_z;
- };
- 
- void g_load_gamestate();
+diff --git a/data/meta/sprites/1.ini b/data/meta/sprites/1.ini
+index 6d8b64f..37a95e9 100644
+--- a/data/meta/sprites/1.ini
++++ b/data/meta/sprites/1.ini
+@@ -19,8 +19,8 @@ origin.anim[0].frame[3].y = 64
+ origin.anim[1].frame[0].x = 32
+ origin.anim[1].frame[0].y = 72
+ origin.anim[1].frame[1].x = 32
+-origin.anim[1].frame[1].y = 72
++origin.anim[1].frame[1].y = 64
+ origin.anim[1].frame[2].x = 32
+-origin.anim[1].frame[2].y = 64
++origin.anim[1].frame[2].y = 72
+ origin.anim[1].frame[3].x = 32
+ origin.anim[1].frame[3].y = 64
 diff --git a/src/l_sprite_manager.c b/src/l_sprite_manager.c
-index 4b7b6b5..93f594f 100644
+index 93f594f..5e8cdc8 100644
 --- a/src/l_sprite_manager.c
 +++ b/src/l_sprite_manager.c
-@@ -59,11 +59,6 @@ void l_draw_sprite(int gindx, bool autoload, Vector2 position, int animation, in
- 		(float)spr->metadata.origin[animation][frame].x,
- 		(float)spr->metadata.origin[animation][frame].y,
- 	};
--	Vector2 new_pos = {
--		.x = position.x - origin.x,
--		.y = position.y - origin.y,
--	};
--
- 	Rectangle dest = {
- 		.x = position.x, 
- 		.y = position.y,
-@@ -71,8 +66,9 @@ void l_draw_sprite(int gindx, bool autoload, Vector2 position, int animation, in
- 		.height = source.height,
- 	};
- 
-+	// DrawTexturePro already subtracts origin from dest, so the sprite's
-+	// anchor lands exactly on position. No manual offset needed.
- 	DrawTexturePro(spr->texture, source, dest, origin, 0.0f, WHITE);
--	DrawCircleV(new_pos, 3.0f, RED);
- }
- 
- static struct SpriteData *l_grab_sprite(int gindx, bool autoload){
-@@ -123,11 +119,20 @@ static void sprite_parser(struct config_pack p, void *ptr){
- 	}
- }
- static Rectangle compute_frame_rec(struct SpriteData *spr, int frame, int animation){
-+	int rows = spr->metadata.animations_y > 0 ? spr->metadata.animations_y : 1;
-+	if(animation < 0 || animation >= rows){
-+		ERR_LOG(ERR_INDX, "Animation %d out of range (sheet has %d rows), clamping", animation, rows);
-+		animation = 0;
-+	}
- 	int frames_in_row = spr->metadata.animated ? spr->metadata.frame_x[animation] : 1;
- 	if(frames_in_row <= 0){ERR_LOG(ERR_FUCKED, "Invalid frame count for animation %d", animation); frames_in_row = 1;}
-+	if(frame < 0 || frame >= frames_in_row){
-+		ERR_LOG(ERR_INDX, "Frame %d out of range (animation %d has %d frames), clamping", frame, animation, frames_in_row);
-+		frame = 0;
-+	}
- 
- 	float frame_w = (float)spr->texture.width / frames_in_row;
--	float frame_h = (float)spr->texture.height / (spr->metadata.animations_y > 0 ? spr->metadata.animations_y : 1);
-+	float frame_h = (float)spr->texture.height / rows;
- 
- 	return (Rectangle){
- 		.x = frame * frame_w,
-diff --git a/src/m_map.c b/src/m_map.c
-index f28b9c1..5210ee8 100644
---- a/src/m_map.c
-+++ b/src/m_map.c
-@@ -281,27 +281,36 @@ static void m_decompress_segments(struct MapRuntime *run, const struct MapMetada
- 		    		bool is_edge_x = (x == min_x || x == max_x);
- 		    		bool is_edge_y = (y == min_y || y == max_y);
- 		    		bool is_perimeter = is_edge_x || is_edge_y;
--
--		    		// Corner detection
--		    		if (is_edge_x && is_edge_y) {
--					tile->flags |= (1 << T_IS_CORNER);
--		    		}
-+		    		bool is_corner   = is_edge_x && is_edge_y;
- 
- 		    		// Wall Placement & Direction Resolution
- 		    		bool place_wall = false;
-+		    		bool place_corner = false;
- 		    		enum WallDirections dir = W_NORTH;
- 
- 		    		if ((seg->flags & (1 << HAS_WALLS_REC)) && is_perimeter) {
- 					place_wall = true;
--					if (y == min_y) dir = W_NORTH;
-+					if (is_corner) {
-+			    			// A corner is defined by BOTH edges that meet there,
-+			    			// so it cannot be resolved by an x-or-y chain. Each
-+			    			// of the four corners of a rectangle lands on a
-+			    			// different vertex of the on-screen diamond, so the
-+			    			// cardinal enum is still enough to name them.
-+			    			place_corner = true;
-+			    			if (x == min_x) dir = (y == min_y) ? W_NORTH : W_EAST;
-+			    			else            dir = (y == min_y) ? W_WEST  : W_SOUTH;
-+					}
-+					else if (y == min_y) dir = W_NORTH;
- 					else if (y == max_y) dir = W_SOUTH;
- 					else if (x == min_x) dir = W_EAST;
- 					else if (x == max_x) dir = W_WEST;
- 		    		} else if (seg->flags & (1 << IS_WALLS)) {
-+					// These two were swapped relative to the branch above.
-+					// min_x is W_EAST, max_x is W_WEST, same as HAS_WALLS_REC.
- 					if ((seg->flags & (1 << WALL_IS_NORTH)) && y == min_y) { place_wall = true; dir = W_NORTH; }
- 					else if ((seg->flags & (1 << WALL_IS_SOUTH)) && y == max_y) { place_wall = true; dir = W_SOUTH; }
--					else if ((seg->flags & (1 << WALL_IS_WEST)) && x == min_x) { place_wall = true; dir = W_WEST; }
--					else if ((seg->flags & (1 << WALL_IS_EAST)) && x == max_x) { place_wall = true; dir = W_EAST; }
-+					else if ((seg->flags & (1 << WALL_IS_EAST)) && x == min_x) { place_wall = true; dir = W_EAST; }
-+					else if ((seg->flags & (1 << WALL_IS_WEST)) && x == max_x) { place_wall = true; dir = W_WEST; }
- 					else {
- 			    			uint32_t dir_mask = (1 << WALL_IS_NORTH) | (1 << WALL_IS_SOUTH) |(1 << WALL_IS_EAST)  | (1 << WALL_IS_WEST);
- 			    			if ((seg->flags & dir_mask) == 0) place_wall = true;
-@@ -313,6 +322,11 @@ static void m_decompress_segments(struct MapRuntime *run, const struct MapMetada
- 					tile->wall_gindx = seg->wall_gindx;
- 					tile->wall_z = seg->z;
- 					tile->dir = dir;
-+					// Only flag a corner when a corner PIECE was placed.
-+					// Setting it from geometry alone made every floor-only
-+					// rectangle mark its four corner tiles as corners.
-+					if (place_corner) { tile->flags |= (1 << T_IS_CORNER); }
-+					else              { tile->flags &= ~(1u << T_IS_CORNER); }
- 		    		}
- 
- 		    		// Floor Placement
-@@ -329,6 +343,7 @@ static void m_decompress_segments(struct MapRuntime *run, const struct MapMetada
- 		    		if (seg->flags & (1 << ALWAYS_ABOVE_PLAYER)) tile->flags |= (1 << T_ALWAYS_ABOVE);
- 		    		if (seg->flags & (1 << SHOULD_MERGE_WALL))   tile->flags |= (1 << T_MERGE_WALL);
- 		    if (seg->flags & (1 << SHOULD_MERGE_FLOOR))  tile->flags |= (1 << T_MERGE_FLOOR);
-+		    		if (seg->flags & (1 << HIDE_IF_ABOVE_PLAYER)) tile->flags |= (1 << T_HIDE_IF_ABOVE);
+@@ -1,5 +1,6 @@
+ #include <stdio.h>
+ #include <stdbool.h>
++#include <string.h>
+ #include <raylib.h>
+ #include "e_engine_settings.h"
+ #include "t_gindex_tool.h"
+@@ -100,9 +101,18 @@ static void sprite_parser(struct config_pack p, void *ptr){
+ 			if(frame_count_indx >= MAX_ANIMATIONS){ERR_LOG(ERR_PARSE, "Frame count exceeded MAX_ANIMATIONS %d", MAX_ANIMATIONS); return;}
+ 			t_atoi(p.value, &spr->metadata.frame_x[frame_count_indx]);
  		}
- 	    }
- 	}
-diff --git a/src/m_map.h b/src/m_map.h
-index eecada7..1fb8287 100644
---- a/src/m_map.h
-+++ b/src/m_map.h
-@@ -31,14 +31,19 @@ enum TileFlags{
- 	T_ALWAYS_ABOVE,
- 	T_MERGE_WALL,
- 	T_MERGE_FLOOR,
-+	T_HIDE_IF_ABOVE,
- };
- // This is specifically 
- // signifying the outward facing plane
-+// dir is passed straight to l_draw_sprite as the FRAME INDEX, for both the
-+// corner row and the straight row, so this order must match the sheet's
-+// left-to-right frame order. It does.
- enum WallDirections{
- 	W_NORTH,
- 	W_SOUTH,
- 	W_EAST,
- 	W_WEST,
-+	W_DIR_COUNT,
- };
- struct MapSegmentData{
- 	uint32_t flags;	
-diff --git a/src/m_render_map.c b/src/m_render_map.c
-index 0baa348..4793e11 100644
---- a/src/m_render_map.c
-+++ b/src/m_render_map.c
-@@ -5,62 +5,97 @@
- #include "m_render_map.h"
- #include "m_map.h"
- #include "e_error_handler.h"
--#define Z_HEIGHT 100
-+
-+// One z level must equal the on-screen rise of one wall block or stacked
-+// levels won't sit flush. Measured against data/sprites/1.png: a floor drawn
-+// at z+1 lands exactly on the wall tops at 56, not 100.
-+#define Z_HEIGHT 56
- 
- #define TILE_X 64
- #define TILE_Y 32
- 
--static Vector2 tile_to_world(int tile_x, int tile_y, int tile_z);
--static void draw_tile(const struct MapDecompTile *tile, v2 tpos);
--static bool tile_checker(const struct MapDecompTile *tile);
-+static void draw_floor(const struct MapDecompTile *tile, v2 tpos);
-+static void draw_props(const struct MapDecompTile *tile, v2 tpos, int player_z);
- static bool fcheck(uint32_t flag, enum TileFlags type);
- 
- void m_draw_map(struct MapPack *m, int player_z){
--	if(!m){return;}
--	int size = m->m.meta[M_WIDTH] * m->m.meta[M_HEIGHT];
--	for(int i = 0; i < size; i++){
--		v2 indx =  {i % m->m.meta[M_WIDTH], i / m->m.meta[M_WIDTH]};
--		draw_tile(&m->d.t[i], indx);		
-+	if(!m || !m->d.t){return;}
-+	int w = m->m.meta[M_WIDTH];
-+	int h = m->m.meta[M_HEIGHT];
-+
-+	// TWO PASSES. Floors and walls cannot be interleaved per tile: a wall
-+	// sits on the FAR edge of its tile, so the next tile's floor is drawn
-+	// after it and paints over its base. That is what turns a solid north
-+	// or east wall into a row of floating pillars with gaps between them.
-+	//
-+	// Within each pass, iterate by depth (x + y) rather than row-major.
-+	// Row-major happens to be a valid painter's order while every tile
-+	// shares one z, and stops being one the moment they don't.
-+	for(int depth = 0; depth <= (w - 1) + (h - 1); depth++){
-+		for(int y = 0; y < h; y++){
-+			int x = depth - y;
-+			if(x < 0 || x >= w){continue;}
-+			v2 indx = {x, y};
-+			draw_floor(&m->d.t[y * w + x], indx);
-+		}
-+	}
-+	for(int depth = 0; depth <= (w - 1) + (h - 1); depth++){
-+		for(int y = 0; y < h; y++){
-+			int x = depth - y;
-+			if(x < 0 || x >= w){continue;}
-+			v2 indx = {x, y};
-+			draw_props(&m->d.t[y * w + x], indx, player_z);
-+		}
- 	}
- }
--// This will give a centered position
--static Vector2 tile_to_world(int tile_x, int tile_y, int tile_z){
-+
-+// Centre of the tile, in world space.
-+Vector2 m_tile_to_world(int tile_x, int tile_y, int tile_z){
- 	Vector2 world;
--	world.x = (float)(tile_x - tile_y) * (TILE_X/ 2.0f);
--	world.y = (float)(tile_x + tile_y) * (TILE_Y/ 2.0f);
--	world.y += TILE_Y/ 2.0f;
-+	world.x = (float)(tile_x - tile_y) * (TILE_X / 2.0f);
-+	world.y = (float)(tile_x + tile_y) * (TILE_Y / 2.0f);
- 	world.y -= (float)(tile_z * Z_HEIGHT);
- 	return world;
- }
--static void draw_tile(const struct MapDecompTile *tile, v2 tpos){
--	if(!tile_checker(tile)){ERR_LOG(ERR_NULL, "tile_checker failed, skipping tile at x:%d.y:%d", tpos.x, tpos.y); return;}
--	if(fcheck(tile->flags, T_HAS_TILE)){
--		Vector2 world_pos = tile_to_world(tpos.x, tpos.y, tile->floor_z);
--		l_draw_sprite(tile->floor_gindx, true, world_pos, 0, 0);	
-+
-+static void draw_floor(const struct MapDecompTile *tile, v2 tpos){
-+	if(!tile){return;}
-+	if(fcheck(tile->flags, T_INVISIBLE)){return;}
-+	if(!fcheck(tile->flags, T_HAS_TILE)){return;}
-+	if(tile->floor_gindx < 0){
-+		ERR_LOG(ERR_PARSE, "Tile %d.%d has T_HAS_TILE but floor_gindx is %d", tpos.x, tpos.y, tile->floor_gindx);
-+		return;
- 	}
--	// Animation 0 is corners and 1 is straights
--	if(fcheck(tile->flags, T_HAS_WALL)){
--		Vector2 world_pos = tile_to_world(tpos.x, tpos.y, tile->wall_z);
--		bool animation = !fcheck(tile->flags, T_IS_CORNER);
--		l_draw_sprite(tile->wall_gindx, true, world_pos, (int)animation, tile->dir);
--	}	
-+	l_draw_sprite(tile->floor_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->floor_z), 0, 0);
- }
--static bool tile_checker(const struct MapDecompTile *tile){
--	if(fcheck(tile->flags, T_INVISIBLE)){return false;}
--	if((fcheck(tile->flags, T_HAS_WALL) || fcheck(tile->flags, T_IS_CORNER) || fcheck(tile->flags, T_WALL_COLLIDE) || fcheck(tile->flags, T_MERGE_WALL)) && tile->wall_gindx < 0){
--		ERR_LOG(ERR_PARSE, "Tile has a wall flag checked, but wall_gindx is set to invalid %d", tile->wall_gindx);
--		return false;
--	}
--	if((fcheck(tile->flags, T_HAS_TILE) || fcheck(tile->flags, T_FLOOR_COLLIDE) || fcheck(tile->flags, T_MERGE_FLOOR)) && tile->floor_gindx < 0){
--		ERR_LOG(ERR_PARSE, "Tile has T_HAS_TILE flag checked, but floor_gindx is set to invalid %d", tile->floor_gindx);
--		return false; 
-+
-+static void draw_props(const struct MapDecompTile *tile, v2 tpos, int player_z){
-+	if(!tile){return;}
-+	if(fcheck(tile->flags, T_INVISIBLE)){return;}
-+
-+	// Each element validates itself now. Previously one bad gindx anywhere
-+	// on the tile threw away the whole tile, floor included.
-+	if(fcheck(tile->flags, T_HAS_WALL)){
-+		if(tile->wall_gindx < 0){
-+			ERR_LOG(ERR_PARSE, "Tile %d.%d has T_HAS_WALL but wall_gindx is %d", tpos.x, tpos.y, tile->wall_gindx);
-+		} else if(!(fcheck(tile->flags, T_HIDE_IF_ABOVE) && tile->wall_z > player_z)){
-+			// Animation 0 is corners and 1 is straights
-+			int animation = fcheck(tile->flags, T_IS_CORNER) ? 0 : 1;
-+			l_draw_sprite(tile->wall_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->wall_z), animation, tile->dir);
-+		}
- 	}
--	if(fcheck(tile->flags, T_HAS_INTERACTABLE) && tile->interactable_gindx < 0){
--		ERR_LOG(ERR_PARSE, "Tile has T_HAS_INTERACTABLE flag checked, but interactable_gindx is set to invalid %d", tile->interactable_gindx);
--		return false;
-+	// This was never drawn. Decompression stamps the flag, the gindx and the
-+	// z onto the tile, tile_checker validated the gindx, and then nothing
-+	// ever read them back out.
-+	if(fcheck(tile->flags, T_HAS_INTERACTABLE)){
-+		if(tile->interactable_gindx < 0){
-+			ERR_LOG(ERR_PARSE, "Tile %d.%d has T_HAS_INTERACTABLE but interactable_gindx is %d", tpos.x, tpos.y, tile->interactable_gindx);
-+		} else {
-+			l_draw_sprite(tile->interactable_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->interactable_z), 0, 0);
-+		}
- 	}
--	return true;
- }
-+
- static bool fcheck(uint32_t flag, enum TileFlags type){
--	return flag & (1 << type);
-+	return flag & (1u << type);
- }
-diff --git a/src/m_render_map.h b/src/m_render_map.h
-index 4d1b4c4..dae8485 100644
---- a/src/m_render_map.h
-+++ b/src/m_render_map.h
-@@ -1,4 +1,8 @@
- #pragma once
-+#include <raylib.h>
- struct MapPack;
- 
-+// Tile grid -> world space. Exposed so entities and anything else on the grid
-+// project through the same function the map does instead of duplicating it.
-+Vector2 m_tile_to_world(int tile_x, int tile_y, int tile_z);
- void m_draw_map(struct MapPack *m, int player_z);
-diff --git a/src/p_entity_instance.c b/src/p_entity_instance.c
-index a99704e..3cdfd6f 100644
---- a/src/p_entity_instance.c
-+++ b/src/p_entity_instance.c
-@@ -6,14 +6,22 @@
- #include "t_math.h"
- #include "p_entity_instance.h"
- #include "t_strings.h"
-+#include "m_render_map.h"
-+#include "l_sprite_manager.h"
- 
- void e_draw_entity_pool(struct EntityInstance *pool, int size){
- 	if(!pool){return;}
- 	// Optimize later
- 	for(int i = 0; i < size; i++){
- 		if(!pool[i].valid){continue;}
--		Vector2 pos = {pool[i].e.data[E_POSX], pool[i].e.data[E_POSY]};
--		DrawCircle(pos.x, pos.y, 0.8f, RED);
-+		// E_POSX/E_POSY are TILE coordinates. Using them directly as world
-+		// coordinates put every entity in a sub-pixel clump at the origin.
-+		Vector2 pos = m_tile_to_world(pool[i].e.data[E_POSX], pool[i].e.data[E_POSY], 0);
-+		if(pool[i].e.flags & (1 << ENT_SPRITE)){
-+			l_draw_sprite(pool[i].e.data[E_SPRITE], true, pos, 0, 0);
-+		} else {
-+			DrawCircleV(pos, 6.0f, RED);
-+		}
- 	}
- }
- 
++		// sscanf returns the number of successful CONVERSIONS, not whether the
++		// whole format matched. "origin.anim[0].frame[0].y" still yields 2 for
++		// the ".x" format below, because both %d convert before the trailing
++		// literal fails to match. Both branches therefore fired on every line,
++		// and the .y line overwrote .x with the y value. %n records how much of
++		// the key was consumed; compare it against the length to require a full
++		// match. (%n does not count toward the return value.)
+ 		int animation_indx_x;
+ 		int frame_indx_x;
+-		if(sscanf(p.key, "origin.anim[%d].frame[%d].x", &animation_indx_x, &frame_indx_x) == 2){
++		int eaten_x = -1;
++		size_t key_len = strlen(p.key);
++		if(sscanf(p.key, "origin.anim[%d].frame[%d].x%n", &animation_indx_x, &frame_indx_x, &eaten_x) == 2 && eaten_x == (int)key_len){
+ 			if(frame_indx_x >= MAX_FRAMES){ERR_LOG(ERR_PARSE, "Can't parse frame_indx %d, larger than MAX_FRAMES", frame_indx_x); return;}			
+ 			if(frame_indx_x < 0){return;}
+ 			if(animation_indx_x >= MAX_ANIMATIONS || animation_indx_x < 0){return;}
+@@ -110,7 +120,8 @@ static void sprite_parser(struct config_pack p, void *ptr){
+ 		}
+ 		int animation_indx_y;
+ 		int frame_indx_y;
+-		if(sscanf(p.key, "origin.anim[%d].frame[%d].y", &animation_indx_y, &frame_indx_y) == 2){
++		int eaten_y = -1;
++		if(sscanf(p.key, "origin.anim[%d].frame[%d].y%n", &animation_indx_y, &frame_indx_y, &eaten_y) == 2 && eaten_y == (int)key_len){
+ 			if(frame_indx_y >= MAX_FRAMES){ERR_LOG(ERR_PARSE, "Can't parse frame_indx %d, larger than MAX_FRAMES", frame_indx_y); return;}			
+ 			if(frame_indx_y < 0){return;}
+ 			if(animation_indx_y >= MAX_ANIMATIONS || animation_indx_y < 0){return;}
