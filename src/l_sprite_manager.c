@@ -15,20 +15,9 @@ static void sprite_parser(struct config_pack p, void *ptr);
 
 static struct local_indx iman[SPRITE_CAP] = {0};
 static struct SpriteData sprites[SPRITE_CAP] = {0};
-static void set_frame_rec(struct SpriteData *spr){
-	int frames_in_row = spr->metadata.animated ? spr->metadata.frame_x[spr->runtime.current_animation] : 1;
-	if(frames_in_row <= 0){ERR_LOG(ERR_FUCKED, "Invalid frame count for animation %d", spr->runtime.current_animation); return;}
 
-	float frame_w = (float)spr->texture.width / frames_in_row;
-	float frame_h = (float)spr->texture.height / (spr->metadata.animations_y > 0 ? spr->metadata.animations_y : 1);
+static Rectangle compute_frame_rec(struct SpriteData *spr, int frame, int animation);
 
-	spr->runtime.frame_rec = (Rectangle){
-		.x = spr->runtime.current_frame * frame_w,
-		.y = spr->runtime.current_animation * frame_h,
-		.width = frame_w,
-		.height = frame_h,
-	};
-}
 bool l_free_sprite(int gindx){
 	int lindx = t_gindx_to_lindx(iman, SPRITE_CAP, gindx);
 	if(!t_indxvalid(SPRITE_CAP, lindx)){ERR_LOG(ERR_INDX, "failed gindx %d conversion", gindx); return false;}	
@@ -57,51 +46,35 @@ bool l_load_sprite(int gindx){
 	char *path = t_png_plus_indx(e_grab_str(SPRITE_PATH), sprites[lindx].metadata.sprite_gindx);	
 	sprites[lindx].texture = LoadTexture(path);
 	
-	sprites[lindx].runtime = (struct SpriteRuntime){0};
-	set_frame_rec(&sprites[lindx]);
 	ERR_LOG(ERR_OK, "Loaded sprite %d", gindx);
 	free(path);
 	return success;
 }
-void l_play_sprite(int gindx, int autoload){
-	struct SpriteData *spr = l_grab_sprite(gindx, autoload);
-	if(!spr->metadata.animated){return;}
-	spr->runtime.frame_count += GetFrameTime();
-	if(spr->runtime.frame_count >= spr->metadata.time_per_frame){
-		spr->runtime.frame_count = 0.0f;
-		spr->runtime.current_frame += 1;	
-		if(spr->runtime.current_frame >= spr->metadata.frame_x[spr->runtime.current_animation]){
-			spr->runtime.current_frame = 0;
-		}
-	}
 
-	set_frame_rec(spr);
-}
-void l_draw_sprite(int gindx, bool autoload, Vector2 position){
+void l_draw_sprite(int gindx, bool autoload, Vector2 position, int animation, int frame){
 	struct SpriteData *spr = l_grab_sprite(gindx, autoload);
+	
+	Rectangle source = compute_frame_rec(spr, frame, animation);
+	Vector2 origin = {
+		(float)spr->metadata.origin[animation][frame].x,
+		(float)spr->metadata.origin[animation][frame].y,
+	};
+	Vector2 new_pos = {
+		.x = position.x - origin.x,
+		.y = position.y - origin.y,
+	};
 
 	Rectangle dest = {
-		.x = position.x,
+		.x = position.x, 
 		.y = position.y,
-		.width = spr->runtime.frame_rec.width,
-		.height = spr->runtime.frame_rec.height,
-	};
-	Vector2 origin = {
-		spr->runtime.frame_rec.width / 2.0f,
-		spr->runtime.frame_rec.height / 2.0f,
+		.width = source.width,
+		.height = source.height,
 	};
 
-	DrawTexturePro(spr->texture, spr->runtime.frame_rec, dest, origin, spr->runtime.rotation, WHITE);
+	DrawTexturePro(spr->texture, source, dest, origin, 0.0f, WHITE);
+	DrawCircleV(new_pos, 3.0f, RED);
 }
-void l_reset_sprite(int gindx, int new_animation){
-	struct SpriteData *spr = l_grab_sprite(gindx, true);
-	spr->runtime.current_frame = 0;
-	spr->runtime.current_animation = new_animation;
-}
-Vector2 l_grab_sprite_scale(int gindx, bool autoload){
-	struct SpriteData *spr = l_grab_sprite(gindx, autoload);
-	return (Vector2){.x = 64, .y = 32};
-}
+
 static struct SpriteData *l_grab_sprite(int gindx, bool autoload){
 	int lindx = l_getter_checks(gindx, autoload, SPRITE_CAP, iman, l_load_sprite);
 	if(!t_indxvalid(SPRITE_CAP ,lindx)){ERR_LOG(ERR_FUCKED, "Failed to grab and load sprite gindx %d", gindx);}
@@ -124,12 +97,42 @@ static void sprite_parser(struct config_pack p, void *ptr){
 		} else if(t_check(p.key, "animations_y")){
 			t_atoi(p.value, &spr->metadata.animations_y);
 		} 
+		
 		int frame_count_indx;
 		if(sscanf(p.key, "frame_x.%d", &frame_count_indx) == 1){
 			if(frame_count_indx < 0){ERR_LOG(ERR_PARSE, "Tried to parse frame_count with negative index");return;}
 			if(frame_count_indx >= MAX_ANIMATIONS){ERR_LOG(ERR_PARSE, "Frame count exceeded MAX_ANIMATIONS %d", MAX_ANIMATIONS); return;}
 			t_atoi(p.value, &spr->metadata.frame_x[frame_count_indx]);
 		}
+		int animation_indx_x;
+		int frame_indx_x;
+		if(sscanf(p.key, "origin.anim[%d].frame[%d].x", &animation_indx_x, &frame_indx_x) == 2){
+			if(frame_indx_x >= MAX_FRAMES){ERR_LOG(ERR_PARSE, "Can't parse frame_indx %d, larger than MAX_FRAMES", frame_indx_x); return;}			
+			if(frame_indx_x < 0){return;}
+			if(animation_indx_x >= MAX_ANIMATIONS || animation_indx_x < 0){return;}
+			t_atoi(p.value, &spr->metadata.origin[animation_indx_x][frame_indx_x].x);
+		}
+		int animation_indx_y;
+		int frame_indx_y;
+		if(sscanf(p.key, "origin.anim[%d].frame[%d].y", &animation_indx_y, &frame_indx_y) == 2){
+			if(frame_indx_y >= MAX_FRAMES){ERR_LOG(ERR_PARSE, "Can't parse frame_indx %d, larger than MAX_FRAMES", frame_indx_y); return;}			
+			if(frame_indx_y < 0){return;}
+			if(animation_indx_y >= MAX_ANIMATIONS || animation_indx_y < 0){return;}
+			t_atoi(p.value, &spr->metadata.origin[animation_indx_y][frame_indx_y].y);
+		}
 	}
 }
+static Rectangle compute_frame_rec(struct SpriteData *spr, int frame, int animation){
+	int frames_in_row = spr->metadata.animated ? spr->metadata.frame_x[animation] : 1;
+	if(frames_in_row <= 0){ERR_LOG(ERR_FUCKED, "Invalid frame count for animation %d", animation); frames_in_row = 1;}
 
+	float frame_w = (float)spr->texture.width / frames_in_row;
+	float frame_h = (float)spr->texture.height / (spr->metadata.animations_y > 0 ? spr->metadata.animations_y : 1);
+
+	return (Rectangle){
+		.x = frame * frame_w,
+		.y = animation * frame_h,
+		.width = frame_w,
+		.height = frame_h,
+	};
+}

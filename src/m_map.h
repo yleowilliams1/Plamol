@@ -20,6 +20,26 @@ enum SegmentFlags{
 	HIDE_IF_ABOVE_PLAYER, // Don't draw if the player is below this segment (second floors etc)
 	SEGMENT_FLAGS_COUNT,
 };
+enum TileFlags{
+	T_INVISIBLE,
+	T_HAS_WALL,
+	T_HAS_TILE,
+	T_HAS_INTERACTABLE,
+	T_IS_CORNER,
+	T_WALL_COLLIDE,
+	T_FLOOR_COLLIDE,
+	T_ALWAYS_ABOVE,
+	T_MERGE_WALL,
+	T_MERGE_FLOOR,
+};
+// This is specifically 
+// signifying the outward facing plane
+enum WallDirections{
+	W_NORTH,
+	W_SOUTH,
+	W_EAST,
+	W_WEST,
+};
 struct MapSegmentData{
 	uint32_t flags;	
 	
@@ -31,19 +51,19 @@ struct MapSegmentData{
 	int wall_gindx;
 	int floor_gindx;
 };
-enum InteractableType{
-	IS_DOOR,
-	IS_WINDOW,
-	IS_TRAP,
-	IS_PUZZEL,
-	NULL_INTERACTABLE,
-	INTERACTABLE_TYPE_COUNT,
+struct MapDecompTile{
+	uint32_t flags;
+	enum WallDirections dir;
+	int wall_gindx;
+	int wall_z;
+	int floor_gindx;
+	int floor_z;
+	int interactable_gindx;
+	int interactable_z;
 };
 struct MapInteractableData{
 	v2 tile_position;
 	int z;
-
-	enum InteractableType type;
 	int gindx;
 };
 
@@ -76,7 +96,8 @@ struct MapMetadata{
 struct MapRuntime{
 	struct MapEntityData *e; // Entity pos and info unconfided to the grid
 	struct MapInteractableData *i; // Doors traps puzzels confined to the grid etc.
-	struct MapSegmentData *s; // Walls ceilings and floors confined to the grid
+	struct MapDecompTile *t; // Walls ceilings and floors confined to the grid
+	struct MapSegmentData *s;
 };
 
 struct MapPack{

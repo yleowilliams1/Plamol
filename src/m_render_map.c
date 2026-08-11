@@ -1,74 +1,66 @@
 #include <stdio.h>
 #include <raylib.h>
+#include <stdint.h>
 #include "l_sprite_manager.h"
 #include "m_render_map.h"
 #include "m_map.h"
-
+#include "e_error_handler.h"
 #define Z_HEIGHT 100
 
-Vector2 tile_to_world(int tile_x, int tile_y, int tile_z, int tile_width, int tile_height, int z_height){
-	Vector2 world;
-	world.x = (float)(tile_x - tile_y) * (tile_width / 2.0f);
-	world.y = (float)(tile_x + tile_y) * (tile_height / 2.0f);
-	world.y -= (float)(tile_z * z_height);
-	return world;
-}
-static void draw_floor_tile(struct MapSegmentData *seg, int tx, int ty){
-	if(seg->floor_gindx < 0){return;}
-	Vector2 scale = l_grab_sprite_scale(seg->floor_gindx, true);
-	l_draw_sprite(seg->floor_gindx, true, tile_to_world(tx, ty, seg->z, scale.x, scale.y, Z_HEIGHT));
-}
-static void draw_wall_tile(struct MapSegmentData *seg, int tx, int ty){
-	if(seg->wall_gindx < 0){return;}
-	Vector2 scale = l_grab_sprite_scale(seg->wall_gindx, true);
-	l_draw_sprite(seg->wall_gindx, true, tile_to_world(tx, ty, seg->z, scale.x, scale.y, Z_HEIGHT));
-}
+#define TILE_X 64
+#define TILE_Y 32
 
-static void draw_segment(struct MapSegmentData *seg, int player_z){
-	if((seg->flags & (1 << INVISIBLE))){return;}
-	if((seg->flags & (1 << HIDE_IF_ABOVE_PLAYER)) && seg->z > player_z){return;}
-
-	int x0 = seg->start_tile.x, x1 = seg->end_tile.x;
-	int y0 = seg->start_tile.y, y1 = seg->end_tile.y;
-	if(x1 < x0){int t = x0; x0 = x1; x1 = t;}
-	if(y1 < y0){int t = y0; y0 = y1; y1 = t;}
-
-	if(seg->flags & (1 << HAS_FLOORS_REC)){
-		for(int ty = y0; ty <= y1; ty++)
-			for(int tx = x0; tx <= x1; tx++)
-				draw_floor_tile(seg, tx, ty);
-	}
-
-	if(seg->flags & (1 << IS_WALLS)){ // fully solid block
-		for(int ty = y0; ty <= y1; ty++)
-			for(int tx = x0; tx <= x1; tx++)
-				draw_wall_tile(seg, tx, ty);
-		return;
-	}
-
-	if(seg->flags & (1 << HAS_WALLS_REC)){ // hollow perimeter
-		for(int tx = x0; tx <= x1; tx++){draw_wall_tile(seg, tx, y0); draw_wall_tile(seg, tx, y1);}
-		for(int ty = y0; ty <= y1; ty++){draw_wall_tile(seg, x0, ty); draw_wall_tile(seg, x1, ty);}
-	}
-
-	if(seg->flags & (1 << WALL_IS_NORTH)) for(int tx = x0; tx <= x1; tx++) draw_wall_tile(seg, tx, y0);
-	if(seg->flags & (1 << WALL_IS_SOUTH)) for(int tx = x0; tx <= x1; tx++) draw_wall_tile(seg, tx, y1);
-	if(seg->flags & (1 << WALL_IS_WEST))  for(int ty = y0; ty <= y1; ty++) draw_wall_tile(seg, x0, ty);
-	if(seg->flags & (1 << WALL_IS_EAST))  for(int ty = y0; ty <= y1; ty++) draw_wall_tile(seg, x1, ty);
-}
-
-static void draw_interactable(struct MapInteractableData *ia, int player_z){
-	if(ia->z > player_z){return;} // same visibility rule as HIDE_IF_ABOVE_PLAYER; no per-interactable flag exists yet
-	Vector2 scale = l_grab_sprite_scale(ia->gindx, true);
-	l_draw_sprite(ia->gindx, true, tile_to_world(ia->tile_position.x, ia->tile_position.y, ia->z, scale.x, scale.y, Z_HEIGHT));
-}
+static Vector2 tile_to_world(int tile_x, int tile_y, int tile_z);
+static void draw_tile(const struct MapDecompTile *tile, v2 tpos);
+static bool tile_checker(const struct MapDecompTile *tile);
+static bool fcheck(uint32_t flag, enum TileFlags type);
 
 void m_draw_map(struct MapPack *m, int player_z){
 	if(!m){return;}
-	for(int i = 0; i < m->m.meta[M_SEGMENT_COUNT]; i++){
-		draw_segment(&m->d.s[i], player_z);
+	int size = m->m.meta[M_WIDTH] * m->m.meta[M_HEIGHT];
+	for(int i = 0; i < size; i++){
+		v2 indx =  {i % m->m.meta[M_WIDTH], i / m->m.meta[M_WIDTH]};
+		draw_tile(&m->d.t[i], indx);		
 	}
-	for(int i = 0; i < m->m.meta[M_INTERACTABLE_COUNT]; i++){
-		draw_interactable(&m->d.i[i], player_z);
+}
+// This will give a centered position
+static Vector2 tile_to_world(int tile_x, int tile_y, int tile_z){
+	Vector2 world;
+	world.x = (float)(tile_x - tile_y) * (TILE_X/ 2.0f);
+	world.y = (float)(tile_x + tile_y) * (TILE_Y/ 2.0f);
+	world.y += TILE_Y/ 2.0f;
+	world.y -= (float)(tile_z * Z_HEIGHT);
+	return world;
+}
+static void draw_tile(const struct MapDecompTile *tile, v2 tpos){
+	if(!tile_checker(tile)){ERR_LOG(ERR_NULL, "tile_checker failed, skipping tile at x:%d.y:%d", tpos.x, tpos.y); return;}
+	if(fcheck(tile->flags, T_HAS_TILE)){
+		Vector2 world_pos = tile_to_world(tpos.x, tpos.y, tile->floor_z);
+		l_draw_sprite(tile->floor_gindx, true, world_pos, 0, 0);	
 	}
+	// Animation 0 is corners and 1 is straights
+	if(fcheck(tile->flags, T_HAS_WALL)){
+		Vector2 world_pos = tile_to_world(tpos.x, tpos.y, tile->wall_z);
+		bool animation = !fcheck(tile->flags, T_IS_CORNER);
+		l_draw_sprite(tile->wall_gindx, true, world_pos, (int)animation, tile->dir);
+	}	
+}
+static bool tile_checker(const struct MapDecompTile *tile){
+	if(fcheck(tile->flags, T_INVISIBLE)){return false;}
+	if((fcheck(tile->flags, T_HAS_WALL) || fcheck(tile->flags, T_IS_CORNER) || fcheck(tile->flags, T_WALL_COLLIDE) || fcheck(tile->flags, T_MERGE_WALL)) && tile->wall_gindx < 0){
+		ERR_LOG(ERR_PARSE, "Tile has a wall flag checked, but wall_gindx is set to invalid %d", tile->wall_gindx);
+		return false;
+	}
+	if((fcheck(tile->flags, T_HAS_TILE) || fcheck(tile->flags, T_FLOOR_COLLIDE) || fcheck(tile->flags, T_MERGE_FLOOR)) && tile->floor_gindx < 0){
+		ERR_LOG(ERR_PARSE, "Tile has T_HAS_TILE flag checked, but floor_gindx is set to invalid %d", tile->floor_gindx);
+		return false; 
+	}
+	if(fcheck(tile->flags, T_HAS_INTERACTABLE) && tile->interactable_gindx < 0){
+		ERR_LOG(ERR_PARSE, "Tile has T_HAS_INTERACTABLE flag checked, but interactable_gindx is set to invalid %d", tile->interactable_gindx);
+		return false;
+	}
+	return true;
+}
+static bool fcheck(uint32_t flag, enum TileFlags type){
+	return flag & (1 << type);
 }

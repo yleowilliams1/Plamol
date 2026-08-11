@@ -23,6 +23,7 @@ static void runtime_parser(struct config_pack p, void *ptr);
 static enum InteractableType str_to_inttype(char *str);
 static void runtime_init(void *ptr);
 
+static void m_decompress_segments(struct MapRuntime *run, const struct MapMetadata *meta);
 
 static struct MapMetadata metamaps[MAP_CAP] = {0};
 static struct local_indx iman_meta[MAP_CAP] = {0};
@@ -78,9 +79,16 @@ bool m_free_map(int gindx){
 	if(!t_indxvalid(MAP_CAP, lindx)){ERR_LOG(ERR_INDX ,"Failed to convert gindx %d", gindx); return false;}	
 	// Free here
 	free(runtimemaps[lindx].e);	
-	free(runtimemaps[lindx].i);	
-	free(runtimemaps[lindx].s);
-
+	free(runtimemaps[lindx].t);
+	if (runtimemaps[lindx].s) {
+		free(runtimemaps[lindx].s);
+		runtimemaps[lindx].s = NULL;
+	}		
+	if(runtimemaps[lindx].i){
+		free(runtimemaps[lindx].i);
+		runtimemaps[lindx].i = NULL;
+	}	
+	
 	runtimemaps[lindx] = (struct MapRuntime){0};	
 	ERR_LOG(ERR_OK, "Freed map %d", gindx);	
 	return t_lfree_lindx(iman_runtime, MAP_CAP, lindx) && freed_meta;
@@ -128,12 +136,15 @@ static void runtime_init(void *ptr){
 	if(!m || !g_loading_meta){ERR_LOG(ERR_FUCKED, "Failed to load map asset passed null pointer to init");}
 	m->e = XMALLOC(g_loading_meta->meta[M_ENTITY_COUNT] * sizeof(struct MapEntityData));
 	m->i = XMALLOC(g_loading_meta->meta[M_INTERACTABLE_COUNT] * sizeof(struct MapInteractableData));
+	m->t = XMALLOC(g_loading_meta->meta[M_WIDTH] * g_loading_meta->meta[M_HEIGHT] * sizeof(struct MapDecompTile));
 	m->s = XMALLOC(g_loading_meta->meta[M_SEGMENT_COUNT] * sizeof(struct MapSegmentData));
 
 	memset(m->e, 0, g_loading_meta->meta[M_ENTITY_COUNT] * sizeof(struct MapEntityData));
 	memset(m->i, 0, g_loading_meta->meta[M_INTERACTABLE_COUNT] * sizeof(struct MapInteractableData));
+	memset(m->t, 0, g_loading_meta->meta[M_WIDTH] * g_loading_meta->meta[M_HEIGHT] * sizeof(struct MapDecompTile));
 	memset(m->s, 0, g_loading_meta->meta[M_SEGMENT_COUNT] * sizeof(struct MapSegmentData));
 }
+
 static void metadata_parser(struct config_pack p, void *ptr){
 	struct MapMetadata *m = (struct MapMetadata*)ptr;	
 	if(!m){
@@ -169,11 +180,7 @@ static void runtime_parser(struct config_pack p, void *ptr){
 	if(sscanf(p.current_section, "interactable.%d", &interactable_indx) == 1){
 		if(interactable_indx < 0){ERR_LOG(ERR_PARSE, "Tried to parse interactable with a negative index"); return;}	
 		if(interactable_indx >= g_loading_meta->meta[M_INTERACTABLE_COUNT]){ERR_LOG(ERR_PARSE, "Tried to parse interactable with index larger than set interactable count %d", g_loading_meta->meta[M_INTERACTABLE_COUNT]); return;}
-		if(t_check(p.key, "type")){
-			enum InteractableType type = str_to_inttype(p.value);
-			if(type == NULL_INTERACTABLE){ERR_LOG(ERR_PARSE, "%s is not a valid type", p.value); return;}
-			m->i[interactable_indx].type = type;
-		} else if(t_check(p.key, "z")){
+		if(t_check(p.key, "z")){
 			t_atoi(p.value, &m->i[interactable_indx].z);
 		} else if(t_check(p.key, "tile_x")){
 			t_atoi(p.value, &m->i[interactable_indx].tile_position.x);
@@ -225,13 +232,124 @@ struct MapPack m_get_map(int gindx, bool autoload){
 		.m = metamaps[metadata_lindx],
 		.d = runtimemaps[runtime_lindx],
 	};
+	
+	// Decompress segments & stamp interactables onto runtime grid
+	m_decompress_segments(&map.d, &map.m);
+	
+	// Free segment data buffer after decompression
+	if (runtimemaps[runtime_lindx].s) {
+		free(runtimemaps[runtime_lindx].s);
+		runtimemaps[runtime_lindx].s = NULL;
+		map.d.s = NULL;
+	}		
+	if(runtimemaps[runtime_lindx].i){
+		free(runtimemaps[runtime_lindx].i);
+		runtimemaps[runtime_lindx].i = NULL;
+		map.d.i = NULL;
+	}	
+	
 	return map;
 }
-static enum InteractableType str_to_inttype(char *str){	
-	if(t_check(str, "is_door")){return IS_DOOR;}
-	if(t_check(str, "is_window")){return IS_WINDOW;}
-	if(t_check(str, "is_trap")){return IS_TRAP;}
-	if(t_check(str, "is_puzzel")){return IS_PUZZEL;}
+static void m_decompress_segments(struct MapRuntime *run, const struct MapMetadata *meta) {
+	if (!run || !run->t || !meta) return;
 
-	return NULL_INTERACTABLE;
+	int width = meta->meta[M_WIDTH];
+	int height = meta->meta[M_HEIGHT];
+	int seg_count = meta->meta[M_SEGMENT_COUNT];
+	int interactable_count = meta->meta[M_INTERACTABLE_COUNT];
+
+	// 1. Process Segments into Decompressed Tiles
+	if (run->s) {
+	for (int i = 0; i < seg_count; i++) {
+		struct MapSegmentData *seg = &run->s[i];
+
+	    	int min_x = seg->start_tile.x < seg->end_tile.x ? seg->start_tile.x : seg->end_tile.x;
+	    	int max_x = seg->start_tile.x > seg->end_tile.x ? seg->start_tile.x : seg->end_tile.x;
+	    	int min_y = seg->start_tile.y < seg->end_tile.y ? seg->start_tile.y : seg->end_tile.y;
+	    	int max_y = seg->start_tile.y > seg->end_tile.y ? seg->start_tile.y : seg->end_tile.y;
+
+	    	if (min_x < 0) min_x = 0;
+	    	if (min_y < 0) min_y = 0;
+	    	if (max_x >= width)  max_x = width - 1;
+	    	if (max_y >= height) max_y = height - 1;
+
+	    	for (int y = min_y; y <= max_y; y++) {
+			for (int x = min_x; x <= max_x; x++) {
+		    		int tile_idx = y * width + x;
+		    		struct MapDecompTile *tile = &run->t[tile_idx];
+				
+		    		bool is_edge_x = (x == min_x || x == max_x);
+		    		bool is_edge_y = (y == min_y || y == max_y);
+		    		bool is_perimeter = is_edge_x || is_edge_y;
+
+		    		// Corner detection
+		    		if (is_edge_x && is_edge_y) {
+					tile->flags |= (1 << T_IS_CORNER);
+		    		}
+
+		    		// Wall Placement & Direction Resolution
+		    		bool place_wall = false;
+		    		enum WallDirections dir = W_NORTH;
+
+		    		if ((seg->flags & (1 << HAS_WALLS_REC)) && is_perimeter) {
+					place_wall = true;
+					if (y == min_y) dir = W_NORTH;
+					else if (y == max_y) dir = W_SOUTH;
+					else if (x == min_x) dir = W_EAST;
+					else if (x == max_x) dir = W_WEST;
+		    		} else if (seg->flags & (1 << IS_WALLS)) {
+					if ((seg->flags & (1 << WALL_IS_NORTH)) && y == min_y) { place_wall = true; dir = W_NORTH; }
+					else if ((seg->flags & (1 << WALL_IS_SOUTH)) && y == max_y) { place_wall = true; dir = W_SOUTH; }
+					else if ((seg->flags & (1 << WALL_IS_WEST)) && x == min_x) { place_wall = true; dir = W_WEST; }
+					else if ((seg->flags & (1 << WALL_IS_EAST)) && x == max_x) { place_wall = true; dir = W_EAST; }
+					else {
+			    			uint32_t dir_mask = (1 << WALL_IS_NORTH) | (1 << WALL_IS_SOUTH) |(1 << WALL_IS_EAST)  | (1 << WALL_IS_WEST);
+			    			if ((seg->flags & dir_mask) == 0) place_wall = true;
+					}
+		    		}
+
+		    		if (place_wall) {
+					tile->flags |= (1 << T_HAS_WALL);
+					tile->wall_gindx = seg->wall_gindx;
+					tile->wall_z = seg->z;
+					tile->dir = dir;
+		    		}
+
+		    		// Floor Placement
+		    		if (seg->flags & (1 << HAS_FLOORS_REC)) {
+					tile->flags |= (1 << T_HAS_TILE);
+					tile->floor_gindx = seg->floor_gindx;
+					tile->floor_z = seg->z;
+		    		}
+
+		    		// Map Segment Flags to TileFlags
+		    		if (seg->flags & (1 << INVISIBLE))           tile->flags |= (1 << T_INVISIBLE);
+		    		if (seg->flags & (1 << IS_WALLS_COLLIDE))    tile->flags |= (1 << T_WALL_COLLIDE);
+		    		if (seg->flags & (1 << IS_FLOOR_COLLIDE))    tile->flags |= (1 << T_FLOOR_COLLIDE);
+		    		if (seg->flags & (1 << ALWAYS_ABOVE_PLAYER)) tile->flags |= (1 << T_ALWAYS_ABOVE);
+		    		if (seg->flags & (1 << SHOULD_MERGE_WALL))   tile->flags |= (1 << T_MERGE_WALL);
+		    if (seg->flags & (1 << SHOULD_MERGE_FLOOR))  tile->flags |= (1 << T_MERGE_FLOOR);
+		}
+	    }
+	}
+	}
+
+	// 2. Stamp Interactables into Tile Grid
+	if (run->i) {
+	for (int i = 0; i < interactable_count; i++) {
+	    struct MapInteractableData *inter = &run->i[i];
+
+	    int x = inter->tile_position.x;
+	    int y = inter->tile_position.y;
+
+	    if (x >= 0 && x < width && y >= 0 && y < height) {
+		int tile_idx = y * width + x;
+		struct MapDecompTile *tile = &run->t[tile_idx];
+
+		tile->flags |= (1 << T_HAS_INTERACTABLE);
+		tile->interactable_gindx = inter->gindx;
+		tile->interactable_z = inter->z;
+	    }
+	}
+	}
 }
