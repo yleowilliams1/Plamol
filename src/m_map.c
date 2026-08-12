@@ -174,7 +174,13 @@ static void runtime_parser(struct config_pack p, void *ptr){
 			t_atoi(p.value, &m->e[entity_indx].world_spawn_y);
 		} else if(t_check(p.key, "GUID")){
 			t_atoi(p.value, &m->e[entity_indx].GUID);
-		} 
+		} else if(t_check(p.key, "Direction")){
+			t_atoi(p.value, (int *)&m->e[entity_indx].dir);
+			if(m->e[entity_indx].dir < 0 || m->e[entity_indx].dir > W_DIR_COUNT){
+				ERR_LOG(ERR_PARSE, "Invalid entity direction");
+				m->e[entity_indx].dir = W_NORTH;
+			}
+		}	
 	}
 	int interactable_indx;
 	if(sscanf(p.current_section, "interactable.%d", &interactable_indx) == 1){

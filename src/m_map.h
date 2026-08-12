@@ -96,6 +96,7 @@ struct MapEntityData{
 	int world_spawn_x;
 	int world_spawn_y;
 	int GUID;
+	enum TileDirections dir;
 };
 
 struct MapMetadata{

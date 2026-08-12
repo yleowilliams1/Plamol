@@ -48,13 +48,17 @@ bool p_instantiate_entities(struct MapPack m){
 		e->GUID = d->GUID;
 
 		e->e = e_grab_entity(einst[lindx].entity_gindx, true);
-		if(e->e.flags & ENT_INV){e->i = i_get_inv_proto(e->e.data[E_INV], true);}
-		if(e->e.flags & ENT_STAT){e->s = s_grab_stats(e->e.data[E_STAT], true);}
+		// enum EntityFlags values are BIT POSITIONS, not masks -- e_load_entity
+		// sets them with |= (1 << i). Testing flags & ENT_INV compared against
+		// the raw value 7, so it matched any entity with bit 0, 1 or 2 set
+		// (ENT_COMBAT, ENT_SPRITE or ENT_TEXT) and missed inventory entirely.
+		if(e->e.flags & (1u << ENT_INV)){e->i = i_get_inv_proto(e->e.data[E_INV], true);}
+		if(e->e.flags & (1u << ENT_STAT)){e->s = s_grab_stats(e->e.data[E_STAT], true);}
 
 		e->e.data[E_POSX] = d->world_spawn_x; 
 		e->e.data[E_POSY] = d->world_spawn_y; 
 		
-
+		e->e.data[E_DIRECTION] = d->dir;
 		// Eventually you want to keep
 		// a list of all loaded prototypes and then
 		// bulk free after the loop but for now

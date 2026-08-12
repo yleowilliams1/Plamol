@@ -4,6 +4,7 @@
 #include "i_inventory.h"
 #include "p_stats.h"
 #include "t_math.h"
+#include "m_map.h"
 
 struct LootData;
 
@@ -12,6 +13,7 @@ struct EntityInstance{
 	int GUID;
 	bool valid;
 	bool dirty;
+	enum TileDirections dir;
 	struct Entity e;
 	struct Inventory i;
 	struct BaseStats s;
