@@ -130,7 +130,7 @@ static void draw_entity(struct EntityInstance *e){
 	// Already world space -- no projection, and no rounding, since the
 	// position is integer pixels by design.
 	Vector2 pos = {(float)e->e.data[E_POSX], (float)e->e.data[E_POSY]};
-	l_draw_sprite(e->e.data[E_SPRITE], true, pos, 0, e->e.data[E_DIRECTION]);
+	l_draw_sprite(e->e.data[E_SPRITE], true, pos, e->animation, e->dir);
 }
 
 // Centre of the tile, in world space.

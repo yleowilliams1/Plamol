@@ -58,7 +58,10 @@ bool p_instantiate_entities(struct MapPack m){
 		e->e.data[E_POSX] = d->world_spawn_x; 
 		e->e.data[E_POSY] = d->world_spawn_y; 
 		
-		e->e.data[E_DIRECTION] = d->dir;
+		e->dir = W_NORTH;
+		// Default to idle
+		e->animation = 0;	
+
 		// Eventually you want to keep
 		// a list of all loaded prototypes and then
 		// bulk free after the loop but for now

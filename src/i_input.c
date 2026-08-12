@@ -8,6 +8,8 @@
 #include "e_error_handler.h"
 #include "t_gindex_tool.h"
 #include "w_window_manager.h"
+#include "t_math.h"
+
 #define INVALID_ENUM 10000
 static struct KeySet input[A_COUNT] = {0};
 void i_set_binding(enum KeyType type, enum Action action, int key);
@@ -46,6 +48,29 @@ bool i_input_released(enum Action action) {
     if(!input[action].is_bound){ return false; }
      i_update_input(action);
     return input[action].is_released;
+}
+
+vf2 i_get_input_vector(){
+	vf2 v = {0};
+	const float leftStickDeadzoneX = 0.1f;
+	const float leftStickDeadzoneY = 0.1f;
+	// Check joystick input manually
+	// first then check non-joystick
+	if(IsGamepadAvailable(0)){
+		float leftStickX = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X);
+		float leftStickY = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y);	
+                if (leftStickX > -leftStickDeadzoneX && leftStickX < leftStickDeadzoneX) leftStickX = 0.0f;
+                if (leftStickY > -leftStickDeadzoneY && leftStickY < leftStickDeadzoneY) leftStickY = 0.0f;
+	
+		v.x = leftStickX;
+		v.y = leftStickY;		
+	}
+	if(i_input_held(A_WALK_UP)){v.y = 1;};
+	if(i_input_held(A_WALK_DOWN)){v.y = -1;}
+	if(i_input_held(A_WALK_RIGHT)){v.x = 1;}
+	if(i_input_held(A_WALK_LEFT)){v.x = -1;}
+
+	return v;
 }
 
 float i_input_get_mouse_x() {

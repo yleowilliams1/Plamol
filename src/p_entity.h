@@ -22,7 +22,6 @@ enum EntityComponents{
 	E_POSY,
 	E_STAT,
 	E_INV,
-	E_DIRECTION,
 	ENTCOM_COUNT,
 };
 

@@ -2,6 +2,7 @@
 
 #include <raylib.h>
 #include <stdbool.h>
+#include "t_math.h"
 
 #define MAX_KEYS 4
 
@@ -46,6 +47,8 @@ struct parser_set{
 	enum KeyType type;
 	int key;
 };
+
+vf2 i_get_input_vector();
 
 bool i_input_pressed(enum Action action);
 bool i_input_held(enum Action action);

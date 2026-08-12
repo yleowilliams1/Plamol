@@ -8,6 +8,16 @@
 #include "t_strings.h"
 #include "m_render_map.h"
 #include "l_sprite_manager.h"
+#include "m_map.h"
+
+// I gotta go through this and clean alot of this up
+#define SEARCH_SIZE 256
+
+void e_update_entities(struct MapPack *map, int *pz_out, struct EntityInstance *e){
+	for(int i = 0; i < SEARCH_SIZE; i++){
+		
+	}	
+}
 
 bool e_consume_item(struct EntityInstance *e){
 	ERR_LOG(ERR_OK, "Consumed item");	

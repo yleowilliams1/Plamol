@@ -38,6 +38,7 @@ void g_load_gamestate(){
 
 void g_update_gamestate(){
 	update_input_handler();	
+	e_update_entities(&gstate.map, &gstate.player_z ,grab_entity_pool());
 }
 void  g_draw_gamestate(){
 	BeginDrawing();
