@@ -72,29 +72,24 @@ static void draw_floor(const struct MapDecompTile *tile, v2 tpos){
 	}
 	l_draw_sprite(tile->floor_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->floor_z), 0, 0);
 }
-
 static void draw_props(const struct MapDecompTile *tile, v2 tpos, int player_z){
 	if(!tile){return;}
 	if(fcheck(tile->flags, T_INVISIBLE)){return;}
+
 	if(fcheck(tile->flags, T_HAS_INTERACTABLE)){
 		if(tile->interactable_gindx < 0){
 			ERR_LOG(ERR_PARSE, "Tile %d.%d has T_HAS_INTERACTABLE but interactable_gindx is %d", tpos.x, tpos.y, tile->interactable_gindx);
 		} else {
-			int animation = fcheck(tile->flags, T_IS_CORNER) ? 0: 1;
-			l_draw_sprite(tile->interactable_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->interactable_z), animation, tile->dir);
+			l_draw_sprite(tile->interactable_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->interactable_z), 0, tile->dir);
 			// Don't draw the wall
 			return;
 		}
 	}
-	// Each element validates itself now. Previously one bad gindx anywhere
-	// on the tile threw away the whole tile, floor included.
 	if(fcheck(tile->flags, T_HAS_WALL)){
 		if(tile->wall_gindx < 0){
 			ERR_LOG(ERR_PARSE, "Tile %d.%d has T_HAS_WALL but wall_gindx is %d", tpos.x, tpos.y, tile->wall_gindx);
 		} else if(!(fcheck(tile->flags, T_HIDE_IF_ABOVE) && tile->wall_z > player_z)){
-			// Animation 0 is corners and 1 is straights
-			int animation = fcheck(tile->flags, T_IS_CORNER) ? 0 : 1;
-			l_draw_sprite(tile->wall_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->wall_z), animation, tile->dir);
+			l_draw_sprite(tile->wall_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->wall_z), 0, tile->dir);
 		}
 	}
 }

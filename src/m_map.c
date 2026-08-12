@@ -278,39 +278,36 @@ static void m_decompress_segments(struct MapRuntime *run, const struct MapMetada
 		    		int tile_idx = y * width + x;
 		    		struct MapDecompTile *tile = &run->t[tile_idx];
 				
-		    		bool is_edge_x = (x == min_x || x == max_x);
+				bool is_edge_x = (x == min_x || x == max_x);
 		    		bool is_edge_y = (y == min_y || y == max_y);
 		    		bool is_perimeter = is_edge_x || is_edge_y;
 		    		bool is_corner   = is_edge_x && is_edge_y;
 
 		    		// Wall Placement & Direction Resolution
 		    		bool place_wall = false;
-		    		bool place_corner = false;
-		    		enum WallDirections dir = W_NORTH;
+		    		// Default to a straight, not W_NORTH: W_NORTH is a corner
+		    		// frame now, so it's a bad fallback for the IS_WALLS
+		    		// no-direction-flags case below.
+		    		enum TileDirections dir = W_NORTH_EAST;
 
 		    		if ((seg->flags & (1 << HAS_WALLS_REC)) && is_perimeter) {
 					place_wall = true;
 					if (is_corner) {
-			    			// A corner is defined by BOTH edges that meet there,
-			    			// so it cannot be resolved by an x-or-y chain. Each
-			    			// of the four corners of a rectangle lands on a
-			    			// different vertex of the on-screen diamond, so the
-			    			// cardinal enum is still enough to name them.
-			    			place_corner = true;
+			    			// A corner is defined by BOTH edges that meet
+			    			// there, so resolve x AND y together, never as
+			    			// an x-or-y chain.
 			    			if (x == min_x) dir = (y == min_y) ? W_NORTH : W_EAST;
 			    			else            dir = (y == min_y) ? W_WEST  : W_SOUTH;
 					}
-					else if (y == min_y) dir = W_NORTH;
-					else if (y == max_y) dir = W_SOUTH;
-					else if (x == min_x) dir = W_EAST;
-					else if (x == max_x) dir = W_WEST;
+					else if (y == min_y) dir = W_NORTH_EAST;
+					else if (y == max_y) dir = W_SOUTH_WEST;
+					else if (x == min_x) dir = W_NORTH_WEST;
+					else if (x == max_x) dir = W_SOUTH_EAST;
 		    		} else if (seg->flags & (1 << IS_WALLS)) {
-					// These two were swapped relative to the branch above.
-					// min_x is W_EAST, max_x is W_WEST, same as HAS_WALLS_REC.
-					if ((seg->flags & (1 << WALL_IS_NORTH)) && y == min_y) { place_wall = true; dir = W_NORTH; }
-					else if ((seg->flags & (1 << WALL_IS_SOUTH)) && y == max_y) { place_wall = true; dir = W_SOUTH; }
-					else if ((seg->flags & (1 << WALL_IS_EAST)) && x == min_x) { place_wall = true; dir = W_EAST; }
-					else if ((seg->flags & (1 << WALL_IS_WEST)) && x == max_x) { place_wall = true; dir = W_WEST; }
+					if ((seg->flags & (1 << WALL_IS_NORTH)) && y == min_y) { place_wall = true; dir = W_NORTH_EAST; }
+					else if ((seg->flags & (1 << WALL_IS_SOUTH)) && y == max_y) { place_wall = true; dir = W_SOUTH_WEST; }
+					else if ((seg->flags & (1 << WALL_IS_EAST)) && x == min_x) { place_wall = true; dir = W_NORTH_WEST; }
+					else if ((seg->flags & (1 << WALL_IS_WEST)) && x == max_x) { place_wall = true; dir = W_SOUTH_EAST; }
 					else {
 			    			uint32_t dir_mask = (1 << WALL_IS_NORTH) | (1 << WALL_IS_SOUTH) |(1 << WALL_IS_EAST)  | (1 << WALL_IS_WEST);
 			    			if ((seg->flags & dir_mask) == 0) place_wall = true;
@@ -322,13 +319,7 @@ static void m_decompress_segments(struct MapRuntime *run, const struct MapMetada
 					tile->wall_gindx = seg->wall_gindx;
 					tile->wall_z = seg->z;
 					tile->dir = dir;
-					// Only flag a corner when a corner PIECE was placed.
-					// Setting it from geometry alone made every floor-only
-					// rectangle mark its four corner tiles as corners.
-					if (place_corner) { tile->flags |= (1 << T_IS_CORNER); }
-					else              { tile->flags &= ~(1u << T_IS_CORNER); }
 		    		}
-
 		    		// Floor Placement
 		    		if (seg->flags & (1 << HAS_FLOORS_REC)) {
 					tile->flags |= (1 << T_HAS_TILE);

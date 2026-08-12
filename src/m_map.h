@@ -25,7 +25,6 @@ enum TileFlags{
 	T_HAS_WALL,
 	T_HAS_TILE,
 	T_HAS_INTERACTABLE,
-	T_IS_CORNER,
 	T_WALL_COLLIDE,
 	T_FLOOR_COLLIDE,
 	T_ALWAYS_ABOVE,
@@ -38,11 +37,15 @@ enum TileFlags{
 // dir is passed straight to l_draw_sprite as the FRAME INDEX, for both the
 // corner row and the straight row, so this order must match the sheet's
 // left-to-right frame order. It does.
-enum WallDirections{
+enum TileDirections{
 	W_NORTH,
 	W_SOUTH,
 	W_EAST,
 	W_WEST,
+	W_NORTH_EAST,
+	W_SOUTH_WEST,
+	W_NORTH_WEST,
+	W_SOUTH_EAST,
 	W_DIR_COUNT,
 };
 struct MapSegmentData{
@@ -58,7 +61,7 @@ struct MapSegmentData{
 };
 struct MapDecompTile{
 	uint32_t flags;
-	enum WallDirections dir;
+	enum TileDirections dir;
 	int wall_gindx;
 	int wall_z;
 	int floor_gindx;
