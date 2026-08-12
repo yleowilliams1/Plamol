@@ -170,7 +170,7 @@ static void draw_props(const struct MapDecompTile *tile, v2 tpos, int player_z){
 		if(tile->interactable_gindx < 0){
 			ERR_LOG(ERR_PARSE, "Tile %d.%d has T_HAS_INTERACTABLE but interactable_gindx is %d", tpos.x, tpos.y, tile->interactable_gindx);
 		} else {
-			l_draw_sprite(tile->interactable_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->interactable_z), 0, 0);
+			l_draw_sprite(tile->interactable_gindx, true, m_tile_to_world(tpos.x, tpos.y, tile->interactable_z), 0, tile->dir);
 			// Don't draw the wall
 			return;
 		}
