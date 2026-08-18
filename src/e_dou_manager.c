@@ -25,6 +25,7 @@ char *e_dou_to_str(enum DouEnum type){
 		[DOU_LOOT] = "Loot",
 		[DOU_STAT] = "Stat",
 		[DOU_SPRITE] = "Sprite",
+		[DOU_INTERACTABLE] "Interactable",
 	};
 
 	return (char *)lokup[type];

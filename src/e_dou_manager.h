@@ -17,6 +17,7 @@ enum DouEnum{
 	DOU_LOOT,
 	DOU_STAT,
 	DOU_SPRITE,
+	DOU_INTERACTABLE,
 	DOU_COUNT,
 };
 
@@ -50,5 +51,5 @@ bool e_load_dou(struct DouManager *dou, struct DouLoader lod);
 bool e_unload_dou(struct DouManager *dou, enum DouEnum type);
 struct DouManager *e_create_dou_manager();
 void e_free_dou_manager(struct DouManager *mem);
-void e_load_dou_data(struct DouManager *mem, enum DouEnum dou, int gindx);
+bool e_load_dou_data(struct DouManager *mem, enum DouEnum dou, int gindx);
 bool e_free_dou_data(struct DouManager *mem, enum DouEnum dou, int gindx);

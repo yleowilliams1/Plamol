@@ -18,8 +18,6 @@ enum EntityComponents{
 	E_SPRITE,
 	E_TEXT,
 	E_LOOT,
-	E_POSX,
-	E_POSY,
 	E_STAT,
 	E_INV,
 	ENTCOM_COUNT,

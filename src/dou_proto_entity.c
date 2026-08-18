@@ -18,8 +18,6 @@ static const char *entitdata_lokup[ENTCOM_COUNT] = {
 	[E_SPRITE] = "sprite_gindx",
 	[E_TEXT] = "text_gindx",
 	[E_LOOT] = "loot_gindx",	
-	[E_POSX] = "x_pos",
-	[E_POSY] = "y_pos",
 	[E_STAT] = "stat_gindx",
 	[E_INV] = "inventory_gindx",
 };

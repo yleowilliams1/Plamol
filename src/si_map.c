@@ -8,7 +8,7 @@
 #include "e_engine_settings.h"
 #include "t_log_handler.h"
 #include "t_strings.h"
-
+#include "c_types.h"
 static void metadata_parser(struct config_pack p, void *ptr);
 static void data_parser(struct config_pack p, void *ptr);
 static bool m_decompress_segments(struct MapParsePackage *pckg);
@@ -61,16 +61,16 @@ struct MapPack *si_load_map(int gindx){
 	if(!metadata_parsed){LOG(LOG_ABORT, "Failed to load map[%s] metadata", path);return false;}
 	
 	int *meta = map->metadata;
-	map->entities = XCALLOC(0 , meta[M_ENTITY_COUNT] * sizeof(struct MapEntityData));
-	map->tiles = XCALLOC(0, meta[M_WIDTH] * meta[M_HEIGHT] * sizeof(struct MapDecompTile));
+	map->entities = XCALLOC(1, meta[M_ENTITY_COUNT] * sizeof(struct MapEntityData));
+	map->tiles = XCALLOC(1, meta[M_WIDTH] * meta[M_HEIGHT] * sizeof(struct MapDecompTile));
 
 	// Now that we have the metadata and the 
 	// allocated arrays we can parse the actual
 	// text file into memory 
 	struct MapParsePackage pckg = {
 		.map = map,
-		.segments = XCALLOC(0, meta[M_SEGMENT_COUNT] * sizeof(struct MapSegmentData)),
-		.interactables = XCALLOC(0, meta[M_INTERACTABLE_COUNT] * sizeof(struct MapInteractableData)),
+		.segments = XCALLOC(1, meta[M_SEGMENT_COUNT] * sizeof(struct MapSegmentData)),
+		.interactables = XCALLOC(1, meta[M_INTERACTABLE_COUNT] * sizeof(struct MapInteractableData)),
 	};
 	
 	bool data_parsed = t_config(&pckg, path, data_parser);

@@ -7,7 +7,7 @@
 #include "t_log_handler.h"
 #include "t_strings.h"
 #include "e_dou_manager.h"
-
+#include "c_types.h"
 static const char *base_lookup[] = {
 	[STR] = "strength",
 	[DEX] = "dexterity",

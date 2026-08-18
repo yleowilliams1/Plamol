@@ -2,7 +2,7 @@
 #include "t_math.h"
 #include <stdint.h>
 #include <stdbool.h>
-
+#include "c_types.h"
 enum SegmentFlags{
 	INVISIBLE, // Visiblity
 	IS_WALLS, // Means from start to end is all walls
@@ -32,17 +32,7 @@ enum TileFlags{
 	T_MERGE_FLOOR,
 	T_HIDE_IF_ABOVE,
 };
-enum TileDirections{
-	W_NORTH,
-	W_SOUTH,
-	W_EAST,
-	W_WEST,
-	W_NORTH_EAST,
-	W_SOUTH_WEST,
-	W_NORTH_WEST,
-	W_SOUTH_EAST,
-	W_DIR_COUNT,
-};
+
 enum MetadataProperties{
 	M_NORTH_EXIT,
 	M_SOUTH_EXIT,

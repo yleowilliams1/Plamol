@@ -1,35 +1,7 @@
 #pragma once
 #include <stdbool.h>
+#include "c_types.h"
 
-enum Stats{
-	STR,
-	DEX,
-	CON,
-	SOC,
-	INT,
-	WIS,
-	BSTAT_COUNT,
-};
-
-enum Dev{
-	PHYSICAL_COORDINATION,
-	WORD,
-	PROB_ANALYSIS,
-	SPATIAL,
-	MUSICAL,
-	NATURAL,
-	INTERPERSONAL,
-	INTRAPERSONAL,
-	INNOCENCE,
-	HEROISM,
-	LOVE,
-	AUTHORITARIAN,
-	AC,
-	DR,
-	MAX_HP,
-	INITIATIVE,
-	DERV_CAP
-};
 struct BaseStats{
 	int basestats[BSTAT_COUNT];
 };
