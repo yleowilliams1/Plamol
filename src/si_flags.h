@@ -1,9 +1,8 @@
 #pragma once
+#include "magic_numbers.h"
 #include <stdbool.h>
 #include <stdint.h>
 
-#define MAX_FLAGS 256
-#define MAX_FLAG_NAME 32
 
 struct Flag{
 	uint32_t hash;

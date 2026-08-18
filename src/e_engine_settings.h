@@ -1,27 +1,27 @@
 #pragma once
 #include <stdbool.h>
-enum EngStrings{
-	MAP_PATH,
-	MAP_METADATA_PATH,
-	TILE_PATH,
-	PORTRAIT_PATH,
-	FLAG_PATH,
-	ITEMS_PATH,
-	STATS_PATH,
-	INVENTORY_PATH,
-	INPUT_PATH,
-	GAMESTATE_PATH,
-	ENTITIES_PATH,
-	LOOT_PATH,
-	MAP_MESHES,
-	SPRITE_PATH,
-	SPRITE_META_PATH,
-	ENG_STR_COUNT,
-};
-struct EngineSettings{
-	char *strings[ENG_STR_COUNT];
+#include "e_dou_manager.h"
+
+enum SiEnum{
+	SI_FLAGS,
+	SI_STATE,
+	SI_INPUT,
+	SI_MAP,
+	SI_GAMESTATE,
+	SI_COUNT,
 };
 
-char *e_grab_str(enum EngStrings type);
-void e_free_setting();
-bool e_load_engine_settings();
+struct EngineSettings{
+	char *si_paths[SI_COUNT];
+	char *dou_paths[DOU_COUNT];
+	char *dou_formats[DOU_COUNT];
+	int dou_icounts[DOU_COUNT]; 
+};
+
+char *e_si_to_str(enum SiEnum type);
+void e_free_settings();
+void e_load_engine_settings();
+char *e_grab_sipath(enum SiEnum si);
+char *e_grab_doupath(enum DouEnum dou);
+char *e_grab_douformat(enum DouEnum dou);
+int e_grab_doucount(enum DouEnum dou);

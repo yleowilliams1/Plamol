@@ -48,14 +48,15 @@ struct parser_set{
 	int key;
 };
 
+struct InputManager{
+	struct KeySet input[A_COUNT];
+};
+
 vf2 i_get_input_vector();
 
 bool i_input_pressed(enum Action action);
 bool i_input_held(enum Action action);
 bool i_input_released(enum Action action);
-
-float i_input_get_mouse_x();
-float i_input_get_mouse_y();
 
 void i_update_input(enum Action action);
 

@@ -32,11 +32,6 @@ enum TileFlags{
 	T_MERGE_FLOOR,
 	T_HIDE_IF_ABOVE,
 };
-// This is specifically 
-// signifying the outward facing plane
-// dir is passed straight to l_draw_sprite as the FRAME INDEX, for both the
-// corner row and the straight row, so this order must match the sheet's
-// left-to-right frame order. It does.
 enum TileDirections{
 	W_NORTH,
 	W_SOUTH,
@@ -47,6 +42,21 @@ enum TileDirections{
 	W_NORTH_WEST,
 	W_SOUTH_EAST,
 	W_DIR_COUNT,
+};
+enum MetadataProperties{
+	M_NORTH_EXIT,
+	M_SOUTH_EXIT,
+	M_WEST_EXIT,
+	M_EAST_EXIT,
+	
+	M_ENTITY_COUNT,
+	M_INTERACTABLE_COUNT,
+	M_SEGMENT_COUNT,
+
+	M_WIDTH,
+	M_HEIGHT,	
+	
+	M_META_COUNT,
 };
 struct MapSegmentData{
 	uint32_t flags;	
@@ -74,47 +84,23 @@ struct MapInteractableData{
 	int z;
 	int gindx;
 };
-
-
-enum MetadataProperties{
-	M_NORTH_EXIT,
-	M_SOUTH_EXIT,
-	M_WEST_EXIT,
-	M_EAST_EXIT,
-	
-	M_ENTITY_COUNT,
-	M_INTERACTABLE_COUNT,
-	M_SEGMENT_COUNT,
-
-	M_WIDTH,
-	M_HEIGHT,	
-	
-	M_META_COUNT,
-};
 struct MapEntityData{
 	int gindx;
-	int world_spawn_x;
-	int world_spawn_y;
+	int tile_spawn_x;
+	int tile_spawn_y;
 	int GUID;
 	enum TileDirections dir;
 };
 
-struct MapMetadata{
-	int meta[M_META_COUNT];	
-};
-struct MapRuntime{
-	struct MapEntityData *e; // Entity pos and info unconfided to the grid
-	struct MapInteractableData *i; // Doors traps puzzels confined to the grid etc.
-	struct MapDecompTile *t; // Walls ceilings and floors confined to the grid
-	struct MapSegmentData *s;
-};
-
 struct MapPack{
-	struct MapMetadata m;
-	struct MapRuntime d;
-
+	int metadata[M_META_COUNT];
+	struct MapEntityData *entities; 
+	struct MapDecompTile *tiles; 
 };
-
-bool m_free_map(int gindx);
-bool m_load_map(int gindx);
-struct MapPack m_get_map(int gindx, bool autoload);
+struct MapParsePackage{
+	struct MapPack *map;
+	struct MapSegmentData *segments;
+	struct MapInteractableData *interactables; 
+};
+bool m_load_map();
+struct MapPack m_get_map();

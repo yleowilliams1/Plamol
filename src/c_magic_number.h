@@ -1,0 +1,14 @@
+#pragma once
+
+#define MAX_FLAGS 256
+#define MAX_FLAG_NAME 32
+
+#define ENTITY_PROTOTYPE_CAP 128
+
+#define HOTBAR_SIZE 8
+#define INVENTORY_SIZE 32
+#define EMPTY_SLOT -1
+
+#define LOOT_MAX_SIZE 64
+
+#define ANIMATION_COUNT_INVALID -6890

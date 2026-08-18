@@ -3,101 +3,132 @@
 #include <stdlib.h>
 #include <string.h>
 #include "e_engine_settings.h"
-#include "i_input.h"
 #include "t_config_tool.h"
-#include "e_error_handler.h"
+#include "t_log_handler.h"
 #include "t_strings.h"
 #define INI_PATH "data/engine.ini"
-#define MAX_BINDS 64
+static void engine_parser(struct config_pack p, void *ptr);
 
 static struct EngineSettings *settings;
 
-static const char *str_lokup[ENG_STR_COUNT] = {
-	[MAP_PATH] = "map_path",
-	[MAP_METADATA_PATH] = "map_metadata_path",
-	[TILE_PATH] = "tile_path",
-	[PORTRAIT_PATH] = "portrait_path",
-	[FLAG_PATH] = "flag_path",
-	[ITEMS_PATH] = "items_path",
-	[STATS_PATH] = "stats_path",
-	[INVENTORY_PATH] = "inventory_path",
-	[INPUT_PATH] = "input_path",
-	[GAMESTATE_PATH] = "gamestate_path",
-	[ENTITIES_PATH] = "entites_path",
-	[LOOT_PATH] = "loot_path",
-	[MAP_MESHES] = "map_meshes",
-	[SPRITE_PATH] = "sprite_path",
-	[SPRITE_META_PATH] = "sprite_meta_path",
+char *e_si_to_str(enum SiEnum type){
+	if(type < 0 || type >= SI_COUNT){LOG(LOG_OUTOFBOUNDS, "%s is not a valid singles enum", type);}
+	switch(type){
+		case SI_FLAGS:
+			return "Flags";
+			break;
+		case SI_STATE:
+			return "State";
+			break;
+		case SI_INPUT:
+			return "Input";
+			break;
+		case SI_MAP:
+			return "Map";
+			break;
+		case SI_GAMESTATE:
+			return "Gamestate";
+			break;
+		default:
+			break;
+	}
+	LOG(LOG_NULL, "Could not find enum %s. Returning NULL string", type);
+	return NULL;
 };
-
-char *e_grab_str(enum EngStrings type){
-	if(type >= ENG_STR_COUNT || type < 0){
-		ERR_LOG(ERR_OUTOFBOUNDS, "Tried to access out of bounds string at index %d.", (int)type);		
-		ERR_LOG(ERR_NULL, "Returning NULL to engine settings string request due to out of bounds request at %d.", (int)type);
-		return NULL;
+void e_free_settings(){
+	if(!settings){LOG(LOG_FREE, "Can't free settings since it's already NULL");return;}
+	for(int i = 0; i < SI_COUNT; i++){
+		if(!settings->si_paths[i]){continue;}
+		free(settings->si_paths[i]);
+		settings->si_paths[i] = NULL;
 	}
-	if(!settings){
-		ERR_LOG(ERR_FUCKED, "Tried to access NULL settings.");
-		return NULL;
+	for(int i = 0; i < DOU_COUNT; i++){
+		if(settings->dou_paths[i]){free(settings->dou_paths[i]);}
+		if(settings->dou_formats[i]){free(settings->dou_formats[i]);}
+		settings->dou_icounts[i] = 0;
+		settings->dou_paths[i] = NULL;
 	}
-	char *str = settings->strings[type];
-	if(!str){
-		ERR_LOG(ERR_FUCKED, "Tried to access engine strings while engine string %d:%s failed to load.", type, str_lokup[type]);
-				return NULL;
-	}
-
-	return str;
-}
-
-void e_free_setting(){
-	if(!settings){
-		ERR_LOG(ERR_NULL, "Tried to double free settings");
-		return;		
-	}	
-
-	for(int i = 0; i < ENG_STR_COUNT; i++){
-		if(!settings->strings[i]){continue;}
-		free(settings->strings[i]);
-		settings->strings[i] = NULL;
-	}
-	
-	ERR_LOG(ERR_OK, "Freed Settings succesfully!");
-	
 	free(settings);
 	settings = NULL;
+	LOG(LOG_FREE, "Freed settings");
 }
-static void engine_parser(struct config_pack p, void *ptr){
-	struct EngineSettings *s = (struct EngineSettings *)ptr;
-	if(!s){
-		ERR_LOG(ERR_FUCKED, "took null pointer in parser, should not be possible. If you see this, you fucked up big time.");	
-		return;
-	}
-	if(t_check(p.current_section, "general")){
-		for(int i = 0; i < ENG_STR_COUNT; i++){
-			char *str = (char *)str_lokup[i];
-			if(!str){
-				ERR_LOG(ERR_FUCKED, "String lookup failed due to index %d not being present in the array.", i); 
-				continue;
-			}
-			if(t_check(p.key, str)){
-				t_cpy(&s->strings[i], p.value);	
-			}			
-		}	
-	}
-}
-bool e_load_engine_settings(){
+void e_load_engine_settings(){
 	if(settings){
-		ERR_LOG(ERR_RELOAD, "Attempted to reload engine settings while already allocated");
-		e_free_setting();
+		e_free_settings();
 	}
 
 	settings = XCALLOC(1, sizeof(struct EngineSettings));
-
-	bool conf_win = t_config((void *)settings, INI_PATH, engine_parser); 
+	bool configured = t_config(settings, INI_PATH, engine_parser);
+	if(!configured){LOG(LOG_ABORT, "t_config return false. Configuration failed"); return;}
+	LOG(LOG_LOAD, "Loading engine settings at relative path from executable %s", INI_PATH);
 	
-	ERR_LOG(ERR_OK, "Succesfully Loaded engine settings!");
-	// Most likely if the config failes then its caught
-	// before this return to main
-	// but if it isn't main will need to crash to catch it.
-	return conf_win;
+	for(int i = 0; i < SI_COUNT; i++){
+		if(settings->si_paths[i] == NULL){
+			LOG(LOG_NULL, "%s didn't load and is currently NULL", e_si_to_str(i));
+		}
+	}
+	for(int i = 0; i < DOU_COUNT; i++){
+		if(settings->dou_paths[i] == NULL){
+			LOG(LOG_NULL, "%s format didn't load and is currently NULL", e_dou_to_str(i));
+		}
+		if(settings->dou_formats[i] == NULL){
+			LOG(LOG_NULL, "%s format didn't load and is currently NULL", e_dou_to_str(i));
+		}
+		if(settings->dou_icounts[i] == 0){
+			LOG(LOG_NULL, "%s count is current set to 0", e_dou_to_str(i));
+		}
+	}
+}
+
+char *e_grab_sipath(enum SiEnum si){
+	if(!settings){LOG(LOG_NULL, "Settings is NULL");return NULL;}
+	return settings->si_paths[si];	
+}
+char *e_grab_doupath(enum DouEnum dou){
+	if(!settings){LOG(LOG_NULL, "Settings is NULL");return NULL;}
+	return settings->dou_paths[dou];
+
+}
+char *e_grab_douformat(enum DouEnum dou){
+	if(!settings){LOG(LOG_NULL, "Settings is NULL");return NULL;}
+	return settings->dou_formats[dou];
+}
+int e_grab_doucount(enum DouEnum dou){
+	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 0;}
+	return settings->dou_icounts[dou];
+}
+
+static void engine_parser(struct config_pack p, void *ptr){
+	struct EngineSettings *s = ptr;
+	if(!s){LOG(LOG_NULL, "NULL settings in parser");return;}
+	if(t_check(p.current_section, "Paths")){
+		for(int i = 0; i < SI_COUNT; i++){
+			if(!t_check(p.key, e_si_to_str(i))){continue;}
+			t_cpy(&s->si_paths[i], p.value);
+		}
+		for(int i = 0; i < DOU_COUNT; i++){
+			if(!t_check(p.key, e_dou_to_str(i))){continue;}
+			t_cpy(&s->dou_paths[i], p.value);
+		}
+	}
+	if(t_check(p.current_section, "Memory")){
+		for(int i = 0; i < DOU_COUNT; i++){
+			size_t size = 128;
+			char buf[size];
+			char *base = e_dou_to_str(i); 
+			t_snprintf(buf, size, NULL, "%s%s", base, "Count");	
+			if(!t_check(p.key, buf)){continue;}
+			t_atoi(p.value, &s->dou_icounts[i]);
+		}
+	}
+	if(t_check(p.current_section, "Format")){
+		for(int i = 0; i < DOU_COUNT; i++){
+			size_t size = 128;
+			char buf[size];
+			char *base = e_dou_to_str(i); 
+			t_snprintf(buf, size, NULL, "%s%s", base, "Format");	
+			if(!t_check(p.key, buf)){continue;}
+			t_cpy(&s->dou_formats[i], p.value);
+		}
+	}
 }

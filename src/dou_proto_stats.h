@@ -34,7 +34,5 @@ struct BaseStats{
 	int basestats[BSTAT_COUNT];
 };
 
-bool t_load_stat(int gindx);
-bool t_free_stat(int gindx);
-struct BaseStats s_grab_stats(int gindx, bool autoload);
-bool p_get_dev(int *b, enum Dev d, int *out);
+struct DouLoader;
+struct DouLoader dou_stat();

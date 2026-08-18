@@ -72,24 +72,17 @@ vf2 i_get_input_vector(){
 
 	return v;
 }
-
-float i_input_get_mouse_x() {
-    return wcnfx(GetMouseX());
-}
-
-float i_input_get_mouse_y() {
-    return wcnfy(GetMouseY());
-}
-
 static void input_parser(struct config_pack p, void *ptr){
+	if(!ptr){ERR_LOG(ERR_NULL, "NULL parse_set in parser"); return;}
 	struct parser_set *set = (struct parser_set *)ptr;
 	
 	int bind_indx = NULL_INDX;
 	if(sscanf(p.current_section, "bind.%d", &bind_indx) != 1){
+		ERR_LOG(ERR_PARSE, "Unknown section [%s]", p.current_section);
 		return;
 	}
 	if(bind_indx < 0 || bind_indx >= (MAX_KEYS * A_COUNT)){
-		ERR_LOG(ERR_PARSE, "To many binds");
+		ERR_LOG(ERR_PARSE, "Bind indx %d is invalid", bind_indx);
 		return;
 	}
 

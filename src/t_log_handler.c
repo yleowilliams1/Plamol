@@ -6,7 +6,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
-#include "e_error_handler.h"
+#include "t_log_handler.h"
 #define COLOR_RED    "\x1b[31m"
 #define COLOR_YELLOW "\x1b[33m"
 #define COLOR_GREEN  "\x1b[32m"
@@ -17,21 +17,24 @@ static FILE *log_file = NULL;
 /*Todo
  * Make this error thing protable to windows. Right now the posix functions will fail silently.
  * */
-static enum ER_LVL severity(enum ER_CODE code){
+static enum LOG_LVL severity(enum LOG_CODE code){
 	switch(code){
-		case ERR_OK:	return LVL_FINE;
-		case ERR_ALLOC: return LVL_CRASH;
-		case ERR_NO_FILE: return LVL_CRITICAL;
-		case ERR_PARSE:   return LVL_CRITICAL;
-		case ERR_INDX:    return LVL_WARNING;
-		case ERR_NULL:    return LVL_WARNING;
-		case ERR_RELOAD:  return LVL_WARNING;
-		case ERR_FUCKED: return LVL_CRASH;
-		case ERR_OUTOFBOUNDS: return LVL_WARNING;
+		case LOG_LOAD:	return LVL_FINE;
+		case LOG_FREE:  return LVL_FINE;
+		case LOG_SET:   return LVL_FINE;
+		case LOG_GET:   return LVL_FINE;
+		case LOG_ALLOC: return LVL_CRASH;
+		case LOG_NO_FILE: return LVL_CRITICAL;
+		case LOG_PARSE:   return LVL_CRITICAL;
+		case LOG_INDX:    return LVL_WARNING;
+		case LOG_NULL:    return LVL_WARNING;
+		case LOG_RELOAD:  return LVL_WARNING;
+		case LOG_ABORT: return LVL_CRASH;
+		case LOG_OUTOFBOUNDS: return LVL_WARNING;
 		default: return LVL_WARNING;
 	}
 }
-static const char *sev_label(enum ER_LVL lvl){
+static const char *sev_label(enum LOG_LVL lvl){
 	switch(lvl){
 		case LVL_FINE: return "FINE";
 		case LVL_WARNING: return "WARNING";
@@ -40,21 +43,24 @@ static const char *sev_label(enum ER_LVL lvl){
 		default: return "UNKOWN";
 	}
 }
-static const char *code_label(enum ER_CODE code){
+static const char *code_label(enum LOG_CODE code){
 	switch (code){
-		case ERR_OK: return "OK";
-		case ERR_ALLOC: return "ALLOC";
-		case ERR_NO_FILE: return "NO_FILE";
-		case ERR_PARSE: return "PARSER";
-		case ERR_INDX: return "INDX";
-		case ERR_NULL: return "NULL";
-		case ERR_RELOAD: return "RELOAD";
-		case ERR_FUCKED: return "FUCKED";
-		case ERR_OUTOFBOUNDS: return "OUT_OF_BOUNDS";
+		case LOG_LOAD: return "LOAD";
+		case LOG_FREE: return "FREE";
+		case LOG_SET: return "SET";
+		case LOG_GET: return "GET";
+		case LOG_ALLOC: return "ALLOC";
+		case LOG_NO_FILE: return "NO_FILE";
+		case LOG_PARSE: return "PARSER";
+		case LOG_INDX: return "INDX";
+		case LOG_NULL: return "NULL";
+		case LOG_RELOAD: return "RELOAD";
+		case LOG_ABORT: return "ABORT";
+		case LOG_OUTOFBOUNDS: return "OUT_OF_BOUNDS";
 		default: return "UNKOWN";
 	}
 }
-static const char *lvl_col(enum ER_LVL lvl){
+static const char *lvl_col(enum LOG_LVL lvl){
 	switch(lvl){
 		case LVL_FINE: return COLOR_GREEN;
 		case LVL_WARNING: return COLOR_YELLOW;
@@ -82,14 +88,14 @@ void err_init(const char *path){
 	}
 }
 
-void err_log(enum ER_CODE code, const char *file, int line, const char *func, const char *fmt, ...){
+void log_func(enum LOG_CODE code, const char *file, int line, const char *func, const char *fmt, ...){
 	char msg[512];
 	va_list args;
 	va_start(args, fmt);
 	vsnprintf(msg, sizeof(msg), fmt, args);
 	va_end(args);
 	
-	enum ER_LVL lvl = severity(code);
+	enum LOG_LVL lvl = severity(code);
 	const char *str_code = code_label(code);
 	const char *str_lvl  = sev_label(lvl);
 
@@ -119,23 +125,23 @@ fprintf(stderr, "[%s:%s%s%s] %s (%s:%d in %s())\n",
 // NO REALLOC. REALLOC IS FOR COWARDS.
 void *xmalloc_impl(size_t size, const char *file, int line, const char *func){
 	if(size == 0){
-		err_log(ERR_INDX, file, line , func, "xmalloc called with size 0");
+		log_func(LOG_INDX, file, line , func, "xmalloc called with size 0");
 		return NULL;
 	}
 	void *p = malloc(size);
 	if(!p){
-		err_log(ERR_ALLOC, file, line, func, "malloc failed for %zu bytes", size);
+		log_func(LOG_ALLOC, file, line, func, "malloc failed for %zu bytes", size);
 	}
 	return p;
 }
 void *xcalloc_impl(size_t count, size_t size, const char *file, int line, const char *func){
 	if(size == 0){
-		err_log(ERR_INDX, file, line, func, "xcalloc called with size 0");
+		log_func(LOG_INDX, file, line, func, "xcalloc called with size 0");
 		return NULL;
 	}
 	void *p = calloc(count, size);
 	if(!p){
-		err_log(ERR_ALLOC, file, line, func, "calloc failed for %zu x %zu bytes", count, size);
+		log_func(LOG_ALLOC, file, line, func, "calloc failed for %zu x %zu bytes", count, size);
 	}
 	return p;
 }

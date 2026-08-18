@@ -5,31 +5,35 @@
 #include "t_config_tool.h"
 #include "t_gindex_tool.h"
 #include "t_strings.h"
-#include "e_error_handler.h"
+#include "t_log_handler.h"
 
 bool t_check(char *line, char *arg){
 	// These arguments could return valid strings
 	// with no null terminatino and just silently fail.
 	// Fix later
 	if(line == NULL){
-		ERR_LOG(ERR_PARSE, "Line argument was NULL!");
+		LOG(LOG_PARSE, "Line argument was NULL!");
 		return false;
 	}
 	if(arg == NULL){
-		ERR_LOG(ERR_PARSE, "Arg argument was NULL");
+		LOG(LOG_PARSE, "Arg argument was NULL");
 		return false;
 	}
 	
 	return strcmp(line, arg) == 0;
 }
 
-bool t_config(void *ptr, char *path, ParserType func){
+bool t_config(void *ptr, char *path, Loader func){
 	struct config_pack pack = {0};
 	
-	if(!path){ERR_LOG(ERR_FUCKED, "Passed NULL path to config");}
-	
+	// There isn't need to check if the ptr is NULL
+	// since it's a valid use case since t_config
+	// never deferences it just passes it
+	if(!path){LOG(LOG_NULL, "Passed NULL path to config"); return false;}
+	if(!func){LOG(LOG_NULL, "Passed NULL loader to config"); return false;}
+
 	FILE *f = fopen(path, "r");
-	if(!f){ERR_LOG(ERR_FUCKED, "Failed to open path %s", path);}
+	if(!f){LOG(LOG_ABORT, "Failed to open path %s. Aborting", path);}
  
 	while(fgets(pack.line, sizeof(pack.line), f)){
 		if(pack.line[0] == '\n' || pack.line[0] == '#' || pack.line[0] == ';'){continue;}
@@ -62,74 +66,79 @@ bool t_config(void *ptr, char *path, ParserType func){
 	   		if(v != pack.value){
 				memmove(pack.value, v, len + 1); // +1 to include the null terminator
 	    		}
-	    		if(!func){ERR_LOG(ERR_FUCKED, "Passed NULL function ptr to config");}
+			
 			func(pack, ptr);	
 		}
 	}
 	fclose(f);
 	return true;
 }
-char *t_ini_plus_indx(char *base,int indx){
-	if(!base){
-		ERR_LOG(ERR_FUCKED, "Called with NULL base path");
-	}
+char *t_format_path(char *base, char *format, int num){
+	if(!base){LOG(LOG_NULL, "Passed NULL base string");}
+	if(!format){LOG(LOG_NULL, "Passed NULL format string");}
+
 	size_t base_len = strlen(base);
 	bool needs_slash = (base_len == 0 || base[base_len - 1] != '/');
 	
 	size_t needed = 0;
-	const char *fmt = needs_slash ? "%s/%u.ini" : "%s%u.ini";
+	const char *fmt = needs_slash ? "%s/%u.%s" : "%s%u.%s";
 
-	if(!t_snprintf(NULL, 0, &needed, fmt, base, (unsigned int)indx)){
-		ERR_LOG(ERR_FUCKED, "failed to compute length");
+	if(!t_snprintf(NULL, 0, &needed, fmt, base, (unsigned int)num, format)){
+		LOG(LOG_PARSE, "failed to compute length");
+		return NULL;
 	}
 
 	char *file = XMALLOC(needed + 1);
-	if(!file){
-		ERR_LOG(ERR_FUCKED, "No clue how this is being called. XMALLOC didn't crash and returned a NULL file?");
-	}
-	if(!t_snprintf(file, needed + 1, NULL, fmt, base, (unsigned int)indx)){
+	
+	if(!t_snprintf(file, needed + 1, NULL, fmt, base, (unsigned int)num, format)){
 		free(file);
-		ERR_LOG(ERR_FUCKED, "Failed to write buffer");
+		LOG(LOG_NULL, "Failed to write buffer");
+		return NULL;
 	}
 	
 	return file;
 }
-char *t_png_plus_indx(char *base,int indx){
-	if(!base){
-		ERR_LOG(ERR_FUCKED, "Called with NULL base path");
-	}
-	size_t base_len = strlen(base);
-	bool needs_slash = (base_len == 0 || base[base_len - 1] != '/');
+bool t_handle_dou_loading(struct DouLoadData data){
+	if(!data.iman){LOG(LOG_NULL, "Passed NULL index manager"); return false;}
+	if(!data.iarr){LOG(LOG_NULL, "Passed NULL iarr"); return false;}
+	if(!data.path){LOG(LOG_NULL, "Passed NULL path"); return false;}
+	if(!data.format){LOG(LOG_NULL, "Passed NULL format"); return false;}
 	
-	size_t needed = 0;
-	const char *fmt = needs_slash ? "%s/%u.png" : "%s%u.png";
-
-	if(!t_snprintf(NULL, 0, &needed, fmt, base, (unsigned int)indx)){
-		ERR_LOG(ERR_FUCKED, "failed to compute length");
-	}
-
-	char *file = XMALLOC(needed + 1);
-	if(!file){
-		ERR_LOG(ERR_FUCKED, "No clue how this is being called. XMALLOC didn't crash and returned a NULL file?");
-	}
-	if(!t_snprintf(file, needed + 1, NULL, fmt, base, (unsigned int)indx)){
-		free(file);
-		ERR_LOG(ERR_FUCKED, "Failed to write buffer");
-	}
+	int free_lindx = t_find_free_lindx(data.iman, data.cap);
+	if(!t_indxvalid(data.cap, free_lindx)){LOG(LOG_NULL, "Found free lindx %s in not valid", free_lindx); return false;}
 	
-	return file;
+	// Find the free slot	
+	void *slot = (char *)data.iarr + (size_t)free_lindx * data.element_size;
+	if(data.init){data.init(slot);}
+
+	// Now actually run the loader
+	char *path = t_format_path(data.path, data.format, free_lindx);
+	if(!path){LOG(LOG_NULL, "t_format_path failed with %s path and %s format and free_lindx %d", data.path, data.format, free_lindx); return false;}
+	bool configured = t_config(slot, path, data.loader);
+	if(!configured){LOG(LOG_PARSE, "Failed to configure %s", path); free(path); return false;}
+	
+	// Now run the post load
+	if(data.pload){data.pload(slot);}	
+
+	LOG(LOG_LOAD, "Loading path %s", path);	
+	free(path);
+	return true;
 }
-bool t_loader(int gindx, struct local_indx *iman, ParserType func, char *path, void *ptr, int lindx){
-	if(lindx == NULL_INDX){ERR_LOG(ERR_PARSE, "Passed NULL lindx"); return false;}
-	// Can't be null
-	char *file = t_ini_plus_indx(path, gindx);
+bool t_handle_dou_freeing(struct DouFreeData data){
+	if(!data.iman){LOG(LOG_NULL, "Passed NULL iman");return false;}
+	if(!data.iarr){LOG(LOG_NULL, "Passed NULL iarr");return false;}
 
-	ERR_LOG(ERR_OK, "Loading %s", file);
-	if(t_config(ptr, file, func)){
-		free(file);
-		return true;
+	int lindx;
+	if(data.gindx){
+		lindx = t_gindx_to_lindx(data.iman, data.cap, *data.gindx);
+		if(!t_indxvalid(data.cap, lindx)){LOG(LOG_NULL, "Failed to convert lindx %d to gindx", lindx); return false;}
 	}
-	ERR_LOG(ERR_PARSE, "Parse failed!");
-	free(file);
-	return false;
-}	
+	if(data.lindx){lindx = *data.lindx;}
+	if(!data.lindx && !data.gindx){LOG(LOG_NULL, "Both lindx and gindx pointers are null.");return false;}	
+	void *slot = (char *)data.iarr + lindx * data.element_size;
+	if(data.freer){data.freer(slot);}	
+	memset(slot, 0, data.element_size);
+	bool freed = t_lfree_lindx(data.iman, data.cap, lindx);
+	if(!freed){LOG(LOG_NULL, "Failed to free %d", lindx);return false;}
+	return true;
+}

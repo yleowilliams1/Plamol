@@ -1,0 +1,12 @@
+c: constants
+
+dou: dou just stands for double structs. doubles in this context means data (often prototypes) with a main data block and a seperate gindx tracker.
+
+e: engine 
+
+p: play
+
+si: singles. Single data blocks with no gindx tracking
+sm: state machine states
+
+t: tools

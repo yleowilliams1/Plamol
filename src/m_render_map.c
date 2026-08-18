@@ -6,16 +6,12 @@
 #include "m_map.h"
 #include "e_error_handler.h"
 #include "p_entity_instance.h"
-// One z level must equal the on-screen rise of one wall block or stacked
-// levels won't sit flush. Measured against data/sprites/1.png: a floor drawn
-// at z+1 lands exactly on the wall tops at 56, not 100.
+
 #define Z_HEIGHT 56
 
 #define TILE_X 64
 #define TILE_Y 32
 
-// Entities drawn per frame. The pool is 256; anything past this is dropped
-// with a warning rather than smashing the stack.
 #define MAX_DRAW_ENTITIES 256
 
 // One entity queued for drawing, keyed by the same depth the tiles sort on.
@@ -99,11 +95,6 @@ static int collect_entities(struct EntityInstance *pool, int ent_size, struct En
 			ERR_LOG(ERR_OUTOFBOUNDS, "More than %d drawable entities, dropping the rest", MAX_DRAW_ENTITIES);
 			break;
 		}
-		// E_POSX/E_POSY are WORLD pixels, not tile indices, so the depth key
-		// has to be recovered from the projection. Only world.y depends on
-		// (tile_x + tile_y): it is that sum times TILE_Y/2, so dividing by
-		// TILE_Y/2 gives the band back. world.x can't help -- it encodes
-		// (tile_x - tile_y), which is constant along a depth band.
 		int depth = world_to_depth(pool[i].e.data[E_POSY]);
 		// Off-map entities still draw; clamping only decides which band
 		// they merge into, never where they land on screen.
@@ -130,7 +121,7 @@ static void draw_entity(struct EntityInstance *e){
 	// Already world space -- no projection, and no rounding, since the
 	// position is integer pixels by design.
 	Vector2 pos = {(float)e->e.data[E_POSX], (float)e->e.data[E_POSY]};
-	l_draw_sprite(e->e.data[E_SPRITE], true, pos, e->animation, e->dir);
+	l_draw_sprite(e->e.data[E_SPRITE], true, m_tile_to_world(pos.x, pos.y,), e->animation, e->dir);
 }
 
 // Centre of the tile, in world space.

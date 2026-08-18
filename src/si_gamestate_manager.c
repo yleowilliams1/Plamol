@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "g_gamestate_manager.h"
 #include "e_engine_settings.h"
-#include "e_error_handler.h"
+#include "t_log_handler.h"
 #include "t_config_tool.h"
 #include "t_strings.h"
 #include "p_instantiator.h"

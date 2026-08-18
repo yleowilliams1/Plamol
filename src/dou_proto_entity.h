@@ -29,6 +29,7 @@ struct Entity{
 	int data[ENTCOM_COUNT];
 	uint32_t flags;
 };
-bool e_free_entity(int gindx);
-bool e_load_entity(int gindx);
-struct Entity e_grab_entity(int gindx, bool autoload);
+
+struct DouLoader;
+
+struct DouLoader dou_entity();
