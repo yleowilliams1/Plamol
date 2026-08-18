@@ -3,18 +3,15 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
-#include "m_map.h"
+#include "si_map.h"
 #include "t_config_tool.h"
 #include "e_engine_settings.h"
-#include "e_error_handler.h"
+#include "t_log_handler.h"
 #include "t_strings.h"
 
 static void metadata_parser(struct config_pack p, void *ptr);
 static void data_parser(struct config_pack p, void *ptr);
-
 static bool m_decompress_segments(struct MapParsePackage *pckg);
-
-struct MapPack loaded_map = {0};
 
 static const char *metadata_lokup[M_META_COUNT] = {
 	[M_NORTH_EXIT] = "north_map",
@@ -44,40 +41,43 @@ static const char *segment_flag_lokup[SEGMENT_FLAGS_COUNT] = {
 	[HIDE_IF_ABOVE_PLAYER] = "hide_if_above_player",
 };
 
-bool m_free_map(){
-	if(loaded_map.entities){free(loaded_map.entities);}
-	if(loaded_map.tiles){free(loaded_map.tiles);}	
-	loaded_map = (struct MapPack){0};	
+bool si_free_map(struct MapPack *map){
+	if(!map){LOG(LOG_NULL, "Map is NULL can't free");}
+	if(map->entities){free(map->entities);}
+	if(map->tiles){free(map->tiles);}	
+	free(map);
+	map = NULL;
 	return true; 
 }
 
-bool m_load_map(int gindx){
-	// Needs to use gindx
+struct MapPack *si_load_map(int gindx){
+	struct MapPack *map = XCALLOC(1, sizeof(struct MapPack));
+	char *base = e_grab_sipath(SI_MAP);
+	if(!base){LOG(LOG_NULL, "e_grab_sipath returned NULL"); return NULL;}
 	
-	// Free the map
-	m_free_map();
-	bool metadata_parsed = t_config(&loaded_map.metadata, e_grab_str(MAP_PATH), metadata_parser);
-	// Crashes the game
-	if(!metadata_parsed){ERR_LOG(ERR_FUCKED, "Failed to load map[%s] metadata", e_grab_str(MAP_PATH)); return false;}
+	char *path = t_format_path(base, ".ini", gindx);
+
+	bool metadata_parsed = t_config(map->metadata, path ,metadata_parser);
+	if(!metadata_parsed){LOG(LOG_ABORT, "Failed to load map[%s] metadata", path);return false;}
 	
-	int *meta = loaded_map.metadata;
-	loaded_map.entities = XCALLOC(0 , meta[M_ENTITY_COUNT] * sizeof(struct MapEntityData));
-	loaded_map.tiles = XCALLOC(0, meta[M_WIDTH] * meta[M_HEIGHT] * sizeof(struct MapDecompTile));
+	int *meta = map->metadata;
+	map->entities = XCALLOC(0 , meta[M_ENTITY_COUNT] * sizeof(struct MapEntityData));
+	map->tiles = XCALLOC(0, meta[M_WIDTH] * meta[M_HEIGHT] * sizeof(struct MapDecompTile));
 
 	// Now that we have the metadata and the 
 	// allocated arrays we can parse the actual
 	// text file into memory 
 	struct MapParsePackage pckg = {
-		.map = &loaded_map,
+		.map = map,
 		.segments = XCALLOC(0, meta[M_SEGMENT_COUNT] * sizeof(struct MapSegmentData)),
 		.interactables = XCALLOC(0, meta[M_INTERACTABLE_COUNT] * sizeof(struct MapInteractableData)),
 	};
 	
-	bool data_parsed = t_config(&pckg, e_grab_str(MAP_PATH), data_parser);
+	bool data_parsed = t_config(&pckg, path, data_parser);
 	if(!data_parsed){
-		ERR_LOG(ERR_FUCKED, "Failed to parse map[%s] data", e_grab_str(MAP_PATH)); 
-		free(loaded_map.entities);
-		free(loaded_map.tiles);
+		LOG(LOG_ABORT, "Failed to parse map[%s] data", e_grab_sipath(SI_MAP)); 
+		free(map->entities);
+		free(map->tiles);
 		free(pckg.segments);
 		free(pckg.interactables);
 		return false;
@@ -87,9 +87,9 @@ bool m_load_map(int gindx){
 	// faster heap array of tiles
 	bool decompressed = m_decompress_segments(&pckg);	
 	if(!decompressed){
-		ERR_LOG(ERR_FUCKED, "Failed to decompress map[%s] data", e_grab_str(MAP_PATH)); 
-		free(loaded_map.entities);
-		free(loaded_map.tiles);
+		LOG(LOG_ABORT, "Failed to decompress map[%s] data", e_grab_sipath(SI_MAP)); 
+		free(map->entities);
+		free(map->tiles);
 		free(pckg.segments);
 		free(pckg.interactables);
 		return false;
@@ -98,12 +98,13 @@ bool m_load_map(int gindx){
 	// Cleanup the useless segments
 	free(pckg.segments);
 	free(pckg.interactables);
-	return true;
+	free(path);
+	return map;
 }
 
 static void metadata_parser(struct config_pack p, void *ptr){
 	int *m = (int *)ptr;	
-	if(!m){ERR_LOG(ERR_FUCKED, "Passed null metadata to parser.");}
+	if(!m){LOG(LOG_ABORT, "Passed null metadata to parser.");}
 	
 	if(t_check(p.current_section, "metadata")){
 		for(int i = 0; i < M_META_COUNT; i++){
@@ -114,18 +115,18 @@ static void metadata_parser(struct config_pack p, void *ptr){
 }
 static void data_parser(struct config_pack p, void *ptr){
 	struct MapParsePackage *m = (struct MapParsePackage*)ptr;	
-	if(!m){ERR_LOG(ERR_FUCKED, "Passed NULL pointer"); return;}	
+	if(!m){LOG(LOG_ABORT, "Passed NULL pointer"); return;}	
 	int *meta = m->map->metadata;	
 	struct MapSegmentData *segs = m->segments;
 	struct MapEntityData *entities = m->map->entities;
 	struct MapInteractableData *inter = m->interactables;
 
-	if(!meta || !segs || !entities || !inter){ERR_LOG(ERR_FUCKED, "Passed NULL pointer"); return;}	
+	if(!meta || !segs || !entities || !inter){LOG(LOG_ABORT, "Passed NULL pointer"); return;}	
 
 	int entity_indx;
 	if(sscanf(p.current_section, "entity.%d", &entity_indx) == 1){
-		if(entity_indx < 0){ERR_LOG(ERR_PARSE, "Tried to create parse entity with a negative index"); return;}	
-		if(entity_indx >= meta[M_ENTITY_COUNT]){ERR_LOG(ERR_PARSE, "Tried to parse entity with index larger than set entity count %d", meta[M_ENTITY_COUNT]); return;}
+		if(entity_indx < 0){LOG(LOG_PARSE, "Tried to create parse entity with a negative index"); return;}	
+		if(entity_indx >= meta[M_ENTITY_COUNT]){LOG(LOG_PARSE, "Tried to parse entity with index larger than set entity count %d", meta[M_ENTITY_COUNT]); return;}
 		if(t_check(p.key, "entity_gindx")){
 			t_atoi(p.value, &entities[entity_indx].gindx);
 		} else if(t_check(p.key, "tile_spawn_x")){
@@ -137,15 +138,15 @@ static void data_parser(struct config_pack p, void *ptr){
 		} else if(t_check(p.key, "Direction")){
 			t_atoi(p.value, (int *)&entities[entity_indx].dir);
 			if(entities[entity_indx].dir < 0 || entities[entity_indx].dir > W_DIR_COUNT){
-				ERR_LOG(ERR_PARSE, "Invalid entity direction");
+				LOG(LOG_PARSE, "Invalid entity direction");
 				entities[entity_indx].dir = W_NORTH;
 			}
 		}	
 	}
 	int interactable_indx;
 	if(sscanf(p.current_section, "interactable.%d", &interactable_indx) == 1){
-		if(interactable_indx < 0){ERR_LOG(ERR_PARSE, "Tried to parse interactable with a negative index"); return;}	
-		if(interactable_indx >= meta[M_INTERACTABLE_COUNT]){ERR_LOG(ERR_PARSE, "Tried to parse interactable with index larger than set interactable count %d", meta[M_INTERACTABLE_COUNT]); return;}
+		if(interactable_indx < 0){LOG(LOG_PARSE, "Tried to parse interactable with a negative index"); return;}	
+		if(interactable_indx >= meta[M_INTERACTABLE_COUNT]){LOG(LOG_PARSE, "Tried to parse interactable with index larger than set interactable count %d", meta[M_INTERACTABLE_COUNT]); return;}
 		if(t_check(p.key, "z")){
 			t_atoi(p.value, &inter[interactable_indx].z);
 		} else if(t_check(p.key, "tile_x")){
@@ -159,8 +160,8 @@ static void data_parser(struct config_pack p, void *ptr){
 
 	int seg_indx;
 	if(sscanf(p.current_section, "segment.%d", &seg_indx) == 1){
-		if(seg_indx < 0){ERR_LOG(ERR_PARSE, "Tried to parse segment with a negative index"); return;}	
-		if(seg_indx >= meta[M_SEGMENT_COUNT]){ERR_LOG(ERR_PARSE, "Tried to parse segment with index larger than set segment count %d", meta[M_SEGMENT_COUNT]); return;}
+		if(seg_indx < 0){LOG(LOG_PARSE, "Tried to parse segment with a negative index"); return;}	
+		if(seg_indx >= meta[M_SEGMENT_COUNT]){LOG(LOG_PARSE, "Tried to parse segment with index larger than set segment count %d", meta[M_SEGMENT_COUNT]); return;}
 		for(int i = 0; i < SEGMENT_FLAGS_COUNT; i++){
 			char *str = (char *)segment_flag_lokup[i];
 			if(!t_check(p.key, str)){continue;}

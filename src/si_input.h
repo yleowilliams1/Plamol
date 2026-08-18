@@ -1,10 +1,9 @@
 #pragma once
+#include "c_magic_number.h"
 
 #include <raylib.h>
 #include <stdbool.h>
 #include "t_math.h"
-
-#define MAX_KEYS 4
 
 enum KeyType{
     KEYBOARD,
@@ -52,12 +51,10 @@ struct InputManager{
 	struct KeySet input[A_COUNT];
 };
 
-vf2 i_get_input_vector();
+vf2 si_input_vector(struct InputManager *input);
 
-bool i_input_pressed(enum Action action);
-bool i_input_held(enum Action action);
-bool i_input_released(enum Action action);
+bool si_pressed(enum Action action, struct InputManager *input);
+bool si_held(enum Action action, struct InputManager *input);
+bool si_released(enum Action action, struct InputManager *input);
 
-void i_update_input(enum Action action);
-
-void i_init_input();
+struct InputManager *si_init_input();

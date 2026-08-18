@@ -86,7 +86,7 @@ struct DouManager *e_create_dou_manager(){
 	LOG(LOG_LOAD, "Loaded Memory Manager");
 	return mem;
 }
-void e_free_memory_manager(struct DouManager *mem){
+void e_free_dou_manager(struct DouManager *mem){
 	if(!mem){LOG(LOG_RELOAD, "Can't free NULL memory manager");return;}
 	
 	for(int i = 0; i < DOU_COUNT; i++){

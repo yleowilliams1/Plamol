@@ -1,5 +1,6 @@
 #pragma once
 #include <stdio.h>
+#include <stdbool.h>
 #include "t_config_tool.h"
 
 // We seperate between structs
@@ -45,8 +46,9 @@ struct DouManager{
 };
 
 char *e_dou_to_str(enum DouEnum type);
-
-// Need grab 
-// Need load 
-// Need free 
-// Need instantiate 
+bool e_load_dou(struct DouManager *dou, struct DouLoader lod);
+bool e_unload_dou(struct DouManager *dou, enum DouEnum type);
+struct DouManager *e_create_dou_manager();
+void e_free_dou_manager(struct DouManager *mem);
+void e_load_dou_data(struct DouManager *mem, enum DouEnum dou, int gindx);
+bool e_free_dou_data(struct DouManager *mem, enum DouEnum dou, int gindx);

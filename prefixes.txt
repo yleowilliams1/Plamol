@@ -10,3 +10,4 @@ si: singles. Single data blocks with no gindx tracking
 sm: state machine states
 
 t: tools
+w: window

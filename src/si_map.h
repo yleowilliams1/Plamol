@@ -102,5 +102,5 @@ struct MapParsePackage{
 	struct MapSegmentData *segments;
 	struct MapInteractableData *interactables; 
 };
-bool m_load_map();
-struct MapPack m_get_map();
+struct MapPack *si_load_map(int gindx);
+bool si_free_map(struct MapPack *map);

@@ -1,7 +1,6 @@
 #include <stdio.h> 
 #include <stdbool.h>
-#include "e_error_handler.h"
-#include "g_statemachine.h"
+#include "si_statemachine.h"
 
 
 // I should probably write error checking for this. But i don't want to.
@@ -23,7 +22,6 @@ void sm_switch(struct GameStateNode node) {
 
 void sm_push(struct GameStateNode node) {
     if (state_machine.count >= MAX_STATE_STACK) {
-    	ERR_LOG(ERR_FUCKED, "Big nono. There shouldn't be more than that many states.");    
         return;
     }
     // push new state

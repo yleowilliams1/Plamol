@@ -1,6 +1,6 @@
 #include <stdbool.h>
 #include <math.h>
-#include "e_error_handler.h"
+#include "t_log_handler.h"
 #include "t_math.h"
 
 static bool src_chk(void *src);
@@ -97,72 +97,72 @@ void v2_add(v2 *src, v2 add){
 	return;
 };
 void v2_min(v2 *src, v2 tke){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x -= tke.x;
 	src->y -= tke.y;
 	return;
 }
 void v2_div(v2 *src, v2 div){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x /= div.x;
 	src->y /= div.y;
 	return;
 }
 void v2_mul(v2 *src, v2 mul){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x *= mul.x;
 	src->y *= mul.y;
 	return;
 }
 
 void vf2_add(vf2 *src, vf2 add){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x += add.x;
 	src->y += add.y;
 	return;
 }
 void vf2_min(vf2 *src, vf2 tke){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x -= tke.x;
 	src->y -= tke.y;
 	return;
 }
 void vf2_div(vf2 *src, vf2 div){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x /= div.x;
 	src->y /= div.y;
 	return;
 }
 void vf2_mul(vf2 *src, vf2 mul){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x *= mul.x;
 	src->y *= mul.y;
 	return;
 }
  
 void v3_add(v3 *src, v3 add){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x += add.x;
 	src->y += add.y;
 	src->z += add.z;
 	return;
 }
 void v3_min(v3 *src, v3 tke){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x -= tke.x;
 	src->y -= tke.y;
 	src->z -= tke.z;
 	return;
 }
 void v3_div(v3 *src, v3 div){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x /= div.x;
 	src->y /= div.y;
 	src->z /= div.z;
 	return;
 }
 void v3_mul(v3 *src, v3 mul){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x *= mul.x;
 	src->y *= mul.y;
 	src->z *= mul.z;
@@ -170,28 +170,28 @@ void v3_mul(v3 *src, v3 mul){
 }
 
 void vf3_add(vf3 *src, vf3 add){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x += add.x;
 	src->y += add.y;
 	src->z += add.z;
 	return;
 }
 void vf3_min(vf3 *src, vf3 tke){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x -= tke.x;
 	src->y -= tke.y;
 	src->z -= tke.z;
 	return;
 }
 void vf3_div(vf3 *src, vf3 div){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x /= div.x;
 	src->y /= div.y;
 	src->z /= div.z;
 	return;
 }
 void vf3_mul(vf3 *src, vf3 mul){
-	if(!src){ERR_LOG(ERR_NULL, "Passed NULL src"); return;}
+	if(!src){LOG(LOG_NULL, "Passed NULL src"); return;}
 	src->x *= mul.x;
 	src->y *= mul.y;
 	src->z *= mul.z;
@@ -200,7 +200,7 @@ void vf3_mul(vf3 *src, vf3 mul){
 
 static bool src_chk(void *src){
 	if(!src){
-		ERR_LOG(ERR_NULL, "Passed NULL src"); 
+		LOG(LOG_NULL, "Passed NULL src"); 
 		return false;
 	}
 	return true;
