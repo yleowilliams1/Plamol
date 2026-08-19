@@ -6,12 +6,12 @@
 
 #include "si_flags.h"
 #include "si_input.h"
-#include "si_map.h"
+#include "si_world.h"
 
 #include "e_dou_manager.h"
 
 
-struct Coordinator *initalize_game(){
+struct Coordinator *e_initalize_game(){
 	struct Coordinator *cor = XCALLOC(1, sizeof(struct Coordinator)); 
 	e_load_engine_settings();
 	cor->flag_manager = si_init_flag();
@@ -21,12 +21,20 @@ struct Coordinator *initalize_game(){
 
 	cor->dous = e_create_dou_manager();
 	if(cor->dous == NULL){LOG(LOG_NULL, "Failed to load dou-manager");}
+	
+	// This needs to be filled with a game loop system passing a map
+	int map_gindx = 0;	
+	cor->world = si_load_world(cor->dous, map_gindx);
 	return cor;
 }
-void free_game(struct Coordinator *cor){
+void e_update_game(struct Coordinator *cor){
+}
+void e_draw_game(struct Coordinator *cor){
+}
+void e_free_game(struct Coordinator *cor){
 	e_free_dou_manager(cor->dous);
-	if(cor->loaded_map){si_free_map(cor->loaded_map);}
 	if(cor->flag_manager){si_free_flag(cor->flag_manager);}
 	if(cor->input){free(cor->input);}
+	si_free_world(cor->world);
 	e_free_settings();
 }

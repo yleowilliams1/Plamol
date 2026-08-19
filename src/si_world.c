@@ -10,6 +10,9 @@
 #include "si_world.h"
 #include "inst_instances.h"
 
+
+// This doesn't have interactable support yet
+
 static struct InRef si_spawn_entity(struct World *w, struct DouManager *protos,int proto_gindx, v3 tile, int guid, enum TileDirections facing);
 
 static void si_occupy_set(struct World *w, v3 tile, struct InRef ref);

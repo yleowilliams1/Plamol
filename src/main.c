@@ -4,13 +4,7 @@
 #include <time.h>
 #include <raylib.h>
 #include "w_window_manager.h"
-#include "e_engine_settings.h"
-#include "f_flags.h"
-#include "g_statemachine.h"
-#include "s_game.h"
-#include "e_error_handler.h"
-#include "g_gamestate_manager.h"
-
+#include "e_coordinator.h"
 #define TARGET_FPS 60
 
 int main(){
@@ -19,25 +13,16 @@ int main(){
 	SetTargetFPS(TARGET_FPS);
 
 	srand(time(NULL));
-	
-	printf("Up %d \n", KEY_W);
-	printf("Down %d\n", KEY_S);
-	printf("Left %d\n", KEY_A);
-	printf("Right %d\n", KEY_D);
-	printf("Action %d\n", KEY_E);
-	printf("Pan %d\n", MOUSE_BUTTON_MIDDLE);
 
-	//t_initalize_tests();
-	sm_init(game_state());
+	struct Coordinator *cor = e_initalize_game();
+	
 	while (!WindowShouldClose()){
 		w_update_relative_scale();	
-		sm_update();
-		sm_draw();
+		e_update_game(cor);
+		e_draw_game(cor);
 	}
-
-	e_free_setting();
-	f_free_flag();
-	sm_free();
+	
+	e_free_game(cor);
 	CloseWindow();
 	return 0;
 }
