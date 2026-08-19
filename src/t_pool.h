@@ -20,7 +20,9 @@ struct Pool{
 	uint32_t next_gen;
 };
 
-void *t_pool_alloc(struct Pool*p, struct InRef *out);
+void t_pool_init(struct Pool *p, int cap, size_t element_size);
+void  t_pool_free_all(struct Pool *p);
+void *t_pool_alloc(struct Pool *p, struct InRef *out);
 void *t_pool_get(struct Pool *p, struct InRef r);
-bool t_pool_free(struct Pool *p, struct InRef r);
-void *t_pool_next(struct Pool *p, struct InRef *out, int *cursor);
+bool  t_pool_release(struct Pool *p, struct InRef r);
+void *t_pool_next(struct Pool *p, int *cursor, struct InRef *out);

@@ -7,56 +7,22 @@
 #include "t_math.h"
 #include "c_magic_number.h"
 #include "c_types.h"
+struct DouManager;
 
-struct InstanceAnimState{
-	float elapsed_time;
-	int current_frame;
-	int current_animation;
-};
-struct InventoryChildInstance{
-	int gindx[INVENTORY_SIZE];
-	int count[INVENTORY_SIZE];
-	int hotbar[HOTBAR_SIZE];
-};
-struct StatChildInstance{
-	int base[BSTAT_COUNT];
-	int mod[BSTAT_COUNT];
-};
-struct EntityInstance{
-	struct PoolHeader h;
-	
-	int proto_gindx;
-	int guid;
-	v3 tile;
-	enum TileDirections facing;
-
-	struct InstanceAnimState anim;		
-	uint32_t runtime_flags;
-
-	int current_hp;
-	int current_ap;
-	struct StatChildInstance stats;
-	struct InventoryChildInstance  inv;
-};
-struct InteractableInstance{
-	struct PoolHeader h;
-	
-	int proto_gindx;
-	int guid;
-	v3 tile;
-	
-	uint32_t runtime_flags;
-	struct InstanceAnimState anim;
-
-	struct InventoryChildInstance inv;
-};
 struct World {
-    struct MapPack *map;
-    struct Pool entities;
-    struct Pool interactables;
-    
-    struct InRef *occupancy;
-    int occupancy_count;
-
-    struct InRef player;
+	struct MapPack *map;
+	struct Pool entities;
+	struct Pool interactables;
+		    
+	struct InRef *occupancy;
+	
+	struct InRef player;
+	struct InRef kill_queue[MAX_KILLS_PER_FRAME];
+	
+	int kill_count;
 };
+
+struct World *si_load_world(struct DouManager *protos, int map_gindx);
+void si_free_world(struct World *w);
+void si_update_world(struct World *w, struct DouManager *proto, float dt);
+bool si_try_move(struct World *w, struct InRef ref, v3 to);

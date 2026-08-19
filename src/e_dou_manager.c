@@ -13,6 +13,24 @@
 #include "e_dou_manager.h"
 #include "t_gindex_tool.h"
 
+void *e_dou_get(struct DouManager *protos, int gindx, enum DouEnum dou){
+	struct MemDou *data = &protos->dou[dou];
+	int lindx = t_gindx_to_lindx(data->iman, data->icount, gindx);
+	if(!t_indxvalid(data->icount, lindx)){
+		// It's not loaded yet
+		bool loaded = e_load_dou_data(protos, dou, gindx);
+		if(!loaded){
+			LOG(LOG_NULL, "Failed to load %s %d",e_dou_to_str(dou), gindx);
+			e_free_dou_data(protos, dou, gindx);
+			return NULL;
+		}
+		int lindx = t_gindx_to_lindx(data->iman, data->icount, gindx);
+		if(!t_indxvalid(data->icount, lindx)){LOG(LOG_NULL, "Failed to load %s gindx %d and loader didn't catch it", e_dou_to_str(dou), gindx); return NULL;}
+		return ((char*)data->iarr + (size_t)lindx * data->size);	
+	}
+	return ((char*)data->iarr + (size_t)lindx * data->size);		
+}
+
 char *e_dou_to_str(enum DouEnum type){
 	if(type < 0 || type >= DOU_COUNT){
 		LOG(LOG_NULL, "%d is not a valid enum", type);

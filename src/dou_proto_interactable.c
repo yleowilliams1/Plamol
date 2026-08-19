@@ -19,9 +19,13 @@ struct DouLoader dou_interactable(){
 	};
 }
 
-static void interactable_on_free(void *slot);
-static void interactable_on_init(void *slot);
-static void interactable_on_pload(void *slot);
-static void interactable_on_load(struct config_pack p, void *ptr);
+static void interactable_on_free(void *slot){
+}
+static void interactable_on_init(void *slot){
+}
+static void interactable_on_pload(void *slot){
+}
+static void interactable_on_load(struct config_pack p, void *ptr){
+}
 
 

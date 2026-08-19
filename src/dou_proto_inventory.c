@@ -8,6 +8,7 @@
 #include "t_strings.h"
 #include "c_magic_number.h"
 #include "e_dou_manager.h"
+#include "c_types.h"
 
 static void inv_on_init(void *slot);
 static void inv_on_free(void *slot);
@@ -26,9 +27,11 @@ struct DouLoader dou_inventory(){
 }
 
 static void inv_on_init(void *slot){
+	// This is janky and needs to be rewritten
 	struct Inventory *inv = (struct Inventory *)slot;
-	for(int i = 0; i < HOTBAR_SIZE; i++){ inv->hotbar_items[i] = EMPTY_SLOT; }
-	for(int i = 0; i < INVENTORY_SIZE; i++){ inv->inventory[i] = EMPTY_SLOT; }
+	for(int i = 0; i < HOTBAR_SIZE; i++){ inv->hotbar[i] = EMPTY_SLOT; }
+	for(int i = 0; i < INVENTORY_SIZE; i++){ inv->gindx[i] = EMPTY_SLOT; }
+	for(int i = 0; i < INVENTORY_SIZE; i++){ inv->count[i] = 0; }
 	LOG(LOG_LOAD, "Initalizing inventory of address %p", slot);
 }
 static void inv_on_free(void *slot){
@@ -50,21 +53,25 @@ static void inv_on_load(struct config_pack p, void *ptr){
 				return;
 			}
 			if(t_check(p.key, buf)){
-				t_atoi(p.value, &inv->hotbar_items[i]);
+				t_atoi(p.value, &inv->hotbar[i]);
 			}
 		}	
 	}
 	if(t_check(p.current_section, "inventory")){
 		for(int i = 0; i < INVENTORY_SIZE; i++){
-			char buf[32];
-			size_t len;
-			bool result = t_snprintf(buf, sizeof(buf), &len, "%d", i);
-			if(!result){
-				LOG(LOG_NULL, "Failed snprintf for indx %d parsing inventory", i);
-				return;
+			char gindx[32];
+			char count[32];
+			bool gresult = t_snprintf(gindx, sizeof(gindx), NULL, "Gindx[%d]", i);
+			bool cresult = t_snprintf(count, sizeof(count), NULL, "Count[%d]", i);
+			if(!gresult){LOG(LOG_NULL, "Failed snprintf for indx %d parsing inventory", i);return;}
+			if(!cresult){LOG(LOG_NULL, "Failed snprintf for indx %d parsing inventory", i);return;}
+
+			if(t_check(p.key, gindx)){
+				t_atoi(p.value, &inv->gindx[i]);
 			}
-			if(t_check(p.key, buf)){
-				t_atoi(p.value, &inv->inventory[i]);
+	
+			if(t_check(p.key, count)){
+				t_atoi(p.value, &inv->count[i]);
 			}
 		}	
 	}

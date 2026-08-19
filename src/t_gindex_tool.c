@@ -10,6 +10,8 @@
  * global indexes refer to loaded data, things like item prototypes 
  * index.*/
 
+
+// Not a fan of this design anymore frankly it's probably better to do a rewrite in the future going off the pool design with the refs and etc
 bool t_indxvalid(int size, int lindx){
 	return (lindx >= 0 && lindx < size);
 }

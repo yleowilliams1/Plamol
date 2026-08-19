@@ -46,6 +46,8 @@ struct DouManager{
 	struct DouFunctions dou_fnc[DOU_COUNT];
 };
 
+void *e_dou_get(struct DouManager *protos, int gindx, enum DouEnum dou);
+
 char *e_dou_to_str(enum DouEnum type);
 bool e_load_dou(struct DouManager *dou, struct DouLoader lod);
 bool e_unload_dou(struct DouManager *dou, enum DouEnum type);

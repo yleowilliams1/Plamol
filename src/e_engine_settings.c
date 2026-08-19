@@ -13,27 +13,22 @@ static struct EngineSettings *settings;
 
 char *e_si_to_str(enum SiEnum type){
 	if(type < 0 || type >= SI_COUNT){LOG(LOG_OUTOFBOUNDS, "%s is not a valid singles enum", type);}
-	switch(type){
-		case SI_FLAGS:
-			return "Flags";
-			break;
-		case SI_STATE:
-			return "State";
-			break;
-		case SI_INPUT:
-			return "Input";
-			break;
-		case SI_MAP:
-			return "Map";
-			break;
-		case SI_GAMESTATE:
-			return "Gamestate";
-			break;
-		default:
-			break;
-	}
-	LOG(LOG_NULL, "Could not find enum %s. Returning NULL string", type);
-	return NULL;
+	const char *si_strs[SI_COUNT] = {
+		[SI_FLAGS] = "Flag",
+		[SI_STATE] = "State",
+		[SI_INPUT] = "Input",
+		[SI_MAP]   = "Map",
+		[SI_GAMESTATE] = "Gamestate",
+	};
+	return (char *)si_strs[type];
+};
+char *e_in_to_str(enum InstancesEnum type){
+	if(type < 0 || type >= INSTANCE_ENUM_COUNT){LOG(LOG_OUTOFBOUNDS, "%s is not a valid singles enum", type);}
+	const char *in_strs[INSTANCE_ENUM_COUNT] = {
+		[INSTANCE_ENTITY] = "Entity",
+		[INSTANCE_INTERACTABLE] = "Interactable",
+	};
+	return (char *)in_strs[type];
 };
 void e_free_settings(){
 	if(!settings){LOG(LOG_FREE, "Can't free settings since it's already NULL");return;}
@@ -97,7 +92,14 @@ int e_grab_doucount(enum DouEnum dou){
 	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 0;}
 	return settings->dou_icounts[dou];
 }
-
+int e_grab_inscount(enum InstancesEnum type){
+	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 0;}
+	return settings->instance_counts[type];
+}
+float e_grab_animfps(){
+	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 0;}
+	return settings->anim_fps;
+}
 static void engine_parser(struct config_pack p, void *ptr){
 	struct EngineSettings *s = ptr;
 	if(!s){LOG(LOG_NULL, "NULL settings in parser");return;}
@@ -129,6 +131,21 @@ static void engine_parser(struct config_pack p, void *ptr){
 			t_snprintf(buf, size, NULL, "%s%s", base, "Format");	
 			if(!t_check(p.key, buf)){continue;}
 			t_cpy(&s->dou_formats[i], p.value);
+		}
+	}
+	if(t_check(p.current_section, "Instances")){
+		for(int i = 0; i < INSTANCE_ENUM_COUNT; i++){
+			size_t size = 128;
+			char buf[size];
+			char *base = e_dou_to_str(i); 
+			t_snprintf(buf, size, NULL, "%s%s", base, "Count");	
+			if(!t_check(p.key, buf)){continue;}
+			t_atoi(p.value, &s->instance_counts[i]);
+		}
+	}
+	if(t_check(p.current_section, "Animation")){
+		if(t_check(p.key, "AnimationFps")){
+			t_atof(p.value, &s->anim_fps);
 		}
 	}
 }

@@ -8,7 +8,7 @@
 #include "t_strings.h"
 #include "c_magic_number.h"
 #include "e_dou_manager.h"
-
+#include "c_types.h"
 static void entity_on_free(void *slot);
 static void entity_on_init(void *slot);
 static void entity_on_ploader(void *slot);
@@ -31,6 +31,7 @@ static const char *entitflag_lokup[ENTITY_FLAG_COUNT] = {
 	[ENT_HOSTILE] = "hostile",
 	[ENT_STAT] = "stat_flag",
 	[ENT_INV] = "inventory_flag",
+	[ENT_DEAD] = "dead",
 };
 
 struct DouLoader dou_entity(){

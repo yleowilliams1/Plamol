@@ -1,0 +1,230 @@
+VAR mquest_resolved = false
+
+// if it's false then it means the hand is the leader
+VAR fhas_leader = true
+VAR fhand_asked = false
+VAR fis_intact = true
+VAR ftalked_seventeen = false
+VAR fknow_seveteen = false
+VAR ftalk_hand = false
+VAR fhand_power = false
+VAR fknow = false
+VAR f_qlied = "invalid"
+VAR f_know_lage = false
+VAR f_talk_serv = false
+VAR f_have_keys = false
+VAR f_have_enote = false
+VAR f_bear_dead = false
+VAR f_seventeen_alive = true
+VAR f_peace = false
+VAR f_hand_alive = true
+VAR f_hostile_exit = false
+
+-> forest_quest
+
+// Optional
+=== forest_quest ===
++ {not fknow_seveteen} [Ask around about the seventeen year old] -> learn_seventeen
++ {fknow_seveteen and not ftalked_seventeen} [Seek him out and talk to him] -> talk_seventeen
++ {not f_talk_serv} [Talk to the leader's parents, working as servants] -> talk_servants
++ {f_talk_serv and not f_know_lage} [Press them further on the leader's past] -> learn_leader_age
++ {not ftalk_hand} [Talk to the hand] -> talk_hand
++ {not f_have_keys or not f_have_enote} [Search the camp for the keys] -> search_camp
++ {fhand_asked == false} [Listen to the hands request] -> hand_request
+*{fis_intact}[00 Defuse the bomb collar and sneak out: Two ability checks] -> f00
+*{fis_intact}[01 Kill the bear in the dungeon and do the fear quiz while lying.]-> f01
+*{fis_intact}[02 Kill the bear in the dungeon and do the fear quiz truthfully.]-> f02
+*{fis_intact and fknow_seveteen and ftalked_seventeen and fhas_leader and f_seventeen_alive and fhand_power == false}[03 Talk to the seventeen year old kid and having a meeting with the leader and convince him against his apprehension against the seventeen year old.]-> f03
+*{fis_intact and fhand_asked and fknow_seveteen and f_seventeen_alive}[05 Kill the seventeen year old and escape after the hand defuses the bomb.]-> f05
+*{fis_intact}[06 Kill everyone/ the leader and the hand]-> f06 
+*{fis_intact and fknow_seveteen and ftalked_seventeen and fhas_leader and f_seventeen_alive and fhand_power and f_hand_alive}[07 Meeting with the leader and convince him against his apprehension against the seventeen year old.  Then kill the hand when he tries to attack you]-> f07
+*{fis_intact and fknow_seveteen and ftalked_seventeen and fhas_leader and ftalk_hand and f_seventeen_alive and fhand_power and f_hand_alive}[08 Meeting with the leader and convince him against his apprehension against the seventeen year old.  Then convince the hand when he tries to not attack you.]-> f08
+*{fis_intact and fknow_seveteen and fhas_leader}[09 Find out about the seventeen year old without talking to him, and convince the leader against his apprehension of the seventeen year old (very hard).]-> f09
+*{fis_intact}[10 Convince the leader to let you go by promising you won’t tell.]-> f10
+*{fis_intact and f_know_lage}[11 Black mail the leader into letting you go by finding out his real age]-> f11
+*{fis_intact and f_talk_serv and fhas_leader}[12 Threaten to kill his parents who are working there as servants to get the bomb collar of.]-> f12
+*{fis_intact and f_have_keys and f_have_enote}[13 Find the keys to the bomb collar and a note telling you about a hidden exit]-> f13
+*{fis_intact and f_know_lage}[14 Expose the leader real age.]-> f14
+
+=== hand_request ===
+~ fhand_asked = true
+~ fknow_seveteen = true
+The hand asks you to kill the seventeen year old
+-> forest_quest
+
+=== f00 ===
+You roll two checks if you fail you just go back to the origonal options
+~fknow = true
+-> main_quest
+
+=== f01 ===
+~fknow = true
+~f_bear_dead = true
+~f_qlied = "lied"
+-> main_quest
+
+=== f02 ===
+~fknow = true
+~f_bear_dead = true
+~f_qlied = "truthful"
+-> main_quest
+
+=== f03 ===
+~fknow = true
+~f_peace = true
+-> main_quest
+
+=== f05 ===
+~fknow = true
+~f_seventeen_alive = false
+~f_peace = false
+~fis_intact = false
+~fhas_leader = false
+-> main_quest
+
+=== f06 ===
+~ fknow = true
+~ f_seventeen_alive = false
+~ f_peace = false
+~ fis_intact = false
+~ fhas_leader = false
+~ f_hand_alive = false
+-> main_quest
+
+=== f07 ===
+Killed the hand after the leader was won over — hand's threat and authority both end
+~ fknow = true
+~ f_peace = true
+~ f_hand_alive = false
+~ fhand_power = false
+-> main_quest
+
+=== f08 ===
+Talked the hand down instead — leader and hand both remain, both reconciled
+~ fknow = true
+~ f_peace = true
+-> main_quest
+
+=== f09 ===
+Convinced the leader without ever confronting the seventeen year old directly — "very hard" but bloodless
+~ fknow = true
+~ f_peace = true
+-> main_quest
+
+=== f10 ===
+Just a promise — nothing about the underlying conflict actually changes
+~ fknow = true
+-> main_quest
+
+=== f11 ===
+Private blackmail — you know his age, but it never becomes public knowledge
+~ fknow = true
+~ f_know_lage = true
+-> main_quest
+
+=== f12 ===
+Intimidation gets the collar off, but doesn't touch leader/hand/peace state — nothing else to flip yet
+~ fknow = true
+~ f_hostile_exit = true
+-> main_quest
+
+=== f13 ===
+Pure exfiltration — found items, no confrontation, no state change beyond escaping
+~ fknow = true
+-> main_quest
+
+=== f14 ===
+Public exposure — the whole camp scatters once his real age gets out. Same collapse as f05/f06, no killing involved
+~ fknow = true
+~ fhas_leader = false
+~ f_hand_alive = false
+~ fis_intact = false
+~ f_peace = false
+-> main_quest
+
+
+=== learn_seventeen ===
+~ fknow_seveteen = true
+You piece together who he is from camp gossip.
+-> forest_quest
+
+=== talk_seventeen ===
+~ ftalked_seventeen = true
+// prose here
+-> forest_quest
+
+=== talk_servants ===
+~ f_talk_serv = true
+-> forest_quest
+
+=== learn_leader_age ===
+~ f_know_lage = true
+-> forest_quest
+
+=== talk_hand ===
+~ ftalk_hand = true
+-> forest_quest
+
+=== search_camp ===
+~ f_have_keys = true
+~ f_have_enote = true
+-> forest_quest
+
+// The main quest gets resolved at the very end. Preface these with conditions
+=== main_quest ===
+* {not mquest_resolved}[Do nothing / leave permanently] -> m00
+* [Frame someone(can be player) by forging a letter and faking the children’s death]-> m02
+* [Persuade/blackmail the town head to drop it]-> m03
+* [Fake the Priest's death, relocate]-> m04
+* [Fake the Priest's death, relocate, leave the wife, and convince the priest she will be fine.]-> m05
+* [Fake the Priest's death, relocate, leave the wife, and don’ tell the pries].-> m06
+* [Kill everyone]-> m07
+* [Convince the leader of the forest to go back]-> m08
+* [Force the leader and tribe back.]-> m09
+* [Tell the town to use the Plamol military to get them back]-> m10
+* [Convince the forest leader to meet with the leader of the town, siding with the forest camp.]-> m11
+* [Convince the forest leader to meet with the leader of the town, siding with the town.]-> m12
+* [Convince the forest leader to meet with the leader of the town, persuade the forest camp and the town to accept a two-town solution.]-> m13
+* [Come back at the end of the game. And use power within Colonials circle to lessen the economic burden on children.]-> m14
+* [Come back later with a paramilitary and force the kids back home.]-> m15
+* [Tell the town that the kids are in the forest]-> m16
+
+=== m00 ===
+-> ending
+=== m01 ===
+-> ending
+=== m02 ===
+-> ending
+=== m03 ===
+-> ending
+=== m04 ===
+-> ending
+=== m05 ===
+-> ending
+=== m06 ===
+-> ending
+=== m07 ===
+-> ending
+=== m08 ===
+-> ending
+=== m09 ===
+-> ending
+=== m10 ===
+-> ending
+=== m11 ===
+-> ending
+=== m12 ===
+-> ending
+=== m13 ===
+-> ending
+=== m14 ===
+-> ending
+=== m15 ===
+-> ending
+=== m16 ===
+-> ending
+
+
+=== ending ===
+~ mquest_resolved = true
+-> END
