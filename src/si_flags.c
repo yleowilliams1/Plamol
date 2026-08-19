@@ -12,7 +12,7 @@ static void flag_parser(struct config_pack p, void *ptr);
 struct FlagManager *si_init_flag(){
 	struct FlagManager *fm = XCALLOC(1, sizeof(struct FlagManager));
 	
-	char *path = e_si_to_str(SI_FLAGS);
+	char *path = e_grab_sipath(SI_FLAGS);
 	if(!path){LOG(LOG_NULL, "e_si_to_str return NULL path for enum %s", SI_FLAGS);}
 		
 	bool configured = t_config(fm, path, flag_parser);		

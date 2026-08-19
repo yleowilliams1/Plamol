@@ -4,10 +4,10 @@
 
 enum SiEnum{
 	SI_FLAGS,
-	SI_STATE,
 	SI_INPUT,
 	SI_MAP,
-	SI_GAMESTATE,
+	SI_STATEMACHINE,
+	SI_WORLD,	
 	SI_COUNT,
 };
 enum InstancesEnum{

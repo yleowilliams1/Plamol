@@ -26,6 +26,9 @@ struct StateMachine{
     int           count;                  
 };
 
+// This needs rewriting to return a xcalloced pointer 
+// instead of storing a static global state
+
 void sm_switch(struct GameStateNode node);
 void sm_push(struct GameStateNode node);
 void sm_pop(void);

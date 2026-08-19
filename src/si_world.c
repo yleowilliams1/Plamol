@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include "t_pool.h"
 #include "c_magic_number.h"
 #include "c_types.h"
 #include "e_dou_manager.h"
@@ -9,7 +10,7 @@
 #include "t_log_handler.h"
 #include "si_world.h"
 #include "inst_instances.h"
-
+#include "run_runtime.h"
 
 // This doesn't have interactable support yet
 
@@ -18,7 +19,6 @@ static struct InRef si_spawn_entity(struct World *w, struct DouManager *protos,i
 static void si_occupy_set(struct World *w, v3 tile, struct InRef ref);
 static void si_occupy_clear(struct World *w, v3 tile);
 
-static void si_queue_kill(struct World *w, struct InRef r);
 static void si_flush_kills(struct World *w);
 
 struct World *si_load_world(struct DouManager *protos, int map_gindx){
@@ -27,7 +27,8 @@ struct World *si_load_world(struct DouManager *protos, int map_gindx){
 	if(!w->map){free(w); LOG(LOG_NULL, "Failed to load map gindx %d", map_gindx);return NULL;}
 	t_pool_init(&w->entities ,e_grab_inscount(INSTANCE_ENTITY), sizeof(struct EntityInstance));
 	t_pool_init(&w->interactables,e_grab_inscount(INSTANCE_INTERACTABLE), sizeof(struct InteractableInstance));
-	
+	w->runtime = run_create_runtime();
+	if(w->runtime == NULL){LOG(LOG_NULL, "Runtime failed to load");}
 	int tiles = w->map->metadata[M_WIDTH] * w->map->metadata[M_HEIGHT];
 	w->occupancy = XCALLOC(1, sizeof(struct InRef) * tiles);
 
@@ -44,37 +45,33 @@ void si_free_world(struct World *w){
 	if(!map_freed){LOG(LOG_RELOAD, "Failed to free map!");}
 	t_pool_free_all(&w->entities);
 	t_pool_free_all(&w->interactables);
+	run_free_runtime(w->runtime);
 	free(w->occupancy);
 	w->occupancy = NULL;
 	free(w);
 	w = NULL;
 }
-void si_update_world(struct World *w, struct DouManager *protos, float dt){
-    int cursor = 0;
-    struct InRef ref;
-    struct EntityInstance *e;
-
-    while((e = t_pool_next(&w->entities, &cursor, &ref))){
-        if(e->runtime_flags & (1 << ENT_DEAD)){ continue; }
-        inst_anim_advance(&e->anim, protos, e->proto_gindx, dt);
-        if(e->current_hp <= 0){ si_queue_kill(w, ref); }
-    }
-    si_flush_kills(w);
+void si_update_world(struct World *w, struct DouManager *protos, float dt, struct InputManager *input){
+    	run_update_runtime(w, protos, input, dt);
+    	si_flush_kills(w);
+}
+void si_draw_world(struct World *w){
+	run_draw_runtime(w);
 }
 bool si_try_move(struct World *w, struct InRef ref, v3 to){
-    struct EntityInstance *e = t_pool_get(&w->entities, ref);
-    if(!e){ return false; }
+    	struct EntityInstance *e = t_pool_get(&w->entities, ref);
+   	if(!e){ return false; }
 
-    int idx = to.y * w->map->metadata[M_WIDTH] + to.x;
-    struct MapDecompTile *t = &w->map->tiles[idx];
+    	int idx = to.y * w->map->metadata[M_WIDTH] + to.x;
+    	struct MapDecompTile *t = &w->map->tiles[idx];
 
-    if(t->flags & (1 << T_WALL_COLLIDE)){ return false; }
-    if(t_pool_get(&w->entities, w->occupancy[idx])){ return false; }  // occupied
+    	if(t->flags & (1 << T_WALL_COLLIDE)){ return false; }
+    	if(t_pool_get(&w->entities, w->occupancy[idx])){ return false; }  // occupied
 
-    si_occupy_clear(w, e->tile);
-    e->tile = to;
-    si_occupy_set(w, to, ref);
-    return true;
+    	si_occupy_clear(w, e->tile);
+    	e->tile = to;
+    	si_occupy_set(w, to, ref);
+    	return true;
 }
 static struct InRef si_spawn_entity(struct World *w, struct DouManager *protos,int proto_gindx, v3 tile, int guid, enum TileDirections facing){
 	struct InRef ref;
@@ -116,7 +113,7 @@ static void si_occupy_clear(struct World *w, v3 tile){
 	int idx = tile.y * w->map->metadata[M_WIDTH] + tile.x;
 	w->occupancy[idx] = (struct InRef){0}; 
 }
-static void si_queue_kill(struct World *w, struct InRef r){
+void si_queue_kill(struct World *w, struct InRef r){
     if(w->kill_count < MAX_KILLS_PER_FRAME){ w->kill_queue[w->kill_count++] = r; }
 }
 

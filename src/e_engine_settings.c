@@ -15,10 +15,10 @@ char *e_si_to_str(enum SiEnum type){
 	if(type < 0 || type >= SI_COUNT){LOG(LOG_OUTOFBOUNDS, "%s is not a valid singles enum", type);}
 	const char *si_strs[SI_COUNT] = {
 		[SI_FLAGS] = "Flag",
-		[SI_STATE] = "State",
 		[SI_INPUT] = "Input",
 		[SI_MAP]   = "Map",
-		[SI_GAMESTATE] = "Gamestate",
+		[SI_STATEMACHINE] = "StateMachine",
+		[SI_WORLD] = "World",
 	};
 	return (char *)si_strs[type];
 };
