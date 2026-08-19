@@ -13,7 +13,8 @@
 #include "run_runtime.h"
 
 // This doesn't have interactable support yet
-
+// The player ref isn't set and there isn't a way for the map to
+// set it either so thats a fix for later
 static struct InRef si_spawn_entity(struct World *w, struct DouManager *protos,int proto_gindx, v3 tile, int guid, enum TileDirections facing);
 
 static void si_occupy_set(struct World *w, v3 tile, struct InRef ref);
