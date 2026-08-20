@@ -4,9 +4,12 @@
 #include "t_pool.h"
 #include "run_runtime.h"
 
+// This will probably be where saves will be done
+
 static void run_update_player(struct World *w, struct DouManager *protos, struct InputManager *input, float dt);
 
 struct RuntimeData *run_create_runtime(){
+	
 }
 void run_update_runtime(struct World *w, struct DouManager *protos, struct InputManager *input, float dt){
 	int cursor = 0;

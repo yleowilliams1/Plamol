@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include "t_config_tool.h"
-#include "t_gindex_tool.h"
 #include "t_strings.h"
 #include "t_log_handler.h"
 
@@ -97,48 +96,4 @@ char *t_format_path(char *base, char *format, int num){
 	}
 	
 	return file;
-}
-bool t_handle_dou_loading(struct DouLoadData data){
-	if(!data.iman){LOG(LOG_NULL, "Passed NULL index manager"); return false;}
-	if(!data.iarr){LOG(LOG_NULL, "Passed NULL iarr"); return false;}
-	if(!data.path){LOG(LOG_NULL, "Passed NULL path"); return false;}
-	if(!data.format){LOG(LOG_NULL, "Passed NULL format"); return false;}
-	
-	int free_lindx = t_find_free_lindx(data.iman, data.cap);
-	if(!t_indxvalid(data.cap, free_lindx)){LOG(LOG_NULL, "Found free lindx %s in not valid", free_lindx); return false;}
-	
-	// Find the free slot	
-	void *slot = (char *)data.iarr + (size_t)free_lindx * data.element_size;
-	if(data.init){data.init(slot);}
-
-	// Now actually run the loader
-	char *path = t_format_path(data.path, data.format, free_lindx);
-	if(!path){LOG(LOG_NULL, "t_format_path failed with %s path and %s format and free_lindx %d", data.path, data.format, free_lindx); return false;}
-	bool configured = t_config(slot, path, data.loader);
-	if(!configured){LOG(LOG_PARSE, "Failed to configure %s", path); free(path); return false;}
-	
-	// Now run the post load
-	if(data.pload){data.pload(slot);}	
-
-	LOG(LOG_LOAD, "Loading path %s", path);	
-	free(path);
-	return true;
-}
-bool t_handle_dou_freeing(struct DouFreeData data){
-	if(!data.iman){LOG(LOG_NULL, "Passed NULL iman");return false;}
-	if(!data.iarr){LOG(LOG_NULL, "Passed NULL iarr");return false;}
-
-	int lindx;
-	if(data.gindx){
-		lindx = t_gindx_to_lindx(data.iman, data.cap, *data.gindx);
-		if(!t_indxvalid(data.cap, lindx)){LOG(LOG_NULL, "Failed to convert lindx %d to gindx", lindx); return false;}
-	}
-	if(data.lindx){lindx = *data.lindx;}
-	if(!data.lindx && !data.gindx){LOG(LOG_NULL, "Both lindx and gindx pointers are null.");return false;}	
-	void *slot = (char *)data.iarr + lindx * data.element_size;
-	if(data.freer){data.freer(slot);}	
-	memset(slot, 0, data.element_size);
-	bool freed = t_lfree_lindx(data.iman, data.cap, lindx);
-	if(!freed){LOG(LOG_NULL, "Failed to free %d", lindx);return false;}
-	return true;
 }

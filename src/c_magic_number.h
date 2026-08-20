@@ -17,3 +17,5 @@
 
 #define VALID_GEN_ID 1
 #define MAX_KILLS_PER_FRAME 16
+
+#define INVALID_CAP -808080 

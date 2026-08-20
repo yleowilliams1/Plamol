@@ -2,11 +2,15 @@
 #include <stdbool.h>
 #include <string.h>
 #include <raylib.h>
-#include "c_magic_number.h"
-#include "t_log_handler.h"
 #include "dou_sprite_manager.h"
+
+#include "t_log_handler.h"
 #include "t_config_tool.h"
 #include "t_strings.h"
+
+#include "c_dou_struct_defs.h"
+#include "c_magic_number.h"
+
 #include "e_dou_manager.h"
 
 static void sprite_on_init(void *slot);
@@ -16,19 +20,19 @@ static void sprite_on_load(struct config_pack p, void *ptr);
 
 struct DouLoader dou_sprite(){
 	return (struct DouLoader){
-		.on_load = sprite_on_load,
-		.on_init = sprite_on_init,
-		.on_free = sprite_on_free,
-		.on_pload = sprite_on_pload,
-		.size = sizeof(struct SpriteData),
-		.type = DOU_SPRITE,
+		.func.on_load = sprite_on_load,
+		.func.on_init = sprite_on_init,
+		.func.on_free = sprite_on_free,
+		.func.on_pload = sprite_on_pload,
+		.size = sizeof(struct DouSpritePrototype),
+		.type = EOU_SPRITE,
 	};
 }
 
 static void sprite_on_init(void *slot){
 	// this is super important
 	if(!slot){LOG(LOG_NULL, "Can't Post Load sprite since slot is NULL"); return;}
-	struct SpriteData *spr = (struct SpriteData *)slot;
+	struct DouSpritePrototype *spr = (struct DouSpritePrototype *)slot;
 	spr->animation_count = ANIMATION_COUNT_INVALID;
 	// The parser will manually check if 
 	// animation_count has parsed by checking against
@@ -39,7 +43,7 @@ static void sprite_on_init(void *slot){
 }
 static void sprite_on_pload(void *slot){
 	if(!slot){LOG(LOG_NULL, "Can't Post Load sprite since slot is NULL"); return;}
-	struct SpriteData *spr = (struct SpriteData *)slot;
+	struct DouSpritePrototype *spr = (struct DouSpritePrototype *)slot;
 	if(!spr->sprite_path){LOG(LOG_NULL, "Can't load texture since path is NULL"); return;}
 	if(spr->texture.id <= 0){
 		// texture has not been freed
@@ -50,7 +54,7 @@ static void sprite_on_pload(void *slot){
 }
 static void sprite_on_free(void *slot){
 	if(!slot){LOG(LOG_NULL, "Can't free null slot"); return;}	
-	struct SpriteData *spr = (struct SpriteData *)slot;
+	struct DouSpritePrototype *spr = (struct DouSpritePrototype*)slot;
 	if(spr->texture.id > 0){UnloadTexture(spr->texture);}
 	
 	if(spr->origin){
@@ -67,7 +71,7 @@ static void sprite_on_free(void *slot){
 	LOG(LOG_FREE, "Freeing sprite at address %p", slot);
 }
 static void sprite_on_load(struct config_pack p, void *ptr){
-	struct SpriteData *spr = (struct SpriteData *)ptr;	
+	struct DouSpritePrototype *spr = (struct DouSpritePrototype *)ptr;	
 	if(!spr){LOG(LOG_NULL, "Passed null pointer to sprite parser"); return;}
 	
 	if(t_check(p.current_section, "metadata")){

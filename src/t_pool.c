@@ -8,7 +8,8 @@
 
 static struct PoolHeader *slot_at(struct Pool *p, int i);
 
-void t_pool_init(struct Pool *p,int cap, size_t element_size){
+void t_pool_create(struct Pool *p,int cap, size_t element_size){
+	if(p->active){t_pool_free(p);}
 	p->items = XCALLOC(1, element_size * cap);
 	p->element_size = element_size;
 	p->cap = cap;
@@ -21,10 +22,12 @@ void t_pool_init(struct Pool *p,int cap, size_t element_size){
 		h->active = false;
 	}
 	
+	p->active = true;	
 	LOG(LOG_LOAD, "Initialized pool %p", p);
 }
-void  t_pool_free_all(struct Pool *p){
+void  t_pool_free(struct Pool *p){
 	if(!p){LOG(LOG_FREE, "Can't free NULL pool"); return;}	
+	if(!p->active){LOG(LOG_FREE, "pool is already inactive so can't free");return;}
 	if(p->items){free(p->items); p->items = NULL;}
 	memset(p, 0, sizeof(struct Pool));
 }
@@ -50,7 +53,8 @@ void *t_pool_alloc(struct Pool *p, struct InRef *out){
 }
 void *t_pool_get(struct Pool *p, struct InRef r){
     	if(r.slot >= (uint32_t)p->cap){ LOG(LOG_OUTOFBOUNDS, "Tried to get pool item of slot %d while cap is %d", r.slot, p->cap);return NULL; }
-    	struct PoolHeader *h = slot_at(p, (int)r.slot);
+    	if(r.slot == 0 && r.gen == 0){return NULL;}
+	struct PoolHeader *h = slot_at(p, (int)r.slot);
     	if(!h->active || h->gen != r.gen){ return NULL; }
     	return h;
 }
@@ -74,7 +78,9 @@ void *t_pool_next(struct Pool *p, int *cursor, struct InRef *out){
    	return NULL;
 }
 
-
+bool t_pool_loaded(struct Pool *p){
+	return p->active;
+}
 
 
 

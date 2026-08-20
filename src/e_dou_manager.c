@@ -2,160 +2,94 @@
 #include <stdbool.h>
 
 #include "e_engine_settings.h"
-
-#include "dou_proto_inventory.h"
-#include "dou_proto_items.h"
-#include "dou_proto_entity.h"
-#include "dou_proto_loot.h"
-#include "dou_proto_stats.h"
+#include "e_dou_manager.h"
 
 #include "t_log_handler.h"
-#include "e_dou_manager.h"
-#include "t_gindex_tool.h"
 
-void *e_dou_get(struct DouManager *protos, int gindx, enum DouEnum dou){
-	struct MemDou *data = &protos->dou[dou];
-	int lindx = t_gindx_to_lindx(data->iman, data->icount, gindx);
-	if(!t_indxvalid(data->icount, lindx)){
-		// It's not loaded yet
-		bool loaded = e_load_dou_data(protos, dou, gindx);
-		if(!loaded){
-			LOG(LOG_NULL, "Failed to load %s %d",e_dou_to_str(dou), gindx);
-			e_free_dou_data(protos, dou, gindx);
-			return NULL;
-		}
-		int lindx = t_gindx_to_lindx(data->iman, data->icount, gindx);
-		if(!t_indxvalid(data->icount, lindx)){LOG(LOG_NULL, "Failed to load %s gindx %d and loader didn't catch it", e_dou_to_str(dou), gindx); return NULL;}
-		return ((char*)data->iarr + (size_t)lindx * data->size);	
-	}
-	return ((char*)data->iarr + (size_t)lindx * data->size);		
-}
-
-char *e_dou_to_str(enum DouEnum type){
-	if(type < 0 || type >= DOU_COUNT){
-		LOG(LOG_NULL, "%d is not a valid enum", type);
-		return "";
-	}
-	const char *lokup[DOU_COUNT] = {
-		[DOU_INV] = "Inventory",
-		[DOU_ITEM] = "Item",
-		[DOU_ENTIT] = "Entity",
-		[DOU_LOOT] = "Loot",
-		[DOU_STAT] = "Stat",
-		[DOU_SPRITE] = "Sprite",
-		[DOU_INTERACTABLE] "Interactable",
-	};
-
-	return (char *)lokup[type];
-}
-
-bool e_load_dou(struct DouManager *dou, struct DouLoader lod){
-	if(!dou){LOG(LOG_NULL, "Can't load dou passed NULL pointer"); return false;}	
-	if(lod.type < 0 || lod.type >= DOU_COUNT){LOG(LOG_NULL, "%d is not a valid type", lod.type); return false;}	
-	
-	struct MemDou *mem = &dou->dou[lod.type];
-	struct DouFunctions *fnc = &dou->dou_fnc[lod.type];
-
-	if(mem->iarr || mem->iman){LOG(LOG_RELOAD, "Can't load %s since already loaded", e_dou_to_str(lod.type)); return false;}
-	
-	mem->icount = e_grab_doucount(lod.type);
-	mem->size = lod.size;
-
-	mem->iman = XCALLOC(1,  sizeof(struct local_indx) * mem->icount);
-	mem->iarr = XCALLOC(1, mem->size * mem->icount);
-	
-	fnc->on_load = lod.on_load;
-	fnc->on_init = lod.on_init;
-	fnc->on_free = lod.on_free;
-	fnc->on_pload = lod.on_pload;
-	
-	LOG(LOG_LOAD, "Loaded %s", e_dou_to_str(lod.type));
-
-	return true;
-}
-bool e_unload_dou(struct DouManager *dou, enum DouEnum type){
-	if(!dou){LOG(LOG_NULL, "Can't load dou passed NULL pointer"); return false;}	
-	if(type < 0 || type >= DOU_COUNT){LOG(LOG_NULL, "%d is not a valid type", type); return false;}	
-	
-	struct MemDou *mem = &dou->dou[type];
-	struct DouFunctions *fnc = &dou->dou_fnc[type];
-	
-	if(mem->iman){free(mem->iman); mem->iman = NULL;;}
-
-	if(mem->iarr){
-		for(int i = 0; i < mem->icount; i++){
-			void *slot = (char *)mem->iarr + (size_t)i * mem->size;
-        		fnc->on_free(slot);
-		}
-		free(mem->iarr);
-		mem->iarr = NULL;
-	}
-
-	fnc->on_load = NULL;
-	fnc->on_init = NULL;
-	fnc->on_free = NULL;
-	fnc->on_pload = NULL;
-	
-	LOG(LOG_FREE, "freed %s", e_dou_to_str(type));
-
-	return true;	
-}
 struct DouManager *e_create_dou_manager(){
-	struct DouManager *mem = XCALLOC(1, sizeof(struct DouManager));
-	LOG(LOG_LOAD, "Loaded Memory Manager");
-	return mem;
+	struct DouManager *dou = XCALLOC(1, sizeof(struct DouManager));
+	return dou;
 }
-void e_free_dou_manager(struct DouManager *mem){
-	if(!mem){LOG(LOG_RELOAD, "Can't free NULL memory manager");return;}
-	
+void e_free_dou_manager(struct DouManager *dou){
 	for(int i = 0; i < DOU_COUNT; i++){
-		e_unload_dou(mem, i);
+		// This already checks double free so it's fine
+		t_pool_free(&dou->pools[i]);
+	}	
+
+	free(dou);
+	dou = NULL;	
+}
+
+void e_load_dou_pool(struct DouManager *dou, struct DouLoader ldr){
+	if(!dou){LOG(LOG_NULL, "Can't load dou type passed NULL pointer"); return ;}	
+	if(ldr.type < 0 || ldr.type >= DOU_COUNT){LOG(LOG_NULL, "%d is not a valid type", ldr.type); return ;}		
+	if(t_pool_loaded(&dou->pools[ldr.type])){
+		LOG(LOG_RELOAD, "Reloading %s", e_dou_to_str(ldr.type));
+		t_pool_free(&dou->pools[ldr.type]);
 	}
 
-	free(mem);
-	mem = NULL;
-	LOG(LOG_FREE, "Freed memory manager");
+	t_pool_create(&dou->pools[ldr.type], e_grab_doucap(ldr.type), ldr.size);	
+	dou->dou_fnc[ldr.type] = ldr.func;
+
+	LOG(LOG_LOAD, "Loaded dou %s with cap %d", e_dou_to_str(ldr.type), e_grab_doucap(ldr.type));
 }
-bool e_load_dou_data(struct DouManager *mem ,enum DouEnum dou, int gindx){
-	struct MemDou *data = &mem->dou[dou];
-	if(!data->iarr){LOG(LOG_NULL, "iarr for %s is NULL", e_dou_to_str(dou)); return false;}
-	if(!data->iman){LOG(LOG_NULL, "iman for %s is NULL", e_dou_to_str(dou)); return false;}
 
-	struct DouLoadData load = {
-		.gindx = gindx,
-		.cap = data->icount,
-		.iman = data->iman,
-		.iarr = data->iarr,
-		.element_size = data->size,
-		.path = e_grab_doupath(dou),
-		.format = e_grab_douformat(dou),
-		.loader = mem->dou_fnc[dou].on_load,
-		.init = mem->dou_fnc[dou].on_init,	
-		.pload = mem->dou_fnc[dou].on_pload,
-	};
-	bool loaded = t_handle_dou_loading(load);	
-	if(!loaded){LOG(LOG_RELOAD, "Failed to load gindx %d of %s", gindx, e_dou_to_str(dou)); return false;}
+void e_free_dou_pool(struct DouManager *dou, enum DouFlag type){
+	if(!dou){LOG(LOG_NULL, "Can't free dou type passed NULL pointer"); return ;}	
+	if(type < 0 || type >= DOU_COUNT){LOG(LOG_NULL, "%d is not a valid type", type); return ;}		
+	if(!t_pool_loaded(&dou->pools[type])){
+		LOG(LOG_RELOAD, "Not loaded so can't free %s", e_dou_to_str(type));
+		return;
+	}
 
-	LOG(LOG_LOAD, "Loaded gindx %d of dou %s with path %s and format %s", gindx, e_dou_to_str(dou), e_grab_doupath(dou), e_grab_douformat(dou));
-	return true;
+	t_pool_free(&dou->pools[type]);	
+	
+	dou->dou_fnc[type].on_load = NULL;
+	dou->dou_fnc[type].on_init = NULL;
+	dou->dou_fnc[type].on_free = NULL;
+	dou->dou_fnc[type].on_pload = NULL;
+
+	LOG(LOG_LOAD, "Free dou %s with cap %d", e_dou_to_str(type), e_grab_doucap(type));
 }
-bool e_free_dou_data(struct DouManager *mem ,enum DouEnum dou, int gindx){
-	struct MemDou *data = &mem->dou[dou];
-	if(!data->iarr){LOG(LOG_NULL, "iarr for %s is NULL", e_dou_to_str(dou)); return false;}
-	if(!data->iman){LOG(LOG_NULL, "iman for %s is NULL", e_dou_to_str(dou)); return false;}
+struct InRef e_load_dou_item(struct DouManager *dou, enum DouFlag type, int gindx, void *out){
+	if(!dou){LOG(LOG_NULL, "Can't load %s %d since Dou is null", e_dou_to_str(type), gindx); return (struct InRef){0};}
+	if(!t_pool_loaded(&dou->pools[type])){LOG(LOG_NULL, "Dou %s is not initalized so can't load any data", e_dou_to_str(type));return (struct InRef){0};}
+		
+	out = NULL;
 
-	struct DouFreeData free = {
-		.lindx = NULL,
-		.gindx = &gindx,
-		.cap = data->icount,
-		.iman = data->iman,
-		.iarr = data->iarr,
-		.element_size = data->size,
-		.freer= mem->dou_fnc[dou].on_free,	
-	};
-	bool freed = t_handle_dou_freeing(free);	
-	if(!freed){LOG(LOG_RELOAD, "Failed to free gindx %d of %s", gindx, e_dou_to_str(dou)); return false;}
+	struct InRef item;
+	void *ptr = t_pool_alloc(&dou->pools[type], &item);
+	if(!ptr){LOG(LOG_NULL, "Failed to allocate %s %d", e_dou_to_str(type), gindx); return (struct InRef){0};}
+	
+	// Initalize
+	if(dou->dou_fnc[type].on_init){dou->dou_fnc[type].on_init(ptr);}	
+	
+	// Format the path	
+	char *base_path = e_grab_doupath(type);
+	char *format = e_grab_douformat(type);
+	char *path = t_format_path(base_path, format, gindx);
+	// Let it run. It either figures itself out later or crashes before it messes stuff up
+	if(!path){LOG(LOG_NULL, "Failed to format path:%s format:%s gindx:%d", base_path, format, gindx);}
+	bool configured = t_config(ptr, path, dou->dou_fnc[type].on_load);
+	if(!configured){LOG(LOG_NULL, "Failed to configure %s of path %s", e_dou_to_str(type), path); free(path); return (struct InRef){0};}
+	
+	// Now pload
+	if(dou->dou_fnc[type].on_pload){dou->dou_fnc[type].on_pload(ptr);}
 
-	LOG(LOG_FREE, "Freed gindx %d of dou %s ", gindx, e_dou_to_str(dou));
+	free(path);
+	if(out){out = ptr;}	
+
+	LOG(LOG_LOAD, "Loaded gindx %d of dou %s with path %s and format %s", gindx, e_dou_to_str(type), e_grab_doupath(type), e_grab_douformat(type));
+	return item;
+}
+bool e_free_dou_item(struct DouManager *dou, enum DouFlag type, struct InRef item){
+	if(!dou){LOG(LOG_NULL, "Can't load %s item since Dou is null", e_dou_to_str(type)); return false;}
+	if(!t_pool_loaded(&dou->pools[type])){LOG(LOG_NULL, "Dou %s is not initalized so can't load any data", e_dou_to_str(type));return false;}	
+
+	void *ptr = t_pool_get(&dou->pools[type], item);
+	if(!ptr){LOG(LOG_NULL, "Pool get for slot %d gen %d returned NULL", item.slot, item.gen); return false;}
+	if(dou->dou_fnc[type].on_free){dou->dou_fnc[type].on_free(ptr);}	
+	bool released = t_pool_release(&dou->pools[type], item);
+	if(!released){LOG(LOG_NULL, "Failed to free slot %d gen %d", item.slot, item.gen); return false;}
 	return true;
 }

@@ -1,9 +1,12 @@
 #pragma once
 #include <stdint.h>
 #include "t_pool.h"
-#include "c_magic_number.h"
 #include "t_math.h"
-#include "c_types.h"
+
+#include "c_magic_number.h"
+#include "c_data_enums.h"
+#include "c_flag_enums.h"
+
 struct DouManager;
 
 struct InstanceChildAnimState{
@@ -17,8 +20,8 @@ struct InventoryChildInstance{
 	int hotbar[HOTBAR_SIZE];
 };
 struct StatChildInstance{
-	int base[BSTAT_COUNT];
-	int mod[BSTAT_COUNT];
+	int base[BASE_STAT_COUNT];
+	int mod[BASE_STAT_COUNT];
 };
 struct EntityInstance{
 	struct PoolHeader h;
@@ -26,7 +29,7 @@ struct EntityInstance{
 	int proto_gindx;
 	int guid;
 	v3 tile;
-	enum TileDirections facing;
+	enum TileDirFlag facing;
 
 	struct InstanceChildAnimState anim;
 	uint32_t runtime_flags;
