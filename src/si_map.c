@@ -4,11 +4,15 @@
 #include <string.h>
 #include <stdint.h>
 #include "si_map.h"
+
 #include "t_config_tool.h"
-#include "e_engine_settings.h"
 #include "t_log_handler.h"
 #include "t_strings.h"
-#include "c_types.h"
+
+#include "c_flag_enums.h"
+
+#include "e_engine_settings.h"
+
 static void metadata_parser(struct config_pack p, void *ptr);
 static void data_parser(struct config_pack p, void *ptr);
 static bool m_decompress_segments(struct MapParsePackage *pckg);
@@ -52,7 +56,7 @@ bool si_free_map(struct MapPack *map){
 
 struct MapPack *si_load_map(int gindx){
 	struct MapPack *map = XCALLOC(1, sizeof(struct MapPack));
-	char *base = e_grab_sipath(SI_MAP);
+	char *base = e_grab_sipath(ESI_MAP);
 	if(!base){LOG(LOG_NULL, "e_grab_sipath returned NULL"); return NULL;}
 	
 	char *path = t_format_path(base, ".ini", gindx);
@@ -75,7 +79,7 @@ struct MapPack *si_load_map(int gindx){
 	
 	bool data_parsed = t_config(&pckg, path, data_parser);
 	if(!data_parsed){
-		LOG(LOG_ABORT, "Failed to parse map[%s] data", e_grab_sipath(SI_MAP)); 
+		LOG(LOG_ABORT, "Failed to parse map[%s] data", e_grab_sipath(ESI_MAP)); 
 		free(map->entities);
 		free(map->tiles);
 		free(pckg.segments);
@@ -87,7 +91,7 @@ struct MapPack *si_load_map(int gindx){
 	// faster heap array of tiles
 	bool decompressed = m_decompress_segments(&pckg);	
 	if(!decompressed){
-		LOG(LOG_ABORT, "Failed to decompress map[%s] data", e_grab_sipath(SI_MAP)); 
+		LOG(LOG_ABORT, "Failed to decompress map[%s] data", e_grab_sipath(ESI_MAP)); 
 		free(map->entities);
 		free(map->tiles);
 		free(pckg.segments);
@@ -137,9 +141,9 @@ static void data_parser(struct config_pack p, void *ptr){
 			t_atoi(p.value, &entities[entity_indx].GUID);
 		} else if(t_check(p.key, "Direction")){
 			t_atoi(p.value, (int *)&entities[entity_indx].dir);
-			if(entities[entity_indx].dir < 0 || entities[entity_indx].dir > W_DIR_COUNT){
+			if(entities[entity_indx].dir < 0 || entities[entity_indx].dir > TILE_DIRECTION_COUNT){
 				LOG(LOG_PARSE, "Invalid entity direction");
-				entities[entity_indx].dir = W_NORTH;
+				entities[entity_indx].dir = ED_NORTH;
 			}
 		}	
 	}
@@ -225,7 +229,7 @@ static bool m_decompress_segments(struct MapParsePackage *pckg){
 		    		// Default to a straight, not W_NORTH: W_NORTH is a corner
 		    		// frame now, so it's a bad fallback for the IS_WALLS
 		    		// no-direction-flags case below.
-		    		enum TileDirections dir = W_NORTH_EAST;
+		    		enum TileDirFlag dir = ED_NORTH_EAST;
 
 		    		if ((seg->flags & (1 << HAS_WALLS_REC)) && is_perimeter) {
 					place_wall = true;
@@ -233,18 +237,18 @@ static bool m_decompress_segments(struct MapParsePackage *pckg){
 			    			// A corner is defined by BOTH edges that meet
 			    			// there, so resolve x AND y together, never as
 			    			// an x-or-y chain.
-			    			if (x == min_x) dir = (y == min_y) ? W_NORTH : W_EAST;
-			    			else            dir = (y == min_y) ? W_WEST  : W_SOUTH;
-					}
-					else if (y == min_y) dir = W_NORTH_EAST;
-					else if (y == max_y) dir = W_SOUTH_WEST;
-					else if (x == min_x) dir = W_NORTH_WEST;
-					else if (x == max_x) dir = W_SOUTH_EAST;
+			    			if (x == min_x) dir = (y == min_y) ? ED_NORTH : ED_EAST;
+			    			else            dir = (y == min_y) ? ED_WEST  : ED_SOUTH;
+					}	
+					else if (y == min_y) dir = ED_NORTH_EAST;
+					else if (y == max_y) dir = ED_SOUTH_WEST;
+					else if (x == min_x) dir = ED_NORTH_WEST;
+					else if (x == max_x) dir = ED_SOUTH_EAST;
 		    		} else if (seg->flags & (1 << IS_WALLS)) {
-					if ((seg->flags & (1 << WALL_IS_NORTH)) && y == min_y) { place_wall = true; dir = W_NORTH_EAST; }
-					else if ((seg->flags & (1 << WALL_IS_SOUTH)) && y == max_y) { place_wall = true; dir = W_SOUTH_WEST; }
-					else if ((seg->flags & (1 << WALL_IS_EAST)) && x == min_x) { place_wall = true; dir = W_NORTH_WEST; }
-					else if ((seg->flags & (1 << WALL_IS_WEST)) && x == max_x) { place_wall = true; dir = W_SOUTH_EAST; }
+					if ((seg->flags & (1 << WALL_IS_NORTH)) && y == min_y) { place_wall = true; dir = ED_NORTH_EAST; }
+					else if ((seg->flags & (1 << WALL_IS_SOUTH)) && y == max_y) { place_wall = true; dir = ED_SOUTH_WEST; }
+					else if ((seg->flags & (1 << WALL_IS_EAST)) && x == min_x) { place_wall = true; dir = ED_NORTH_WEST; }
+					else if ((seg->flags & (1 << WALL_IS_WEST)) && x == max_x) { place_wall = true; dir = ED_SOUTH_EAST; }
 					else {
 			    			uint32_t dir_mask = (1 << WALL_IS_NORTH) | (1 << WALL_IS_SOUTH) |(1 << WALL_IS_EAST)  | (1 << WALL_IS_WEST);
 			    			if ((seg->flags & dir_mask) == 0) place_wall = true;

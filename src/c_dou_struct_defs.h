@@ -10,6 +10,7 @@
 
 #include "c_data_enums.h"
 #include "c_flag_enums.h"
+#include "c_magic_number.h"
 
 struct DouChildInvSlot{
 	int item_gindx;
@@ -23,11 +24,8 @@ struct DouEntityPrototype{
 	int entity_data[ENTITY_DATA_COUNT];
 	int bstats_data[BASE_STAT_COUNT];
 
-	int inventory_cap;
-	int hotbar_cap;
-
-	struct DouChildInvSlot *inventory;
-	struct DouChildInvSlot *hotbar;
+	struct DouChildInvSlot inventory[MAX_INV_SIZE];
+	struct DouChildInvSlot hotbar[MAX_HOTBAR_SIZE];
 
 	uint32_t flags;
 };

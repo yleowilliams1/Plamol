@@ -2,15 +2,16 @@
 #include <string.h>	
 #include <raylib.h>
 #include "e_engine_settings.h"
+
 #include "si_input.h"
+
 #include "t_config_tool.h"
 #include "t_strings.h"
 #include "t_log_handler.h"
-#include "t_gindex_tool.h"
-#include "w_window_manager.h"
 #include "t_math.h"
-#include "c_magic_number.h"
 
+#include "c_magic_number.h"
+#include "c_flag_enums.h"
 static void input_parser(struct config_pack p, void *ptr);
 static void si_set_binding(enum KeyType type, enum Action action, int key, struct InputManager *input);
 static void si_update_input(enum Action action, struct InputManager *input);
@@ -75,7 +76,7 @@ vf2 si_input_vector(struct InputManager *input){
 }
 
 struct InputManager *si_init_input(){
-	char *path = e_grab_sipath(SI_INPUT);
+	char *path = e_grab_sipath(ESI_INPUT);
 	if(!path){LOG(LOG_NULL, "e_grab_sipath returned NULL"); return NULL;}
 	
 	int set_count = MAX_KEYS * A_COUNT;

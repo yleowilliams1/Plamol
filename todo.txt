@@ -1,0 +1,12 @@
+DONE 1: Get rid of gindex tool and dou manager and refactor to use the pool system
+DONE 2: Combine stats inventory into entity instead of seperate prototypes. 
+3: Combine loot and interactable into one and implement interactable support for maps 
+DONE 4: Rewrite the sprite manager to be more efficent (think about this when refactoring gindex)
+5: Write interactable and integrate it into map and world and also add a player spawn for the map 
+6: Start adding asserts now that theres a clearer flow of data
+7: Write runtime_render
+8: Write input handler
+9: Write combat
+10: Write entity AI
+11: Write UI
+

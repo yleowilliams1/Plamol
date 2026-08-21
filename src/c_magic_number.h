@@ -1,10 +1,7 @@
 #pragma once
 
-#define MAX_FLAGS 256
-#define MAX_FLAG_NAME 32
-
-#define HOTBAR_SIZE 8
-#define INVENTORY_SIZE 32
+#define MAX_HOTBAR_SIZE 8
+#define MAX_INV_SIZE 32
 #define EMPTY_SLOT -1
 
 #define LOOT_MAX_SIZE 64
@@ -19,3 +16,6 @@
 #define MAX_KILLS_PER_FRAME 16
 
 #define INVALID_CAP -808080 
+
+#define NULL_INDX -1
+

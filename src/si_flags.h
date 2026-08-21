@@ -1,5 +1,4 @@
 #pragma once
-#include "c_magic_number.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -10,7 +9,8 @@ struct Flag{
 };
 
 struct FlagManager{
-	struct Flag flags[MAX_FLAGS];
+	struct Flag *flags;
+	int cap;
 	int count;
 };
 

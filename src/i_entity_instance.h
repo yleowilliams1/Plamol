@@ -40,5 +40,5 @@ struct EntityInstance{
 	struct InstanceChildInvSlot inventory[MAX_INV_SIZE];
 	struct InstanceChildInvSlot hotbar[MAX_HOTBAR_SIZE];
 };
-void i_entity_advance_anim(struct InstanceChildAnimState *anim, struct DouManager *dou, int gindx, float delta);
-int i_entity_derive_stat(struct EntityInstance *entity, int stat, enum StatTypes type);
+void inst_anim_advance(struct InstanceChildAnimState *anim, struct DouManager *dou, int gindx, float delta);
+int inst_derive_stat(struct EntityInstance *entity, int stat, enum StatType type);

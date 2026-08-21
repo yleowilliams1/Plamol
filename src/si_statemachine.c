@@ -2,11 +2,6 @@
 #include <stdbool.h>
 #include "si_statemachine.h"
 
-
-// I should probably write error checking for this. But i don't want to.
-// Most of this is fine. If a function is nulled then it's not really something to 
-// announce
-
 static struct StateMachine state_machine = {0};
 
 void sm_init(struct GameStateNode node){

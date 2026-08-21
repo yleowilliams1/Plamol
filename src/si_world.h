@@ -3,10 +3,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "si_map.h"
+
 #include "t_pool.h"
 #include "t_math.h"
+
 #include "c_magic_number.h"
-#include "c_types.h"
 #include "run_runtime.h"
 
 struct DouManager;

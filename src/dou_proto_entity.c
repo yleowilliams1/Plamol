@@ -34,9 +34,6 @@ struct DouLoader dou_entity(){
 static void entity_on_free(void *slot){
 	struct DouEntityPrototype *e = (struct DouEntityPrototype*)slot;	
 	if(!e){LOG(LOG_NULL, "Took null pointer into dou entity prototype free."); return;}	
-	
-	free(e->inventory);
-	free(e->hotbar);
 
 	LOG(LOG_FREE, "Freeing dou entity prototype of address %p", slot);
 }
@@ -44,8 +41,6 @@ static void entity_on_init(void *slot){
 	struct DouEntityPrototype *e = (struct DouEntityPrototype*)slot;	
 	if(!e){LOG(LOG_NULL, "Took null pointer into dou entity prototype init."); return;}	
 	
-	e->inventory_cap = INVALID_CAP;
-	e->hotbar_cap = INVALID_CAP;
 	LOG(LOG_LOAD, "Initalizing dou entity prototype of address %p", slot);
 }
 static void entity_on_ploader(void *slot){
@@ -65,12 +60,6 @@ static void entity_on_loader(struct config_pack p, void *ptr){
 			if(!t_check(p.key, str)){continue;}
 			t_atoi(p.value, &e->entity_data[i]);
 		}	
-		if(t_check(p.key, "inventory_size")){
-			t_atoi(p.value, &e->inventory_cap);
-		}	
-		if(t_check(p.key, "hotbar_size")){
-			t_atoi(p.value, &e->hotbar_cap);
-		}
 	}
 	if(t_check(p.current_section, "flags")){
 		for(int i = 0; i < ENTITY_FLAG_COUNT; i++){
@@ -82,12 +71,7 @@ static void entity_on_loader(struct config_pack p, void *ptr){
 		}
 	}
 	if(t_check(p.current_section, "inventory_data")){
-		if(e->inventory_cap == INVALID_CAP){
-			LOG(LOG_PARSE, "major error please fill inventory_size before inventory section. failing parse");
-			return;
-		}
-		if(!e->inventory){e->inventory = XCALLOC(1, sizeof(struct DouChildInvSlot) * e->inventory_cap);}
-		for(int i = 0; i < e->inventory_cap; i++){
+		for(int i = 0; i < MAX_INV_SIZE; i++){
 			size_t size = 32;
 			char gindx[size];
 			char count[size];
@@ -109,12 +93,7 @@ static void entity_on_loader(struct config_pack p, void *ptr){
 		}
 	}
 	if(t_check(p.current_section, "hotbar_data")){
-		if(e->hotbar_cap== INVALID_CAP){
-			LOG(LOG_PARSE, "major error please fill hotbar_size before hotbar section. failing parse");
-			return;
-		}
-		if(!e->hotbar){e->hotbar = XCALLOC(1, sizeof(struct DouChildInvSlot) * e->hotbar_cap);}
-		for(int i = 0; i < e->hotbar_cap; i++){
+		for(int i = 0; i < MAX_HOTBAR_SIZE; i++){
 			size_t size = 32;
 			char gindx[size];
 			char count[size];

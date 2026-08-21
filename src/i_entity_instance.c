@@ -1,19 +1,20 @@
 #include <math.h>
 #include "t_log_handler.h"
+#include "t_pool.h"
+
 #include "dou_sprite_manager.h"
 
-#include "inst_instances.h"
+#include "i_entity_instance.h"
 
 #include "e_dou_manager.h"
 #include "e_engine_settings.h"
 
-// This is pretty bad since e_dou_get calls t_gindx_to_lindx and this is ran multiple times a frame.
-// t_gindx_to_lindx does a for loop so this is really not great but i'll fix later since it's going to
-// need a rework
-void inst_anim_advance(struct InstanceChildAnimState *anim, struct DouManager *dou, int gindx, float delta){
-	if(!anim){LOG(LOG_NULL, "Anim is NULL on gindx %d", gindx);return;}
-	if(!dou){LOG(LOG_NULL, "Dou is NULL on gindx %d", gindx);return;}
+void i_entity_advance_anim(struct Pool *einst_pool, struct Pool *eproto_pool, struct Pool *sproto_pool, struct InRef entity, float delta){
+	if(!einst_pool || !eproto_pool || !sproto_pool){LOG(LOG_NULL, "passed NULL pool");return;}
 	
+	struct EntityInstance *ptr = (struct EntityInstance *)t_pool_get(einst_pool, entity);
+	if(!ptr){LOG(LOG_NULL, "t_pool_get returned NULL for InRef slot: %d gen: %d", entity.slot, entity.gen);return;}
+
 	struct SpriteData *spr = e_dou_get(dou, gindx, DOU_SPRITE);
 	if(!spr){LOG(LOG_NULL, "Sprite return NULL on gindx %d", gindx);return;}	
 	
@@ -26,7 +27,7 @@ void inst_anim_advance(struct InstanceChildAnimState *anim, struct DouManager *d
 	}	
 	
 }
-int inst_derive_stat(struct StatChildInstance *stat, enum Dev type){
+int i_entity_derive_stat(struct EntityInstance *entity, int stat, enum StatTypes type){
 	if(!stat){LOG(LOG_NULL, "Stat is NULL");return 0;}
 	if(type < 0 || type > DERV_CAP){LOG(LOG_NULL, "%d is not a valid type", type);return 0;}
 	int *b = stat->base; 

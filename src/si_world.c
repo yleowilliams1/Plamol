@@ -1,21 +1,25 @@
 #include <stdio.h>
 #include <string.h>
 #include "t_pool.h"
-#include "c_magic_number.h"
-#include "c_types.h"
-#include "e_dou_manager.h"
-#include "t_math.h"
+
 #include "e_engine_settings.h"
-#include "si_map.h"
+#include "e_dou_manager.h"
+
+#include "t_math.h"
 #include "t_log_handler.h"
+
+#include "c_magic_number.h"
+#include "c_flag_enums.h"
+#include "c_dou_struct_defs.h"
+
+#include "si_map.h"
 #include "si_world.h"
+
 #include "inst_instances.h"
+
 #include "run_runtime.h"
 
-// This doesn't have interactable support yet
-// The player ref isn't set and there isn't a way for the map to
-// set it either so thats a fix for later
-static struct InRef si_spawn_entity(struct World *w, struct DouManager *protos,int proto_gindx, v3 tile, int guid, enum TileDirections facing);
+static struct InRef si_spawn_entity(struct World *w, struct DouManager *protos,int proto_gindx, v3 tile, int guid, enum TileDirFlag facing);
 
 static void si_occupy_set(struct World *w, v3 tile, struct InRef ref);
 static void si_occupy_clear(struct World *w, v3 tile);
@@ -24,12 +28,16 @@ static void si_flush_kills(struct World *w);
 
 struct World *si_load_world(struct DouManager *protos, int map_gindx){
 	struct World *w = XCALLOC(1, sizeof(struct World));
+	
 	w->map = si_load_map(map_gindx);
 	if(!w->map){free(w); LOG(LOG_NULL, "Failed to load map gindx %d", map_gindx);return NULL;}
-	t_pool_init(&w->entities ,e_grab_inscount(INSTANCE_ENTITY), sizeof(struct EntityInstance));
-	t_pool_init(&w->interactables,e_grab_inscount(INSTANCE_INTERACTABLE), sizeof(struct InteractableInstance));
+	
+	t_pool_create(&w->entities ,e_grab_inscount(EIN_ENTITY), sizeof(struct EntityInstance));
+	t_pool_create(&w->interactables,e_grab_inscount(EIN_INTERACTABLE), sizeof(struct InteractableInstance));
+	
 	w->runtime = run_create_runtime();
 	if(w->runtime == NULL){LOG(LOG_NULL, "Runtime failed to load");}
+	
 	int tiles = w->map->metadata[M_WIDTH] * w->map->metadata[M_HEIGHT];
 	w->occupancy = XCALLOC(1, sizeof(struct InRef) * tiles);
 
@@ -44,11 +52,15 @@ void si_free_world(struct World *w){
 	bool map_freed = si_free_map(w->map);
 	w->map = NULL;
 	if(!map_freed){LOG(LOG_RELOAD, "Failed to free map!");}
-	t_pool_free_all(&w->entities);
-	t_pool_free_all(&w->interactables);
+	
+	t_pool_free(&w->entities);
+	t_pool_free(&w->interactables);
+	
 	run_free_runtime(w->runtime);
+	
 	free(w->occupancy);
 	w->occupancy = NULL;
+	
 	free(w);
 	w = NULL;
 }
@@ -74,12 +86,12 @@ bool si_try_move(struct World *w, struct InRef ref, v3 to){
     	si_occupy_set(w, to, ref);
     	return true;
 }
-static struct InRef si_spawn_entity(struct World *w, struct DouManager *protos,int proto_gindx, v3 tile, int guid, enum TileDirections facing){
+static struct InRef si_spawn_entity(struct World *w, struct DouManager *protos,int proto_gindx, v3 tile, int guid, enum TileDirFlag facing){
 	struct InRef ref;
 	struct EntityInstance *e = t_pool_alloc(&w->entities, &ref);
 	if(!e){ return (struct InRef){0}; }	
 
-	struct Entity *p = (struct Entity *)e_dou_get(protos, proto_gindx, DOU_ENTIT);
+	struct DouEntityPrototype *p = (struct DouEntityPrototype *)e_dou_get(protos, proto_gindx, EOU_ENTITY);
 	if(!p){ t_pool_release(&w->entities, ref); return (struct InRef){0}; }
 
 	e->proto_gindx   = proto_gindx;
@@ -89,11 +101,10 @@ static struct InRef si_spawn_entity(struct World *w, struct DouManager *protos,i
 	// The enum has to be shared for this btw
 	e->runtime_flags = p->flags;
 
-	if(p->flags & (1 << ENT_STAT)){
-		struct BaseStats *bs = (struct BaseStats *)e_dou_get(protos, p->data[E_STAT], DOU_STAT);
-		if(bs){ memcpy(e->stats.base, bs->basestats, sizeof(e->stats.base)); }
+	if(p->flags & (1 << EF_HAS_STAT)){
+		memcpy(e->stats.base, p->bstat, sizeof(e->stats.base)); }
 	}
-	if(p->flags & (1 << ENT_INV)){
+	if(p->flags & (1 << EF_HAS_INV)){
 		struct Inventory *iv = (struct Inventory *)e_dou_get(protos, p->data[E_INV], DOU_INV);
 		if(iv){ memcpy(&e->inv, iv, sizeof(e->inv));}
 	}

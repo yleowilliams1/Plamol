@@ -12,6 +12,6 @@ sm: state machine states
 t: tools
 w: window
 
-inst: instance
+i: instance
 
 run: runtime
