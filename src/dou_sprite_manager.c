@@ -11,21 +11,19 @@
 #include "c_dou_struct_defs.h"
 #include "c_magic_number.h"
 
-#include "e_dou_manager.h"
+#include "e_prototype_manager.h"
 
 static void sprite_on_init(void *slot);
 static void sprite_on_pload(void *slot);
 static void sprite_on_free(void *slot);
 static void sprite_on_load(struct config_pack p, void *ptr);
 
-struct DouLoader dou_sprite(){
-	return (struct DouLoader){
-		.func.on_load = sprite_on_load,
-		.func.on_init = sprite_on_init,
-		.func.on_free = sprite_on_free,
-		.func.on_pload = sprite_on_pload,
-		.size = sizeof(struct DouSpritePrototype),
-		.type = EOU_SPRITE,
+struct ItemFunctions dou_sprite(){
+	return (struct ItemFunctions){
+		.on_load = sprite_on_load,
+		.on_init = sprite_on_init,
+		.on_free = sprite_on_free,
+		.on_pload = sprite_on_pload,
 	};
 }
 

@@ -33,13 +33,6 @@ enum ItemFlag{
 	EI_IS_CONSUMEABLE,
 	ITEM_FLAG_COUNT,
 };
-enum DouFlag{
-	EOU_ITEM,
-	EOU_ENTITY,
-	EOU_SPRITE,
-	EOU_INTERACTABLE,
-	DOU_COUNT,
-};
 enum SiFlag{
 	ESI_FLAGS,
 	ESI_INPUT,
@@ -47,6 +40,13 @@ enum SiFlag{
 	ESI_STATEMACHINE,
 	ESI_WORLD,
 	SI_COUNT,
+};
+enum PrototypeFlag{
+	PROT_ITEM,
+	PROT_ENTITY,
+	PROT_SPRITE,
+	PROT_INTERACTABLE,
+	PROT_COUNT,
 };
 enum InstanceFlag{
 	EIN_ENTITY,
@@ -57,7 +57,7 @@ char *entity_flag_str(enum EntityFlag value);
 char *tiledir_flag_str(enum TileDirFlag value);
 char *inter_flag_str(enum InterFlag value);
 char *intertype_flag_str(enum InterTypeFlag value);
+char *protflag_str(enum PrototypeFlag value);
 char *item_flag_str(enum ItemFlag value);
-char *dou_flag_str(enum DouFlag value);
 char *si_flag_str(enum SiFlag value);
 char *instance_flag_str(enum InstanceFlag value);

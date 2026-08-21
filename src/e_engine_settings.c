@@ -23,11 +23,12 @@ void e_free_settings(){
 		free(settings->si_paths[i]);
 		settings->si_paths[i] = NULL;
 	}
-	for(int i = 0; i < DOU_COUNT; i++){
-		if(settings->dou_paths[i]){free(settings->dou_paths[i]);}
-		if(settings->dou_formats[i]){free(settings->dou_formats[i]);}
-		settings->dou_icounts[i] = 0;
-		settings->dou_paths[i] = NULL;
+	for(int i = 0; i < PROT_COUNT; i++){
+		if(settings->proto_paths[i]){free(settings->proto_paths[i]);}
+		if(settings->proto_formats[i]){free(settings->proto_formats[i]);}
+		settings->proto_item_counts[i] = 0;
+		settings->proto_paths[i] = NULL;
+		settings->proto_formats[i] = NULL;
 	}
 	free(settings);
 	settings = NULL;
@@ -48,35 +49,23 @@ void e_load_engine_settings(){
 			LOG(LOG_NULL, "%s didn't load and is currently NULL", si_flag_str(i));
 		}
 	}
-	for(int i = 0; i < DOU_COUNT; i++){
-		if(settings->dou_paths[i] == NULL){
-			LOG(LOG_NULL, "%s format didn't load and is currently NULL", dou_flag_str(i));
-		}
-		if(settings->dou_formats[i] == NULL){
-			LOG(LOG_NULL, "%s format didn't load and is currently NULL", dou_flag_str(i));
-		}
-		if(settings->dou_icounts[i] == 0){
-			LOG(LOG_NULL, "%s count is current set to 0", dou_flag_str(i));
-		}
-	}
 }
 
+char *e_grab_protopath(enum PrototypeFlag proto){
+	if(!settings){LOG(LOG_NULL, "Settings is NULL");return NULL;}
+	return settings->proto_paths[proto];
+}
+char *e_grab_protoformat(enum PrototypeFlag proto){
+	if(!settings){LOG(LOG_NULL, "Settings is NULL");return NULL;}
+	return settings->proto_formats[proto];
+}
+int e_grab_proto_itemcount(enum PrototypeFlag proto){
+	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 1;}
+	return settings->proto_item_counts[proto];
+}
 char *e_grab_sipath(enum SiFlag si){
 	if(!settings){LOG(LOG_NULL, "Settings is NULL");return NULL;}
 	return settings->si_paths[si];	
-}
-char *e_grab_doupath(enum DouFlag dou){
-	if(!settings){LOG(LOG_NULL, "Settings is NULL");return NULL;}
-	return settings->dou_paths[dou];
-
-}
-char *e_grab_douformat(enum DouFlag dou){
-	if(!settings){LOG(LOG_NULL, "Settings is NULL");return NULL;}
-	return settings->dou_formats[dou];
-}
-int e_grab_doucap(enum DouFlag dou){
-	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 0;}
-	return settings->dou_icounts[dou];
 }
 int e_grab_inscount(enum InstanceFlag type){
 	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 0;}
@@ -94,36 +83,36 @@ static void engine_parser(struct config_pack p, void *ptr){
 			if(!t_check(p.key, si_flag_str(i))){continue;}
 			t_cpy(&s->si_paths[i], p.value);
 		}
-		for(int i = 0; i < DOU_COUNT; i++){
-			if(!t_check(p.key, dou_flag_str(i))){continue;}
-			t_cpy(&s->dou_paths[i], p.value);
+		for(int i = 0; i < PROT_COUNT; i++){
+			if(!t_check(p.key, protflag_str(i))){continue;}
+			t_cpy(&s->proto_paths[i], p.value);
 		}
 	}
 	if(t_check(p.current_section, "Memory")){
-		for(int i = 0; i < DOU_COUNT; i++){
+		for(int i = 0; i < PROT_COUNT; i++){
 			size_t size = 128;
 			char buf[size];
-			char *base = dou_flag_str(i); 
+			char *base = protflag_str(i); 
 			t_snprintf(buf, size, NULL, "%s%s", base, "Count");	
 			if(!t_check(p.key, buf)){continue;}
-			t_atoi(p.value, &s->dou_icounts[i]);
+			t_atoi(p.value, &s->proto_item_counts[i]);
 		}
 	}
 	if(t_check(p.current_section, "Format")){
-		for(int i = 0; i < DOU_COUNT; i++){
+		for(int i = 0; i < PROT_COUNT; i++){
 			size_t size = 128;
 			char buf[size];
-			char *base = dou_flag_str(i); 
+			char *base = protflag_str(i); 
 			t_snprintf(buf, size, NULL, "%s%s", base, "Format");	
 			if(!t_check(p.key, buf)){continue;}
-			t_cpy(&s->dou_formats[i], p.value);
+			t_cpy(&s->proto_formats[i], p.value);
 		}
 	}
 	if(t_check(p.current_section, "Instances")){
 		for(int i = 0; i < INSTANCE_COUNT; i++){
 			size_t size = 128;
 			char buf[size];
-			char *base = dou_flag_str(i); 
+			char *base = protflag_str(i); 
 			t_snprintf(buf, size, NULL, "%s%s", base, "Count");	
 			if(!t_check(p.key, buf)){continue;}
 			t_atoi(p.value, &s->instance_counts[i]);

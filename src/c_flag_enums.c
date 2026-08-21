@@ -79,17 +79,17 @@ char *item_flag_str(enum ItemFlag value){
 	if(!result){LOG(LOG_NULL, "Passing NULL string value of %d", value);}
 	return result;
 }
-char *dou_flag_str(enum DouFlag value){
+char *protflag_str(enum PrototypeFlag value){
 	char *result = NULL;
-	if(value < 0 || value >= DOU_COUNT){
+	if(value < 0 || value >= PROT_COUNT){
 		LOG(LOG_NULL, "Passing out of range value of %d", value);
 		return NULL;
 	}
 	switch(value){
-		case EOU_ITEM: result = "Item"; break;
-		case EOU_ENTITY: result = "Entity"; break;
-		case EOU_SPRITE: result = "Sprite"; break;
-		case EOU_INTERACTABLE: result = "Interactable"; break;
+		case PROT_ITEM: result = "ItemPrototype"; break;
+		case PROT_ENTITY: result = "EntityPrototype"; break;
+		case PROT_SPRITE: result = "SpritePrototype"; break;
+		case PROT_INTERACTABLE: result = "InteractablePrototype"; break;
 		default: result = NULL; break;
 	}
 	if(!result){LOG(LOG_NULL, "Passing NULL string value of %d", value);}

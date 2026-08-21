@@ -2,11 +2,12 @@
 #include <stdbool.h>
 #include "c_flag_enums.h"
 
+
 struct EngineSettings{
 	char *si_paths[SI_COUNT];
-	char *dou_paths[DOU_COUNT];
-	char *dou_formats[DOU_COUNT];
-	int dou_icounts[DOU_COUNT]; 
+	char *proto_paths[PROT_COUNT];
+	char *proto_formats[PROT_COUNT];
+	int proto_item_counts[PROT_COUNT]; 
 	int instance_counts[INSTANCE_COUNT];
 	float anim_fps;
 };
@@ -14,8 +15,9 @@ struct EngineSettings{
 void e_free_settings();
 void e_load_engine_settings();
 char *e_grab_sipath(enum SiFlag si);
-char *e_grab_doupath(enum DouFlag dou);
-char *e_grab_douformat(enum DouFlag dou);
-int e_grab_doucap(enum DouFlag dou);
 int e_grab_inscount(enum InstanceFlag type);
 float e_grab_animfps();
+
+char *e_grab_protopath(enum PrototypeFlag proto);
+char *e_grab_protoformat(enum PrototypeFlag proto);
+int e_grab_proto_itemcount(enum PrototypeFlag proto);

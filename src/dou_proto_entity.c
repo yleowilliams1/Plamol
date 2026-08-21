@@ -13,21 +13,19 @@
 #include "c_flag_enums.h"
 #include "c_dou_struct_defs.h"
 
-#include "e_dou_manager.h"
+#include "e_prototype_manager.h"
 
 static void entity_on_free(void *slot);
 static void entity_on_init(void *slot);
 static void entity_on_ploader(void *slot);
 static void entity_on_loader(struct config_pack p, void *ptr);
 
-struct DouLoader dou_entity(){
-	return (struct DouLoader){
-		.func.on_load = entity_on_loader,
-		.func.on_init = entity_on_init,
-		.func.on_free = entity_on_free,
-		.func.on_pload = entity_on_ploader,
-		.size = sizeof(struct DouEntityPrototype),
-		.type = EOU_ENTITY,
+struct ItemFunctions prototype_entity(){
+	return (struct ItemFunctions){
+		.on_load = entity_on_loader,
+		.on_init = entity_on_init,
+		.on_free = entity_on_free,
+		.on_pload = entity_on_ploader,
 	};
 }
 

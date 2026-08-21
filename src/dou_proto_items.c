@@ -13,7 +13,7 @@
 #include "c_data_enums.h"
 #include "c_flag_enums.h"
 
-#include "e_dou_manager.h"
+#include "e_prototype_manager.h"
 
 
 static void item_on_init(void *slot);
@@ -21,14 +21,12 @@ static void item_on_free(void *slot);
 static void item_on_pload(void *slot);
 static void item_on_load(struct config_pack p, void *ptr);
 
-struct DouLoader dou_item(){
-	return (struct DouLoader){
-		.func.on_load = item_on_load,
-		.func.on_init = item_on_init,
-		.func.on_free = item_on_free,
-		.func.on_pload = item_on_pload,
-		.size = sizeof(struct DouItemPrototype),
-		.type = EOU_ITEM,
+struct ItemFunctions prototype_item(){
+	return (struct ItemFunctions){
+		.on_load = item_on_load,
+		.on_init = item_on_init,
+		.on_free = item_on_free,
+		.on_pload = item_on_pload,
 	};
 }
 

@@ -1,5 +1,5 @@
 #pragma once
 
-struct DouLoader;
+struct ItemFunctions;
 
-struct DouLoader dou_item();
+struct ItemFunctions prototype_item();

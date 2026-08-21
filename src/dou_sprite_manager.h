@@ -1,5 +1,5 @@
 #pragma once
 
-struct DouLoader;
+struct ItemFunctions;
 
-struct DouLoader dou_sprite();
+struct ItemFunctions prototype_sprite();
