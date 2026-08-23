@@ -75,6 +75,16 @@ void e_free_register(struct RegisterManager *rman, int reg){
 	rman->registers[reg] = NULL;
 	rman->fncs[reg] = (struct ItemFunctions){0};	
 }
+void *e_grab_item(struct RegisterManager *rman, int reg, int gindx){
+	if(!rman){LOG(LOG_NULL, "Can't grab register %d with NULL register manager", reg);return NULL;}
+	if(reg < 0 || reg >= rman->register_cap){LOG(LOG_NULL, "%d is not a valid register index", reg); return NULL;}
+	if(!rman->register_item_caps){LOG(LOG_RELOAD, "Can't grab item %d of %d register since item_caps array is NULL", gindx, reg); return NULL;}
+	if(!rman->registers[reg]){LOG(LOG_RELOAD, "Can't grab %d register since it's NULL", reg); return NULL;}
+	if(gindx < 0 || gindx >= rman->register_item_caps[reg]){LOG(LOG_NULL, "%d is not a valid item index for register %d", gindx, reg); return NULL;}
+	if(!rman->registers[reg][gindx]){LOG(LOG_RELOAD, "Item %d of register %d is NULL", gindx, reg); return NULL;}
+	
+	return rman->registers[reg][gindx];	
+}
 void *e_load_item(struct RegisterManager *rman, int reg, struct LoadData ld, int gindx, size_t size){
 	if(!rman){LOG(LOG_NULL, "Can't load item %d of reg %d with NULL register manager", gindx, reg);return NULL;}
 	if(reg < 0 || reg >= rman->register_cap){LOG(LOG_NULL, "%d is not a valid register index", reg); return NULL;}

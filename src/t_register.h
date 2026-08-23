@@ -43,4 +43,4 @@ void e_free_register(struct RegisterManager *rman, int reg);
 
 void *e_load_item(struct RegisterManager *rman, int reg, struct LoadData, int gindx, size_t size);
 void e_free_item(struct RegisterManager *rman, int reg, int gindx);
-
+void *e_grab_item(struct RegisterManager *rman, int reg, int gindx);

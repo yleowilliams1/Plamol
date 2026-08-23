@@ -24,4 +24,4 @@ struct InteractablePrototype{
 };
 
 struct ItemFunctions;
-struct ItemFunctions prototype_interactable();
+struct ItemFunctions interactable_prototype();

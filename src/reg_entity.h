@@ -118,6 +118,3 @@ const char *entflgstr(enum EntityFlags flag);
 const char *bstatstr(enum BaseStatEnum stat);
 const char *dstatstr(enum DerivedStatEnum stat);
 
-#define GET_ENTITY_PROTOTYPE(gindx) (Entity*)get_prototype(TYPE_ENTITY, gindx, sizeof(Entity))
-#define GET_ENTITY_INSTANCE(gindx) (Entity*)get_prototype(TYPE_ENTITY, gindx, sizeof(Entity))
-

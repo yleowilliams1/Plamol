@@ -46,4 +46,4 @@ struct ItemPrototype{
 };
 
 struct ItemFunctions;
-struct ItemFunctions prototype_item();
+struct ItemFunctions item_prototype();

@@ -11,4 +11,4 @@ struct SpritePrototype{
 };
 
 struct ItemFunctions;
-struct ItemFunctions prototype_sprite();
+struct ItemFunctions sprite_prototype();
