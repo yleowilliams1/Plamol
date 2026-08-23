@@ -1,11 +1,6 @@
 #include <stdio.h>
 
-#include "dou_proto_interactable.h"
-
-#include "c_dou_struct_defs.h"
-#include "c_flag_enums.h"
-
-#include "e_prototype_manager.h"
+#include "t_register.h"
 
 static void interactable_on_free(void *slot);
 static void interactable_on_init(void *slot);
@@ -18,6 +13,7 @@ struct ItemFunctions prototype_interactable(){
 		.on_init = interactable_on_init,
 		.on_free = interactable_on_free,
 		.on_pload = interactable_on_pload,
+		.on_bulk = NULL,
 	};
 }
 

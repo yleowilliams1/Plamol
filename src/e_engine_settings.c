@@ -2,12 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "e_engine_settings.h"
 
 #include "t_config_tool.h"
 #include "t_log_handler.h"
 #include "t_strings.h"
 
+#include "e_prototype_manager.h"
 #include "c_flag_enums.h"
 
 #define INI_PATH "data/engine.ini"

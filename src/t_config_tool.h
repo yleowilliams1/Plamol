@@ -9,11 +9,8 @@ struct config_pack{
 	char value[128];
 };
 
-typedef void (*Loader)(struct config_pack, void *ptr);
-typedef void (*Freer)(void *slot);
-typedef void (*Init)(void *slot);
-typedef void (*PostLoad)(void *slot);
+typedef void (*ConfigLoader)(struct config_pack, void *ptr);
 
 char *t_format_path(char *base, char *format, int num);
 bool t_check(char *line, char *arg);
-bool t_config(void *ptr, char *path, Loader func);
+bool t_config(void *ptr, char *path, ConfigLoader func);

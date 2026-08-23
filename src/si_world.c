@@ -3,7 +3,7 @@
 #include "t_pool.h"
 
 #include "e_engine_settings.h"
-#include "e_dou_manager.h"
+#include "e_prototype_manager.h"
 
 #include "t_math.h"
 #include "t_log_handler.h"
@@ -32,8 +32,7 @@ struct World *si_load_world(struct DouManager *protos, int map_gindx){
 	w->map = si_load_map(map_gindx);
 	if(!w->map){free(w); LOG(LOG_NULL, "Failed to load map gindx %d", map_gindx);return NULL;}
 	
-	t_pool_create(&w->entities ,e_grab_inscount(EIN_ENTITY), sizeof(struct EntityInstance));
-	t_pool_create(&w->interactables,e_grab_inscount(EIN_INTERACTABLE), sizeof(struct InteractableInstance));
+	t_pool_create(&w->entities ,e_grab_inscount(PROT_ENTITY), sizeof(struct EntityInstance));
 	
 	w->runtime = run_create_runtime();
 	if(w->runtime == NULL){LOG(LOG_NULL, "Runtime failed to load");}
@@ -54,7 +53,6 @@ void si_free_world(struct World *w){
 	if(!map_freed){LOG(LOG_RELOAD, "Failed to free map!");}
 	
 	t_pool_free(&w->entities);
-	t_pool_free(&w->interactables);
 	
 	run_free_runtime(w->runtime);
 	

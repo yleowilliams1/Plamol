@@ -1,5 +1,6 @@
 #pragma once
 #include <stdbool.h>
+#include "e_prototype_manager.h"
 #include "c_flag_enums.h"
 
 

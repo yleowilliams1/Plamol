@@ -22,7 +22,7 @@ bool t_check(char *line, char *arg){
 	return strcmp(line, arg) == 0;
 }
 
-bool t_config(void *ptr, char *path, Loader func){
+bool t_config(void *ptr, char *path, ConfigLoader func){
 	struct config_pack pack = {0};
 	
 	// There isn't need to check if the ptr is NULL
