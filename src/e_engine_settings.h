@@ -1,24 +1,26 @@
 #pragma once
 #include <stdbool.h>
-#include "e_prototype_manager.h"
-#include "c_flag_enums.h"
 
+#include "c_reg_list.h"
+#include "c_si_list.h"
 
 struct EngineSettings{
-	char *si_paths[SI_COUNT];
-	char *proto_paths[PROT_COUNT];
-	char *proto_formats[PROT_COUNT];
-	int proto_item_counts[PROT_COUNT]; 
-	int instance_counts[INSTANCE_COUNT];
 	float anim_fps;
+	
+	char *si_paths[SI_COUNT];
+	
+	char *reg_paths[REGISTER_COUNT];
+	char *reg_formats[REGISTER_COUNT];
+	int   reg_item_counts[REGISTER_COUNT];
 };
 
 void e_free_settings();
 void e_load_engine_settings();
-char *e_grab_sipath(enum SiFlag si);
-int e_grab_inscount(enum InstanceFlag type);
+
+char *e_grab_sipath(enum SiEnum si);
 float e_grab_animfps();
 
-char *e_grab_protopath(enum PrototypeFlag proto);
-char *e_grab_protoformat(enum PrototypeFlag proto);
-int e_grab_proto_itemcount(enum PrototypeFlag proto);
+char *e_grab_regpath(enum RegisterType reg);
+char *e_grab_regformat(enum RegisterType reg);
+int   e_grab_regitemcount(enum RegisterType reg);
+

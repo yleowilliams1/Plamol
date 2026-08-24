@@ -33,3 +33,5 @@ static inline void register_##id(struct RegisterManager *rman){ \
 }
 REGISTER_LIST
 #undef X
+
+const char *regstr(enum RegisterType reg);
