@@ -3,17 +3,13 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "dou_proto_items.h"
+#include "depo_proto_items.h"
 
 #include "t_config_tool.h"
 #include "t_strings.h"
 #include "t_log_handler.h"
 
-#include "c_dou_struct_defs.h"
-#include "c_data_enums.h"
-#include "c_flag_enums.h"
-
-#include "e_prototype_manager.h"
+#include "t_depot_manager.h"
 
 
 static void item_on_init(void *slot);

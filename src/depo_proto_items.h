@@ -38,6 +38,9 @@ struct ItemStatModifier{
 	};
 	int amount;
 };
+struct ItemPrototypeInteractData{
+
+};
 struct ItemPrototype{
 	struct ItemStatModifier mods[MODIFIER_COUNT];	
 	char *strings[ITEM_STRING_COUNT];

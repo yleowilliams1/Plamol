@@ -18,10 +18,19 @@ enum InteractableFlags{
 	#undef X
 	INTERACTABLE_FLAG_COUNT,
 };
+
+struct InteractablePrototypeInteractData{
+};
+struct InteractableInstanceInteractData{
+};
+
 struct InteractablePrototype{
 	int sprite_gindx;
 	uint32_t flags;
 };
+struct InteractableInstance{
+};
 
 struct ItemFunctions;
 struct ItemFunctions interactable_prototype();
+struct ItemFunctions interactable_instance();

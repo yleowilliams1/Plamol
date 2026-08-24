@@ -2,16 +2,16 @@
 #include <stdbool.h>
 #include <string.h>
 #include <raylib.h>
-#include "dou_sprite_manager.h"
+
+#include "depo_sprite.h"
 
 #include "t_log_handler.h"
 #include "t_config_tool.h"
 #include "t_strings.h"
 
-#include "c_dou_struct_defs.h"
 #include "c_magic_number.h"
 
-#include "e_prototype_manager.h"
+#include "t_depot_manager.h"
 
 static void sprite_on_init(void *slot);
 static void sprite_on_pload(void *slot);

@@ -1,6 +1,7 @@
 #include <stdio.h>
 
-#include "t_register.h"
+#include "t_depot_manager.h"
+#include "depo_interactable.h"
 
 static void interactable_on_free(void *slot);
 static void interactable_on_init(void *slot);
@@ -16,7 +17,9 @@ struct ItemFunctions prototype_interactable(){
 		.on_bulk = NULL,
 	};
 }
+struct ItemFunctions instance_interactable(){
 
+}
 static void interactable_on_free(void *slot){
 }
 static void interactable_on_init(void *slot){

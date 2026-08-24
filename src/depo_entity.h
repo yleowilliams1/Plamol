@@ -89,6 +89,11 @@ struct EntityInstanceLoadData{
 	v3 start_tile;
 	enum TileDirFlag start_direction;
 };
+struct EntityPrototypeInteractData{
+
+};
+struct EntityInstanceInteractData{
+};
 struct EntityInstance{
 	v3 tile;
 	

@@ -2,7 +2,11 @@
 #include "t_math.h"
 #include <raylib.h>
 
-struct SpritePrototype{
+struct SpriteDataInteractData{
+};
+
+
+struct SpriteData{
 	char *sprite_path;
 	int animation_count;
 	int *frame_count;
@@ -11,4 +15,4 @@ struct SpritePrototype{
 };
 
 struct ItemFunctions;
-struct ItemFunctions sprite_prototype();
+struct ItemFunctions sprite_data();

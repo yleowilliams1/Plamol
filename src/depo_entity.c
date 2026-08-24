@@ -4,11 +4,11 @@
 #include <string.h>
 #include <math.h>
 
-#include "reg_entity.h"
+#include "depo_entity.h"
 
 #include "t_log_handler.h"
 #include "t_strings.h"
-#include "t_register.h"
+#include "t_depot_manager.h"
 #include "t_config_tool.h"
 
 #include "c_magic_number.h"
@@ -17,13 +17,14 @@ static void prototype_on_free(void *slot);
 static void prototype_on_init(void *slot);
 static void prototype_on_ploader(void *slot);
 static void prototype_on_loader(struct config_pack p, void *ptr);
+static void prototype_on_interact(void *interactdata, void *slot);
 
 static void instance_on_free(void *slot);
 static void instance_on_init(void *slot);
 static void instance_on_ploader(void *slot);
 static void instance_on_load(struct config_pack p, void *ptr);
 static void instance_on_bulk(void *loaddata, void *ptr);
-
+static void instance_on_interact(void *interactdata, void *slot);
 
 struct ItemFunctions entity_prototype(){
 	return (struct ItemFunctions){
@@ -32,6 +33,7 @@ struct ItemFunctions entity_prototype(){
 		.on_init = prototype_on_init,
 		.on_free = prototype_on_free,
 		.on_pload = prototype_on_ploader,
+		.on_interact = prototype_on_interact,
 	};
 }
 
@@ -42,6 +44,7 @@ struct ItemFunctions entity_instance(){
 		.on_init = instance_on_init,
 		.on_free = instance_on_free,
 		.on_pload = instance_on_ploader,
+		.on_interact = instance_on_interact,
 	};
 }
 
@@ -85,6 +88,14 @@ static void instance_on_bulk(void *loaddata, void *ptr){
 	if(prototype->hotbar){*e->hotbar = *prototype->hotbar;}
 	
 	memcpy(e->bstat, prototype->bstat_data, sizeof(e->bstat));
+}
+static void instance_on_interact(void *interactdata, void *slot){
+	struct EntityInstance *e = (struct EntityInstance *)slot;
+	if(!e){LOG(LOG_NULL, "Entity instance is NULL");return;}
+	struct EntityInteractData *ld = (struct EntityInteractData *)interactdata;
+	if(!ld){LOG(LOG_NULL, "Load data is NULL");return;}
+
+	LOG(LOG_LOAD, "Hello. I have been interact with! Hipee...");	
 }
 
 static void prototype_on_free(void *slot){
@@ -179,6 +190,10 @@ static void prototype_on_loader(struct config_pack p, void *ptr){
 			}
 		}	
 	}
+}
+static void prototype_on_interact(void *interactdata, void *slot){
+	LOG(LOG_NULL, "Tried to interact with prototype! Returning");
+	return;
 }
 const char *entflgstr(enum EntityFlags flag) {
     switch (flag) {
