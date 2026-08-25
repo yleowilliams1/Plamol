@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
-#include <stdint.h>
+#include <time.h>
+
 #include "si_map.h"
 
 #include "t_config_tool.h"
@@ -10,263 +10,96 @@
 #include "t_strings.h"
 
 #include "e_engine_settings.h"
+#define VERSION 1
+#define MAGIC_NUMBER 0x53414E444D414E00ULL
+#define EXPECTED_ENDIAN 0xFFFE
+#define SWAPPED_ENDIAN 0xFEFF
 
-// This is bad. But whatever for now it's fine i guess
+// This is basically done but it needs a assert and error checking doover like most of files right now so don't forget that once thigns are in place, write the asserts and descriptive log messages.
 
-static void metadata_parser(struct config_pack p, void *ptr);
-static void data_parser(struct config_pack p, void *ptr);
-static bool m_decompress_segments(struct MapParsePackage *pckg);
+static bool si_validate_header(struct MapHeader *header);
 
-bool si_free_map(struct MapPack *map){
-	if(!map){LOG(LOG_NULL, "Map is NULL can't free");}
-	if(map->entities){free(map->entities);}
-	if(map->tiles){free(map->tiles);}	
-	free(map);
-	map = NULL;
-	return true; 
+void si_write_map_to_disk(struct Map *map, const char *filename){
+	if(!map || !filename || !map->entity_instances || !map->interactable_instances || !map->ground_sprite_gindex || !map->wall_sprite_gindex || !map->ceiling_sprite_gindex){LOG(LOG_NULL, "Can't write something was NULL");return;}
+	
+	FILE *f = fopen(filename, "wb");
+	if(!f){return;}
+	struct MapHeader header = {0};	
+	
+	header.time_stamp = (uint32_t)time(NULL);
+	header.magic_number = MAGIC_NUMBER;
+	header.endian_check = 0xFFFE;
+	header.version = VERSION;
+	
+	// write the header
+	fwrite(&header, sizeof(struct MapHeader), 1, f);
+
+	// Write the fixed size metadata array to file	
+	fwrite(map->metadata, sizeof(int), M_META_COUNT, f);
+	
+	fwrite(map->entity_instances, sizeof(struct InstanceSlot), map->metadata[M_ENTITY_INSTANCE_COUNT], f);
+	fwrite(map->interactable_instances, sizeof(struct InstanceSlot), map->metadata[M_INTERACTABLE_INSTANCE_COUNT], f);
+	
+	int tiles_size = map->metadata[M_WIDTH] * map->metadata[M_HEIGHT];
+	
+	fwrite(map->ground_sprite_gindex, sizeof(int), tiles_size, f);
+	fwrite(map->wall_sprite_gindex, sizeof(int), tiles_size, f);
+	fwrite(map->ceiling_sprite_gindex, sizeof(int), tiles_size, f);
+	
+	
+	fclose(f);
 }
+struct Map *si_read_map_to_memory(const char *filename){
+	if(!filename){LOG(LOG_NULL, "Can't read filename was NULL");return NULL;}	
+	FILE *f = fopen(filename, "rb");
+	if(!f){return NULL;}
+	
+	struct MapHeader header = {0};
+	fread(&header, sizeof(struct MapHeader), 1, f);	
+	if(!si_validate_header(&header)){fclose(f);return NULL;}
 
-struct MapPack *si_load_map(int gindx){
-	struct MapPack *map = XCALLOC(1, sizeof(struct MapPack));
-	char *base = e_grab_sipath(ESI_MAP);
-	if(!base){LOG(LOG_NULL, "e_grab_sipath returned NULL"); return NULL;}
-	
-	char *path = t_format_path(base, ".ini", gindx);
+	struct Map *map = XCALLOC(1, sizeof(struct Map));
+	fread(map->metadata, sizeof(int), M_META_COUNT, f);
 
-	bool metadata_parsed = t_config(map->metadata, path ,metadata_parser);
-	if(!metadata_parsed){LOG(LOG_ABORT, "Failed to load map[%s] metadata", path);return false;}
-	
-	int *meta = map->metadata;
-	map->entities = XCALLOC(1, meta[M_ENTITY_COUNT] * sizeof(struct MapEntityData));
-	map->tiles = XCALLOC(1, meta[M_WIDTH] * meta[M_HEIGHT] * sizeof(struct MapDecompTile));
+	// Now that we have the metadata we can finish allocating the map
+	map->entity_instances = XCALLOC(1, sizeof(struct InstanceSlot) * map->metadata[M_ENTITY_INSTANCE_COUNT]);	
+	map->interactable_instances = XCALLOC(1, sizeof(struct InstanceSlot) * map->metadata[M_INTERACTABLE_INSTANCE_COUNT]);	
+	int tiles_size = map->metadata[M_WIDTH] * map->metadata[M_HEIGHT];
+	map->ground_sprite_gindex = XCALLOC(1, sizeof(int) * tiles_size);
+	map->wall_sprite_gindex = XCALLOC(1, sizeof(int) * tiles_size);
+	map->ceiling_sprite_gindex = XCALLOC(1, sizeof(int) * tiles_size);
+	fread(map->entity_instances, sizeof(struct InstanceSlot), map->metadata[M_ENTITY_INSTANCE_COUNT], f);
+	fread(map->interactable_instances, sizeof(struct InstanceSlot), map->metadata[M_INTERACTABLE_INSTANCE_COUNT], f);
 
-	// Now that we have the metadata and the 
-	// allocated arrays we can parse the actual
-	// text file into memory 
-	struct MapParsePackage pckg = {
-		.map = map,
-		.segments = XCALLOC(1, meta[M_SEGMENT_COUNT] * sizeof(struct MapSegmentData)),
-		.interactables = XCALLOC(1, meta[M_INTERACTABLE_COUNT] * sizeof(struct MapInteractableData)),
-	};
-	
-	bool data_parsed = t_config(&pckg, path, data_parser);
-	if(!data_parsed){
-		LOG(LOG_ABORT, "Failed to parse map[%s] data", e_grab_sipath(ESI_MAP)); 
-		free(map->entities);
-		free(map->tiles);
-		free(pckg.segments);
-		free(pckg.interactables);
-		return false;
-	};
-	
-	// Now we decompress into a 
-	// faster heap array of tiles
-	bool decompressed = m_decompress_segments(&pckg);	
-	if(!decompressed){
-		LOG(LOG_ABORT, "Failed to decompress map[%s] data", e_grab_sipath(ESI_MAP)); 
-		free(map->entities);
-		free(map->tiles);
-		free(pckg.segments);
-		free(pckg.interactables);
-		return false;
-	};
-	
-	// Cleanup the useless segments
-	free(pckg.segments);
-	free(pckg.interactables);
-	free(path);
+	fread(map->ground_sprite_gindex, sizeof(int), tiles_size, f);
+	fread(map->wall_sprite_gindex, sizeof(int), tiles_size, f);
+	fread(map->ceiling_sprite_gindex, sizeof(int), tiles_size, f);
+
+	fclose(f);
 	return map;
 }
-
-static void metadata_parser(struct config_pack p, void *ptr){
-	int *m = (int *)ptr;	
-	if(!m){LOG(LOG_ABORT, "Passed null metadata to parser.");}
-	
-	if(t_check(p.current_section, "metadata")){
-		for(int i = 0; i < M_META_COUNT; i++){
-			if(!t_check(p.key, (char *)mmetastr(i))){continue;}
-			t_atoi(p.value, &m[i]);	
-		}
-	}
+// Btw none of this has saves. The saveing and loading happens on the instnatiation of the instances. On instantiation it checks against the save files and applys any change found in this map file
+struct Map *si_load_map(int gindx){
+	char *base = e_grab_sipath(ESI_MAP);
+	char *path = t_format_path(base, ".map", gindx);
+	return si_read_map_to_memory(path);
 }
-static void data_parser(struct config_pack p, void *ptr){
-	struct MapParsePackage *m = (struct MapParsePackage*)ptr;	
-	if(!m){LOG(LOG_ABORT, "Passed NULL pointer"); return;}	
-	int *meta = m->map->metadata;	
-	struct MapSegmentData *segs = m->segments;
-	struct MapEntityData *entities = m->map->entities;
-	struct MapInteractableData *inter = m->interactables;
-
-	if(!meta || !segs || !entities || !inter){LOG(LOG_ABORT, "Passed NULL pointer"); return;}	
-
-	int entity_indx;
-	if(sscanf(p.current_section, "entity.%d", &entity_indx) == 1){
-		if(entity_indx < 0){LOG(LOG_PARSE, "Tried to create parse entity with a negative index"); return;}	
-		if(entity_indx >= meta[M_ENTITY_COUNT]){LOG(LOG_PARSE, "Tried to parse entity with index larger than set entity count %d", meta[M_ENTITY_COUNT]); return;}
-		if(t_check(p.key, "entity_gindx")){
-			t_atoi(p.value, &entities[entity_indx].gindx);
-		} else if(t_check(p.key, "tile_spawn_x")){
-			t_atoi(p.value, &entities[entity_indx].tile_spawn_x);
-		} else if(t_check(p.key, "tile_spawn_y")){
-			t_atoi(p.value, &entities[entity_indx].tile_spawn_y);
-		} else if(t_check(p.key, "GUID")){
-			t_atoi(p.value, &entities[entity_indx].GUID);
-		} else if(t_check(p.key, "Direction")){
-			t_atoi(p.value, (int *)&entities[entity_indx].dir);
-			if(entities[entity_indx].dir < 0 || entities[entity_indx].dir > DIRECTION_COUNT){
-				LOG(LOG_PARSE, "Invalid entity direction");
-				entities[entity_indx].dir = D_NORTH;
-			}
-		}	
-	}
-	int interactable_indx;
-	if(sscanf(p.current_section, "interactable.%d", &interactable_indx) == 1){
-		if(interactable_indx < 0){LOG(LOG_PARSE, "Tried to parse interactable with a negative index"); return;}	
-		if(interactable_indx >= meta[M_INTERACTABLE_COUNT]){LOG(LOG_PARSE, "Tried to parse interactable with index larger than set interactable count %d", meta[M_INTERACTABLE_COUNT]); return;}
-		if(t_check(p.key, "z")){
-			t_atoi(p.value, &inter[interactable_indx].z);
-		} else if(t_check(p.key, "tile_x")){
-			t_atoi(p.value, &inter[interactable_indx].tile_position.x);
-		} else if(t_check(p.key, "tile_y")){
-			t_atoi(p.value, &inter[interactable_indx].tile_position.y);
-		} else if(t_check(p.key, "interactable_gindx")){
-			t_atoi(p.value, &inter[interactable_indx].gindx);
-		}	
-	}
-
-	int seg_indx;
-	if(sscanf(p.current_section, "segment.%d", &seg_indx) == 1){
-		if(seg_indx < 0){LOG(LOG_PARSE, "Tried to parse segment with a negative index"); return;}	
-		if(seg_indx >= meta[M_SEGMENT_COUNT]){LOG(LOG_PARSE, "Tried to parse segment with index larger than set segment count %d", meta[M_SEGMENT_COUNT]); return;}
-		for(int i = 0; i < SEGMENT_FLAGS_COUNT; i++){
-			char *str = (char *)segflgstr(i);
-			if(!t_check(p.key, str)){continue;}
-			int value;
-			t_atoi(p.value, &value);
-			if(value > 0){segs[seg_indx].flags |= (1 << i);}				
-		}
-		
-		if(t_check(p.key, "start_tile_x")){
-			t_atoi(p.value, &segs[seg_indx].start_tile.x);
-		} else if(t_check(p.key, "start_tile_y")){
-			t_atoi(p.value, &segs[seg_indx].start_tile.y);
-		} else if(t_check(p.key, "end_tile_x")){
-			t_atoi(p.value, &segs[seg_indx].end_tile.x);
-		} else if(t_check(p.key, "end_tile_y")){
-			t_atoi(p.value, &segs[seg_indx].end_tile.y);
-		} else if(t_check(p.key, "z")){
-			t_atoi(p.value, &segs[seg_indx].z);
-		} else if(t_check(p.key, "wall_gindx")){
-			t_atoi(p.value, &segs[seg_indx].wall_gindx);
-		} else if(t_check(p.key, "floor_gindx")){
-			t_atoi(p.value, &segs[seg_indx].floor_gindx);
-		}
-	}
+void si_free_map(struct Map *map){
+	if(!map){return;}	
+	if(map->entity_instances){free(map->entity_instances); map->entity_instances = NULL;}
+	if(map->interactable_instances){free(map->interactable_instances); map->interactable_instances = NULL;}
+	if(map->ground_sprite_gindex){free(map->ground_sprite_gindex); map->ground_sprite_gindex = NULL;}
+	if(map->ceiling_sprite_gindex){free(map->ceiling_sprite_gindex); map->ceiling_sprite_gindex = NULL;}
+	if(map->wall_sprite_gindex){free(map->wall_sprite_gindex); map->wall_sprite_gindex = NULL;}
+	free(map);
+	map = NULL;	
 }
-static bool m_decompress_segments(struct MapParsePackage *pckg){
-	if(!pckg) {return false;}
-	if(!pckg->map){return false;}
-
-	int width = pckg->map->metadata[M_WIDTH];
-	int height = pckg->map->metadata[M_HEIGHT];
-	int seg_count = pckg->map->metadata[M_SEGMENT_COUNT];
-	int interactable_count = pckg->map->metadata [M_INTERACTABLE_COUNT];
-
-	// 1. Process Segments into Decompressed Tiles
-	for (int i = 0; i < seg_count; i++) {
-		struct MapSegmentData *seg = &pckg->segments[i];
-
-	    	int min_x = seg->start_tile.x < seg->end_tile.x ? seg->start_tile.x : seg->end_tile.x;
-	    	int max_x = seg->start_tile.x > seg->end_tile.x ? seg->start_tile.x : seg->end_tile.x;
-	    	int min_y = seg->start_tile.y < seg->end_tile.y ? seg->start_tile.y : seg->end_tile.y;
-	    	int max_y = seg->start_tile.y > seg->end_tile.y ? seg->start_tile.y : seg->end_tile.y;
-
-	    	if (min_x < 0) min_x = 0;
-	    	if (min_y < 0) min_y = 0;
-	    	if (max_x >= width)  max_x = width - 1;
-	    	if (max_y >= height) max_y = height - 1;
-
-	    	for (int y = min_y; y <= max_y; y++) {
-			for (int x = min_x; x <= max_x; x++) {
-		    		int tile_idx = y * width + x;
-		    		struct MapDecompTile *tile = &pckg->map->tiles[tile_idx];
-				
-				bool is_edge_x = (x == min_x || x == max_x);
-		    		bool is_edge_y = (y == min_y || y == max_y);
-		    		bool is_perimeter = is_edge_x || is_edge_y;
-		    		bool is_corner   = is_edge_x && is_edge_y;
-
-		    		// Wall Placement & Direction Resolution
-		    		bool place_wall = false;
-		    		// Default to a straight, not W_NORTH: W_NORTH is a corner
-		    		// frame now, so it's a bad fallback for the IS_WALLS
-		    		// no-direction-flags case below.
-		    		enum Direction dir = D_NORTH_EAST;
-
-		    		if ((seg->flags & (1 << HAS_WALLS_REC)) && is_perimeter) {
-					place_wall = true;
-					if (is_corner) {
-			    			// A corner is defined by BOTH edges that meet
-			    			// there, so resolve x AND y together, never as
-			    			// an x-or-y chain.
-			    			if (x == min_x) dir = (y == min_y) ? D_NORTH : D_EAST;
-			    			else            dir = (y == min_y) ? D_WEST  : D_SOUTH;
-					}	
-					else if (y == min_y) dir = D_NORTH_EAST;
-					else if (y == max_y) dir = D_SOUTH_WEST;
-					else if (x == min_x) dir = D_NORTH_WEST;
-					else if (x == max_x) dir = D_SOUTH_EAST;
-		    		} else if (seg->flags & (1 << IS_WALLS)) {
-					if ((seg->flags & (1 << WALL_IS_NORTH)) && y == min_y) { place_wall = true; dir = D_NORTH_EAST; }
-					else if ((seg->flags & (1 << WALL_IS_SOUTH)) && y == max_y) { place_wall = true; dir = D_SOUTH_WEST; }
-					else if ((seg->flags & (1 << WALL_IS_EAST)) && x == min_x) { place_wall = true; dir = D_NORTH_WEST; }
-					else if ((seg->flags & (1 << WALL_IS_WEST)) && x == max_x) { place_wall = true; dir = D_SOUTH_EAST; }
-					else {
-			    			uint32_t dir_mask = (1 << WALL_IS_NORTH) | (1 << WALL_IS_SOUTH) |(1 << WALL_IS_EAST)  | (1 << WALL_IS_WEST);
-			    			if ((seg->flags & dir_mask) == 0) place_wall = true;
-					}
-		    		}
-
-		    		if (place_wall) {
-					tile->flags |= (1 << T_HAS_WALL);
-					tile->wall_gindx = seg->wall_gindx;
-					tile->wall_z = seg->z;
-					tile->dir = dir;
-		    		}
-		    		// Floor Placement
-		    		if (seg->flags & (1 << HAS_FLOORS_REC)) {
-					tile->flags |= (1 << T_HAS_TILE);
-					tile->floor_gindx = seg->floor_gindx;
-					tile->floor_z = seg->z;
-		    		}
-
-		    		// Map Segment Flags to TileFlags
-		    		if (seg->flags & (1 << INVISIBLE))           tile->flags |= (1 << T_INVISIBLE);
-		    		if (seg->flags & (1 << IS_WALLS_COLLIDE))    tile->flags |= (1 << T_WALL_COLLIDE);
-		    		if (seg->flags & (1 << IS_FLOOR_COLLIDE))    tile->flags |= (1 << T_FLOOR_COLLIDE);
-		    		if (seg->flags & (1 << ALWAYS_ABOVE_PLAYER)) tile->flags |= (1 << T_ALWAYS_ABOVE);
-		    		if (seg->flags & (1 << SHOULD_MERGE_WALL))   tile->flags |= (1 << T_MERGE_WALL);
-		    if (seg->flags & (1 << SHOULD_MERGE_FLOOR))  tile->flags |= (1 << T_MERGE_FLOOR);
-		    		if (seg->flags & (1 << HIDE_IF_ABOVE_PLAYER)) tile->flags |= (1 << T_HIDE_IF_ABOVE);
-		}
-	    }
-	}
-
-	// 2. Stamp Interactables into Tile Grid
-	for (int i = 0; i < interactable_count; i++) {
-	    struct MapInteractableData *inter = &pckg->interactables[i];
-
-	    int x = inter->tile_position.x;
-	    int y = inter->tile_position.y;
-
-	    if (x >= 0 && x < width && y >= 0 && y < height) {
-		int tile_idx = y * width + x;
-		struct MapDecompTile *tile = &pckg->map->tiles[tile_idx];
-
-		tile->flags |= (1 << T_HAS_INTERACTABLE);
-		tile->interactable_gindx = inter->gindx;
-		tile->interactable_z = inter->z;
-	    }
-	}
+static bool si_validate_header(struct MapHeader *header){
+	if(!header){LOG(LOG_NULL, "header was NULL");return false;}	
+	if(header->magic_number != MAGIC_NUMBER){LOG(LOG_PARSE, "Magic number does not match"); return false;}
+	if(header->endian_check == SWAPPED_ENDIAN){LOG(LOG_PARSE, "Endian mismatch ,need to byteswap");return false;}	
+	if(header->endian_check != SWAPPED_ENDIAN && header->endian_check != EXPECTED_ENDIAN){LOG(LOG_NULL, "Header is corrupted");return false;}
+	if(header->version != VERSION){LOG(LOG_OUTOFBOUNDS, "Possibly map won't be read since they are on differing version from compiled executable");}	
 	return true;
 }
+
