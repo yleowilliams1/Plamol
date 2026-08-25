@@ -1,53 +1,68 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "t_math.h"
 #include "depo_sprite.h"
 
+#define SEG_FLAGS\
+	X(INVISIBLE)\
+	X(IS_WALLS)\
+	X(WALL_IS_NORTH)\
+	X(WALL_IS_SOUTH)\
+	X(WALL_IS_EAST)\
+	X(WALL_IS_WEST) \
+	X(HAS_WALLS_REC)\
+	X(HAS_FLOORS_REC) \
+	X(IS_WALLS_COLLIDE) \
+	X(IS_FLOOR_COLLIDE) \
+	X(ALWAYS_ABOVE_PLAYER) \
+	X(SHOULD_MERGE_WALL)\
+       	X(SHOULD_MERGE_FLOOR) \
+	X(HIDE_IF_ABOVE_PLAYER) \
+	X(SEGMENT_FLAGS_COUNT)
+
 enum SegmentFlags{
-	INVISIBLE, // Visiblity
-	IS_WALLS, // Means from start to end is all walls
-	WALL_IS_NORTH,// Means is walls will draw wall facing north
-	WALL_IS_SOUTH,// Means is walls will draw wall facing south
-	WALL_IS_EAST,// Means is walls will draw wall facing east
-	WALL_IS_WEST, // Means is walls will draw wall facing west
-	HAS_WALLS_REC,// Means the edge tiles of the rectangle have walls
-	HAS_FLOORS_REC, // Means rec is filled with tiles
-	IS_WALLS_COLLIDE, // Toggles if walls collide
-	IS_FLOOR_COLLIDE, // Toggles if floors collide
-	ALWAYS_ABOVE_PLAYER, // Always draws above player
-	SHOULD_MERGE_WALL,// Smoothly transition between other segments neighbouring walls
-       	SHOULD_MERGE_FLOOR, // Smoothly transition between other segments neighbouring floors
-	HIDE_IF_ABOVE_PLAYER, // Don't draw if the player is below this segment (second floors etc)
-	SEGMENT_FLAGS_COUNT,
+	#define X(name) name,
+	SEG_FLAGS
+	#undef X
+	SEGMENT_FLAG_COUNT,
 };
+
+#define TILE_FLAGS \
+	X(T_INVISIBLE) \
+	X(T_HAS_WALL) \
+	X(T_HAS_TILE) \
+	X(T_HAS_INTERACTABLE) \
+	X(T_WALL_COLLIDE) \
+	X(T_FLOOR_COLLIDE) \
+	X(T_ALWAYS_ABOVE) \
+	X(T_MERGE_WALL) \
+	X(T_MERGE_FLOOR) \
+	X(T_HIDE_IF_ABOVE)
 enum TileFlags{
-	T_INVISIBLE,
-	T_HAS_WALL,
-	T_HAS_TILE,
-	T_HAS_INTERACTABLE,
-	T_WALL_COLLIDE,
-	T_FLOOR_COLLIDE,
-	T_ALWAYS_ABOVE,
-	T_MERGE_WALL,
-	T_MERGE_FLOOR,
-	T_HIDE_IF_ABOVE,
+	#define X(name) name,
+	TILE_FLAGS
+	#undef X
+	TILE_FLAG_COUNT,
 };
+
+#define META_PROPER\
+	X(M_NORTH_EXIT)\
+	X(M_SOUTH_EXIT)\
+	X(M_WEST_EXIT) \
+	X(M_EAST_EXIT)\
+	X(M_ENTITY_COUNT) \
+	X(M_INTERACTABLE_COUNT) \
+	X(M_SEGMENT_COUNT) \
+	X(M_WIDTH) \
+	X(M_HEIGHT) 
 
 enum MetadataProperties{
-	M_NORTH_EXIT,
-	M_SOUTH_EXIT,
-	M_WEST_EXIT,
-	M_EAST_EXIT,
-	
-	M_ENTITY_COUNT,
-	M_INTERACTABLE_COUNT,
-	M_SEGMENT_COUNT,
-
-	M_WIDTH,
-	M_HEIGHT,	
-	
+	#define X(name) name,
+	META_PROPER
+	#undef X	
 	M_META_COUNT,
 };
 struct MapSegmentData{
@@ -96,3 +111,28 @@ struct MapParsePackage{
 };
 struct MapPack *si_load_map(int gindx);
 bool si_free_map(struct MapPack *map);
+
+const char *segflgstr(enum SegmentFlags type){
+	switch(type){
+		#define X(name) case name: return #name;
+		SEG_FLAGS
+		#undef X
+		default: return NULL;
+	}
+}
+const char *tileflgstr(enum TileFlags type){
+	switch(type){
+		#define X(name) case name: return #name;
+		TILE_FLAGS
+		#undef X
+		default: return NULL;
+	}
+}
+const char *mmetastr(enum MetadataProperties type){
+	switch(type){
+		#define X(name) case name: return #name;
+		META_PROPER
+		#undef X
+		default: return NULL;
+	}
+}

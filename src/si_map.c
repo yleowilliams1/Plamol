@@ -17,34 +17,6 @@ static void metadata_parser(struct config_pack p, void *ptr);
 static void data_parser(struct config_pack p, void *ptr);
 static bool m_decompress_segments(struct MapParsePackage *pckg);
 
-static const char *metadata_lokup[M_META_COUNT] = {
-	[M_NORTH_EXIT] = "north_map",
-	[M_SOUTH_EXIT] = "south_map",
-	[M_WEST_EXIT] = "west_map",
-	[M_EAST_EXIT] = "east_map",
-	[M_ENTITY_COUNT] = "entity_count",
-	[M_INTERACTABLE_COUNT] = "interactable_count",
-	[M_SEGMENT_COUNT] = "segment_count",
-	[M_WIDTH] = "width",
-	[M_HEIGHT] = "height",
-};
-static const char *segment_flag_lokup[SEGMENT_FLAGS_COUNT] = {
-	[INVISIBLE] = "invisible",
-	[IS_WALLS] = "is_wall",
-	[WALL_IS_NORTH] = "wall_is_north",
-	[WALL_IS_SOUTH] = "wall_is_south",
-	[WALL_IS_EAST] = "wall_is_east",
-	[WALL_IS_WEST] = "wall_is_west",
-	[HAS_WALLS_REC] = "has_walls_rec",
-	[HAS_FLOORS_REC] = "has_floors_rec",
-	[IS_WALLS_COLLIDE] = "is_walls_collide",
-	[IS_FLOOR_COLLIDE] = "is_floor_collide",
-	[ALWAYS_ABOVE_PLAYER] = "always_above_player",
-	[SHOULD_MERGE_WALL] = "should_merge_wall",
-	[SHOULD_MERGE_FLOOR] = "should_merge_floor",
-	[HIDE_IF_ABOVE_PLAYER] = "hide_if_above_player",
-};
-
 bool si_free_map(struct MapPack *map){
 	if(!map){LOG(LOG_NULL, "Map is NULL can't free");}
 	if(map->entities){free(map->entities);}
@@ -112,7 +84,7 @@ static void metadata_parser(struct config_pack p, void *ptr){
 	
 	if(t_check(p.current_section, "metadata")){
 		for(int i = 0; i < M_META_COUNT; i++){
-			if(!t_check(p.key, (char *)metadata_lokup[i])){continue;}
+			if(!t_check(p.key, (char *)mmetastr(i))){continue;}
 			t_atoi(p.value, &m[i]);	
 		}
 	}
@@ -167,7 +139,7 @@ static void data_parser(struct config_pack p, void *ptr){
 		if(seg_indx < 0){LOG(LOG_PARSE, "Tried to parse segment with a negative index"); return;}	
 		if(seg_indx >= meta[M_SEGMENT_COUNT]){LOG(LOG_PARSE, "Tried to parse segment with index larger than set segment count %d", meta[M_SEGMENT_COUNT]); return;}
 		for(int i = 0; i < SEGMENT_FLAGS_COUNT; i++){
-			char *str = (char *)segment_flag_lokup[i];
+			char *str = (char *)segflgstr(i);
 			if(!t_check(p.key, str)){continue;}
 			int value;
 			t_atoi(p.value, &value);

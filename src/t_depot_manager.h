@@ -39,7 +39,7 @@ struct DepotManager{
 
 struct DepotManagerFile *t_create_depotmanfile(int count);
 
-struct DepotManager *t_create_depot_manager();
+struct DepotManager *t_create_depot_manager(struct DepotManagerFile *file);
 void t_free_depot_manager(struct DepotManager *depot_manager);
 
 void t_load_depot(struct DepotManager *depot_manager, int depot_index, struct ItemFunctions fncs);
