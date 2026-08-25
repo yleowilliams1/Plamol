@@ -5,7 +5,9 @@
 
 #include "t_math.h"
 
-#include "c_flag_enums.h"
+#include "depo_sprite.h"
+
+#include "c_stat_list.h"
 
 #define FLAG_LIST\
    	X(EF_CAN_COMBAT) \
@@ -13,51 +15,15 @@
    	X(EF_HAS_INV) \
 	X(EF_HAS_STAT) \
 	X(EF_IS_HOSTILE) \
-	X(EF_IS_DEAD) 
-
-#define BSTAT_LIST \
-	X(STRENGTH) \
-	X(DEXTERITY) \
-	X(CONSITUTION) \
-	X(SOCIAL) \
-	X(INTELLIGENCE) \
-	X(WISDOM)
-
-#define DSTAT_LIST \
-	X(PHYSICAL_COORDIANTION) \
-	X(WORD) \
-	X(PROBLEM_ANALYSIS) \
-	X(SPATIAL) \
-	X(MUSICAL) \
-	X(NATURAL) \
-	X(INTERPERSONAL) \
-	X(INTRAPERSONAL) \
-	X(INNOCENCE) \
-	X(HEROISM) \
-	X(LOVE) \
-	X(AUTHORITARIAN) \
-	X(ARMOR_CLASS) \
-	X(MAX_HEALTH_POINTS) \
-	X(MAX_ACIONT_POINTS) \
-	X(INITATIVE_BONUS) 
+	X(EF_IS_DEAD) \
+    	X(EF_DOES_COLLIDE) \
+	X(EF_ON_TILE) 	
 
 enum EntityFlags{
 	#define X(name) name,
 	FLAG_LIST
 	#undef X
 	ENTITY_FLAG_COUNT,
-};
-enum BaseStatEnum{
-	#define X(name) name,
-	BSTAT_LIST
-	#undef X
-	BASE_STAT_COUNT,
-};
-enum DerivedStatEnum{
-	#define X(name) name,
-	DSTAT_LIST
-	#undef X
-	DERIVED_STAT_COUNT,
 };
 
 struct ChildInventorySlot{
@@ -87,17 +53,18 @@ struct AnimationState{
 struct EntityInstanceLoadData{
 	struct EntityPrototype *prototype;
 	v3 start_tile;
-	enum TileDirFlag start_direction;
+	enum Direction start_direction;
 };
 struct EntityPrototypeInteractData{
-
+	int killer_beans;
 };
 struct EntityInstanceInteractData{
+	int important_stuff;
 };
 struct EntityInstance{
 	v3 tile;
 	
-	enum TileDirFlag facing;
+	enum Direction facing;
 
 	struct AnimationState anim;
 	uint32_t runtime_flags;

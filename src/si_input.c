@@ -10,8 +10,9 @@
 #include "t_log_handler.h"
 #include "t_math.h"
 
-#include "c_magic_number.h"
-#include "c_flag_enums.h"
+#define INVALID_ENUM -1
+#define NULL_INDX -1
+#define NUMBER_OF_GAMEPADS_TO_CHECK 4
 static void input_parser(struct config_pack p, void *ptr);
 static void si_set_binding(enum KeyType type, enum Action action, int key, struct InputManager *input);
 static void si_update_input(enum Action action, struct InputManager *input);

@@ -3,8 +3,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <raylib.h>
+
+#include "e_engine_state.h"
 #include "w_window_manager.h"
-#include "e_coordinator.h"
+
 #define TARGET_FPS 60
 
 int main(){
@@ -14,15 +16,15 @@ int main(){
 
 	srand(time(NULL));
 
-	struct Coordinator *cor = e_initalize_game();
+	struct EngineState *engine_state = e_create_engine_state();
 	
 	while (!WindowShouldClose()){
 		w_update_relative_scale();	
-		e_update_game(cor);
-		e_draw_game(cor);
+		e_update_engine_state(engine_state);
+		e_draw_engine_state(engine_state);
 	}
 	
-	e_free_game(cor);
+	e_free_engine_state(engine_state);
 	CloseWindow();
 	return 0;
 }

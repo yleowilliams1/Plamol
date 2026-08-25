@@ -1,8 +1,10 @@
 #pragma once
-#include "t_math.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include "c_flag_enums.h"
+
+#include "t_math.h"
+#include "depo_sprite.h"
+
 enum SegmentFlags{
 	INVISIBLE, // Visiblity
 	IS_WALLS, // Means from start to end is all walls
@@ -61,7 +63,7 @@ struct MapSegmentData{
 };
 struct MapDecompTile{
 	uint32_t flags;
-	enum TileDirFlag dir;
+	enum Direction dir;
 	int wall_gindx;
 	int wall_z;
 	int floor_gindx;
@@ -79,7 +81,7 @@ struct MapEntityData{
 	int tile_spawn_x;
 	int tile_spawn_y;
 	int GUID;
-	enum TileDirFlag dir;
+	enum Direction dir;
 };
 
 struct MapPack{

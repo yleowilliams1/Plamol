@@ -11,7 +11,7 @@
 #include "t_depot_manager.h"
 #include "t_config_tool.h"
 
-#include "c_magic_number.h"
+#define INVALID_CAP -1
 
 static void prototype_on_free(void *slot);
 static void prototype_on_init(void *slot);

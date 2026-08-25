@@ -1,11 +1,13 @@
 #pragma once
 #include <stdint.h>
+#include "c_stat_list.h"
 
 #define MODIFIER_LIST\
 	X(ADD_MOD)\
 	X(HIT_MOD)\
 	X(DAMAGE_MOD)\
 	X(CONSUME_MOD)
+
 #define ITEM_STRING_LIST \
 	X(ITEM_NAME) \
 	X(ITEM_DESCRIPTION) 
@@ -32,10 +34,8 @@ enum ItemStringType{
 	ITEM_STRING_COUNT,
 };
 struct ItemStatModifier{
-	union{
-		int bstat;
-		int dstat;
-	};
+	enum StatType type;
+	int stat;	
 	int amount;
 };
 struct ItemPrototypeInteractData{
@@ -50,3 +50,28 @@ struct ItemPrototype{
 
 struct ItemFunctions;
 struct ItemFunctions item_prototype();
+
+const char *modstr(enum ModifierType type){
+	switch(type){
+		#define X(name) case name: return #name;
+		MODIFIER_LIST
+		#undef X
+		default: return NULL;
+	}
+}
+const char *itemstrstr(enum ItemStringType type){
+	switch(type){
+		#define X(name) case name: return #name;
+		ITEM_STRING_LIST	
+		#undef X
+		default: return NULL;
+	}
+}
+const char *itemflgstr(enum ItemFlags flag){
+	switch(flag){
+		#define X(name) case name: return #name;
+		ITEM_FLAGS	
+		#undef X
+		default: return NULL;
+	}	
+}

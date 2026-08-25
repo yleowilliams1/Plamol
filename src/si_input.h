@@ -1,9 +1,9 @@
 #pragma once
-#include "c_magic_number.h"
-
 #include <raylib.h>
 #include <stdbool.h>
 #include "t_math.h"
+
+#define MAX_KEYS 5
 
 enum KeyType{
     KEYBOARD,

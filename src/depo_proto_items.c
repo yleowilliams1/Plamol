@@ -5,10 +5,11 @@
 
 #include "depo_proto_items.h"
 
+#include "c_stat_list.h"
+
 #include "t_config_tool.h"
 #include "t_strings.h"
 #include "t_log_handler.h"
-
 #include "t_depot_manager.h"
 
 
@@ -16,6 +17,7 @@ static void item_on_init(void *slot);
 static void item_on_free(void *slot);
 static void item_on_pload(void *slot);
 static void item_on_load(struct config_pack p, void *ptr);
+static void item_on_interact(void *interactdata, void *slot);
 
 struct ItemFunctions prototype_item(){
 	return (struct ItemFunctions){
@@ -23,15 +25,18 @@ struct ItemFunctions prototype_item(){
 		.on_init = item_on_init,
 		.on_free = item_on_free,
 		.on_pload = item_on_pload,
+		.on_bulk = NULL,
+		.on_interact = item_on_interact,
 	};
 }
-
+static void item_on_interact(void *interactdata, void *slot){
+}
 static void item_on_init(void *slot){
 	LOG(LOG_LOAD, "Initalizing item of address %p", slot);
 }
 static void item_on_free(void *slot){
-	struct DouItemPrototype *item = (struct DouItemPrototype *)slot;	
-	for(int i = 0; i < ITEM_STR_DATA_COUNT; i++){
+	struct ItemPrototype *item = (struct ItemPrototype *)slot;	
+	for(int i = 0; i < ITEM_STRING_COUNT; i++){
 		if(item->strings[i]){
 			free(item->strings[i]);
 			item->strings[i] = NULL;
@@ -43,40 +48,42 @@ static void item_on_pload(void *slot){
 	LOG(LOG_LOAD, "Post-loading item of address %p", slot);
 }
 static void item_on_load(struct config_pack p, void *ptr){
-	struct DouItemPrototype *item = (struct DouItemPrototype *)ptr;
+	struct ItemPrototype *item = (struct ItemPrototype*)ptr;
 	if(!item){LOG(LOG_NULL, "Took null pointer into parser, This shouldn't be possible");}
 	
-	for(int i = 0; i < ITEM_MOD_DATA_COUNT; i++){
-		if(t_check(p.current_section, idata_str(i))){
+	for(int i = 0; i < MODIFIER_COUNT; i++){
+		if(t_check(p.current_section, (char *)modstr(i))){
 			if(t_check(p.key, "DStat")){
-				t_atoi(p.value, &item->modifer[i].dstat);	
-				if(item->modifer[i].dstat > DERIVED_STAT_COUNT || item->modifer[i].dstat < 0){
-					LOG(LOG_PARSE, "%d is not a valid DSTAT value", item->modifer[i].dstat);
-					item->modifer[i].dstat = 0;
+				t_atoi(p.value, &item->mods[i].stat);	
+				if(item->mods[i].stat > DERIVED_STAT_COUNT || item->mods[i].stat < 0){
+					LOG(LOG_PARSE, "%d is not a valid DSTAT value", item->mods[i].stat);
+					item->mods[i].stat = 0;
 				}
+				item->mods[i].type = BaseStatType;
 			}
 			else if(t_check(p.key, "BStat")){
-				t_atoi(p.value, &item->modifer[i].bstat);
-				if(item->modifer[i].bstat > BASE_STAT_COUNT || item->modifer[i].bstat < 0){
-					LOG(LOG_PARSE, "%d is not a valid BSTAT value", item->modifer[i].bstat);
-					item->modifer[i].bstat = 0;
+				t_atoi(p.value, &item->mods[i].stat);
+				if(item->mods[i].stat > BASE_STAT_COUNT || item->mods[i].stat < 0){
+					LOG(LOG_PARSE, "%d is not a valid BSTAT value", item->mods[i].stat);
+					item->mods[i].stat = 0;
 				}
+				item->mods[i].type = DerivedStatType;
 			}
 			if(t_check(p.key, "Amount")){
-				t_atoi(p.value, &item->modifer[i].amount);
+				t_atoi(p.value, &item->mods[i].amount);
 			}	
 		}
 	}
 	if(t_check(p.current_section, "Strings")){
-		for(int i = 0; i < ITEM_STR_DATA_COUNT; i++){
-			if(t_check(p.key, istrdata_str(i))){
+		for(int i = 0; i < ITEM_STRING_COUNT; i++){
+			if(t_check(p.key, (char *)itemstrstr(i))){
 				t_cpy(&item->strings[i], p.value);
 			}
 		}
 	}
 	if(t_check(p.current_section, "General")){ 
 		for(int i = 0; i < ITEM_FLAG_COUNT; i++){
-			char *str = item_flag_str(i);
+			char *str = (char *)itemflgstr(i);
 			if(t_check(p.key, str)){
 				int value;
 				t_atoi(p.value, &value);

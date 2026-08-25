@@ -3,10 +3,9 @@
 #include "t_config_tool.h"
 #include "t_strings.h"
 
-#include "e_engine_settings.h"
+#define INVALID_CAP -1
 
-#include "c_flag_enums.h"
-#include "c_magic_number.h"
+#include "e_engine_settings.h"
 
 #include "si_flags.h"
 
@@ -16,8 +15,8 @@ struct FlagManager *si_init_flag(){
 	struct FlagManager *fm = XCALLOC(1, sizeof(struct FlagManager));
 	fm->flags = NULL;
 	fm->cap= INVALID_CAP;
-	char *path = e_grab_sipath(ESI_FLAGS);
-	if(!path){LOG(LOG_NULL, "e_grab_si_path return NULL path for enum %s", si_flag_str(ESI_FLAGS));}
+	char *path = e_grab_sipath(SI_FLAGS);
+	if(!path){LOG(LOG_NULL, "e_grab_si_path return NULL path for enum");}
 		
 	bool configured = t_config(fm, path, flag_parser);		
 	if(!configured){LOG(LOG_ABORT, "Flag failed to configure at %s", path);}

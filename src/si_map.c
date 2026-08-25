@@ -9,9 +9,9 @@
 #include "t_log_handler.h"
 #include "t_strings.h"
 
-#include "c_flag_enums.h"
-
 #include "e_engine_settings.h"
+
+// This is bad. But whatever for now it's fine i guess
 
 static void metadata_parser(struct config_pack p, void *ptr);
 static void data_parser(struct config_pack p, void *ptr);
@@ -141,9 +141,9 @@ static void data_parser(struct config_pack p, void *ptr){
 			t_atoi(p.value, &entities[entity_indx].GUID);
 		} else if(t_check(p.key, "Direction")){
 			t_atoi(p.value, (int *)&entities[entity_indx].dir);
-			if(entities[entity_indx].dir < 0 || entities[entity_indx].dir > TILE_DIRECTION_COUNT){
+			if(entities[entity_indx].dir < 0 || entities[entity_indx].dir > DIRECTION_COUNT){
 				LOG(LOG_PARSE, "Invalid entity direction");
-				entities[entity_indx].dir = ED_NORTH;
+				entities[entity_indx].dir = D_NORTH;
 			}
 		}	
 	}
@@ -229,7 +229,7 @@ static bool m_decompress_segments(struct MapParsePackage *pckg){
 		    		// Default to a straight, not W_NORTH: W_NORTH is a corner
 		    		// frame now, so it's a bad fallback for the IS_WALLS
 		    		// no-direction-flags case below.
-		    		enum TileDirFlag dir = ED_NORTH_EAST;
+		    		enum Direction dir = D_NORTH_EAST;
 
 		    		if ((seg->flags & (1 << HAS_WALLS_REC)) && is_perimeter) {
 					place_wall = true;
@@ -237,18 +237,18 @@ static bool m_decompress_segments(struct MapParsePackage *pckg){
 			    			// A corner is defined by BOTH edges that meet
 			    			// there, so resolve x AND y together, never as
 			    			// an x-or-y chain.
-			    			if (x == min_x) dir = (y == min_y) ? ED_NORTH : ED_EAST;
-			    			else            dir = (y == min_y) ? ED_WEST  : ED_SOUTH;
+			    			if (x == min_x) dir = (y == min_y) ? D_NORTH : D_EAST;
+			    			else            dir = (y == min_y) ? D_WEST  : D_SOUTH;
 					}	
-					else if (y == min_y) dir = ED_NORTH_EAST;
-					else if (y == max_y) dir = ED_SOUTH_WEST;
-					else if (x == min_x) dir = ED_NORTH_WEST;
-					else if (x == max_x) dir = ED_SOUTH_EAST;
+					else if (y == min_y) dir = D_NORTH_EAST;
+					else if (y == max_y) dir = D_SOUTH_WEST;
+					else if (x == min_x) dir = D_NORTH_WEST;
+					else if (x == max_x) dir = D_SOUTH_EAST;
 		    		} else if (seg->flags & (1 << IS_WALLS)) {
-					if ((seg->flags & (1 << WALL_IS_NORTH)) && y == min_y) { place_wall = true; dir = ED_NORTH_EAST; }
-					else if ((seg->flags & (1 << WALL_IS_SOUTH)) && y == max_y) { place_wall = true; dir = ED_SOUTH_WEST; }
-					else if ((seg->flags & (1 << WALL_IS_EAST)) && x == min_x) { place_wall = true; dir = ED_NORTH_WEST; }
-					else if ((seg->flags & (1 << WALL_IS_WEST)) && x == max_x) { place_wall = true; dir = ED_SOUTH_EAST; }
+					if ((seg->flags & (1 << WALL_IS_NORTH)) && y == min_y) { place_wall = true; dir = D_NORTH_EAST; }
+					else if ((seg->flags & (1 << WALL_IS_SOUTH)) && y == max_y) { place_wall = true; dir = D_SOUTH_WEST; }
+					else if ((seg->flags & (1 << WALL_IS_EAST)) && x == min_x) { place_wall = true; dir = D_NORTH_WEST; }
+					else if ((seg->flags & (1 << WALL_IS_WEST)) && x == max_x) { place_wall = true; dir = D_SOUTH_EAST; }
 					else {
 			    			uint32_t dir_mask = (1 << WALL_IS_NORTH) | (1 << WALL_IS_SOUTH) |(1 << WALL_IS_EAST)  | (1 << WALL_IS_WEST);
 			    			if ((seg->flags & dir_mask) == 0) place_wall = true;

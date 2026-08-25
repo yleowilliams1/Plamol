@@ -9,8 +9,7 @@
 #include "t_log_handler.h"
 #include "t_strings.h"
 
-#include "c_reg_list.h"
-#include "c_flag_enums.h"
+#include "c_depot_list.h"
 
 #define INI_PATH "data/engine.ini"
 
@@ -25,13 +24,13 @@ void e_free_settings(){
 		free(settings->si_paths[i]);
 		settings->si_paths[i] = NULL;
 	}
-	for(int i = 0; i < REGISTER_COUNT; i++){
-		if(settings->reg_paths[i]){free(settings->reg_paths[i]);}
-		if(settings->reg_formats[i]){free(settings->reg_formats[i]);}
+	for(int i = 0; i < DEPOT_COUNT; i++){
+		if(settings->depo_paths[i]){free(settings->depo_paths[i]);}
+		if(settings->depo_formats[i]){free(settings->depo_formats[i]);}
 		
-		settings->reg_item_counts[i] = 0;
-		settings->reg_paths[i] = NULL;
-		settings->reg_formats[i] = NULL;
+		settings->depo_item_counts[i] = 0;
+		settings->depo_paths[i] = NULL;
+		settings->depo_formats[i] = NULL;
 	}
 	free(settings);
 	settings = NULL;
@@ -57,17 +56,17 @@ float e_grab_animfps(){
 	return settings->anim_fps;
 }
 
-char *e_grab_regpath(enum RegisterType reg){
+char *e_grab_depopath(enum DepotType depot_index){
 	if(!settings){LOG(LOG_NULL, "Settings is NULL");return NULL;}
-	return settings->reg_paths[reg];
+	return settings->depo_paths[depot_index];
 }
-char *e_grab_regformat(enum RegisterType reg){
+char *e_grab_depoformat(enum DepotType depot_index){
 	if(!settings){LOG(LOG_NULL, "Settings is NULL");return NULL;}
-	return settings->reg_formats[reg];
+	return settings->depo_formats[depot_index];
 }
-int e_grab_regitemcount(enum RegisterType reg){
+int e_grab_depoitemcount(enum DepotType depot_index){
 	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 1;}
-	return settings->reg_item_counts[reg];
+	return settings->depo_item_counts[depot_index];
 }
 static void engine_parser(struct config_pack p, void *ptr){
 	struct EngineSettings *s = ptr;
@@ -77,29 +76,29 @@ static void engine_parser(struct config_pack p, void *ptr){
 			if(!t_check(p.key, (char *)sistr(i))){continue;}
 			t_cpy(&s->si_paths[i], p.value);
 		}
-		for(int i = 0; i < REGISTER_COUNT; i++){
-			if(!t_check(p.key, (char *)regstr(i))){continue;}
-			t_cpy(&s->reg_paths[i], p.value);
+		for(int i = 0; i < DEPOT_COUNT; i++){
+			if(!t_check(p.key, (char *)depstr(i))){continue;}
+			t_cpy(&s->depo_paths[i], p.value);
 		}
 	}
 	if(t_check(p.current_section, "Memory")){
-		for(int i = 0; i < REGISTER_COUNT; i++){
+		for(int i = 0; i < DEPOT_COUNT; i++){
 			size_t size = 128;
 			char buf[size];
-			char *base = (char *)regstr(i); 
+			char *base = (char *)depstr(i); 
 			t_snprintf(buf, size, NULL, "%s%s", base, "Count");	
 			if(!t_check(p.key, buf)){continue;}
-			t_atoi(p.value, &s->reg_item_counts[i]);
+			t_atoi(p.value, &s->depo_item_counts[i]);
 		}
 	}
 	if(t_check(p.current_section, "Format")){
-		for(int i = 0; i < REGISTER_COUNT; i++){
+		for(int i = 0; i < DEPOT_COUNT; i++){
 			size_t size = 128;
 			char buf[size];
-			char *base = (char *)regstr(i); 
+			char *base = (char *)depstr(i); 
 			t_snprintf(buf, size, NULL, "%s%s", base, "Format");	
 			if(!t_check(p.key, buf)){continue;}
-			t_cpy(&s->reg_formats[i], p.value);
+			t_cpy(&s->depo_formats[i], p.value);
 		}
 	}
 	if(t_check(p.current_section, "Animation")){
