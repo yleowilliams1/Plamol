@@ -15,7 +15,7 @@
 	X(M_WIDTH) \
 	X(M_HEIGHT) \
 	X(M_SPRITE_COUNT) \
-	X(M_ITEM_PROTOTYPE) \
+	X(M_ITEM_PROTOTYPE_COUNT) \
 	X(M_ENTITY_PROTOTYPE_COUNT)\
 	X(M_ENTITY_INSTANCE_COUNT)\
 	X(M_INTERACTABLE_PROTOTYPE_COUNT) \
@@ -47,6 +47,11 @@ struct MapHeader{
 };
 #pragma pack(pop)
 
+struct MapSpriteSlot{
+	int gindex;
+	bool collide;
+	v2 tile;
+};
 struct Map{
 	int metadata[M_META_COUNT];
 
@@ -56,6 +61,7 @@ struct Map{
 	int *ground_sprite_gindex;
 	int *wall_sprite_gindex;
 	int *ceiling_sprite_gindex;
+	bool *occupancy;
 };
 
 struct Map *si_load_map(int gindx);

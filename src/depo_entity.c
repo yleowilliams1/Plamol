@@ -25,6 +25,9 @@ static void instance_on_ploader(void *slot);
 static void instance_on_load(struct config_pack p, void *ptr);
 static void instance_on_bulk(void *loaddata, void *ptr);
 static void instance_on_interact(void *interactdata, void *slot);
+static void instance_on_save(void *slot, FILE *f);
+static void instance_on_read(void *slot, FILE *f);
+
 
 struct ItemFunctions entity_prototype(){
 	return (struct ItemFunctions){
@@ -34,6 +37,8 @@ struct ItemFunctions entity_prototype(){
 		.on_free = prototype_on_free,
 		.on_pload = prototype_on_ploader,
 		.on_interact = prototype_on_interact,
+		.on_save = NULL,
+		.on_read = NULL,
 	};
 }
 
@@ -45,10 +50,44 @@ struct ItemFunctions entity_instance(){
 		.on_free = instance_on_free,
 		.on_pload = instance_on_ploader,
 		.on_interact = instance_on_interact,
+		.on_save = instance_on_save,
+		.on_read = instance_on_read,
 	};
 }
+// depo_entity.c
+static void instance_on_save(void *slot, FILE *f){
+	struct EntityInstance *e = slot;
+	fwrite(&e->tile, sizeof(v3), 1, f);
+	fwrite(&e->facing, sizeof(enum Direction), 1, f);
+	fwrite(&e->anim, sizeof(struct AnimationState), 1, f);
+	fwrite(&e->runtime_flags, sizeof(uint32_t), 1, f);
+	fwrite(&e->current_hp, sizeof(int), 1, f);
+	fwrite(&e->current_ap, sizeof(int), 1, f);
+	fwrite(e->bstat, sizeof(int), BASE_STAT_COUNT, f);
 
-// Think abotu a solution to type safety later
+	fwrite(&e->inventory_size, sizeof(int), 1, f);
+	fwrite(e->inventory, sizeof(struct ChildInventorySlot), e->inventory_size, f);
+	fwrite(&e->hotbar_size, sizeof(int), 1, f);
+	fwrite(e->hotbar, sizeof(struct ChildInventorySlot), e->hotbar_size, f);
+}
+static void instance_on_read(void *slot, FILE *f){
+	struct EntityInstance *e = slot;
+	fread(&e->tile, sizeof(v3), 1, f);
+	fread(&e->facing, sizeof(enum Direction), 1, f);
+	fread(&e->anim, sizeof(struct AnimationState), 1, f);
+	fread(&e->runtime_flags, sizeof(uint32_t), 1, f);
+	fread(&e->current_hp, sizeof(int), 1, f);
+	fread(&e->current_ap, sizeof(int), 1, f);
+	fread(e->bstat, sizeof(int), BASE_STAT_COUNT, f);
+
+	int inv_size; fread(&inv_size, sizeof(int), 1, f);
+	if(inv_size != e->inventory_size){LOG(LOG_OUTOFBOUNDS, "Inventory size mismatch on load"); return;}
+	fread(e->inventory, sizeof(struct ChildInventorySlot), inv_size, f);
+
+	int hot_size; fread(&hot_size, sizeof(int), 1, f);
+	if(hot_size != e->hotbar_size){LOG(LOG_OUTOFBOUNDS, "Hotbar size mismatch on load"); return;}
+	fread(e->hotbar, sizeof(struct ChildInventorySlot), hot_size, f);
+}
 static void instance_on_free(void *slot){
 	struct EntityInstance *e = (struct EntityInstance *)slot;
 	if(!e){LOG(LOG_NULL, "Entity instance is NULL");return;}

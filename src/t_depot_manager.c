@@ -4,7 +4,48 @@
 #include "t_depot_manager.h"
 #include "t_log_handler.h"
 #include "t_config_tool.h"
+void t_save_depot(struct DepotManager *dm, int depot_index, const char *path){
+	if(!dm || !dm->depots[depot_index]){LOG(LOG_NULL, "Can't save depot %d", depot_index); return;}
+	struct ItemFunctions *fncs = &dm->fncs[depot_index];
+	if(!fncs->on_save){LOG(LOG_NULL, "Depot %d has no on_save, nothing to persist", depot_index); return;}
 
+	FILE *f = fopen(path, "wb");
+	if(!f){return;}
+
+	int cap = dm->depot_item_caps[depot_index];
+	fwrite(&cap, sizeof(int), 1, f); // sanity check on load
+
+	for(int i = 0; i < cap; i++){
+		void *item = dm->depots[depot_index][i];
+		if(!item){continue;}              // sparse: only spawned instances get written
+		fwrite(&i, sizeof(int), 1, f);     // tag with gindex
+		fncs->on_save(item, f);
+	}
+	int stop = -1;
+	fwrite(&stop, sizeof(int), 1, f);     // sentinel
+	fclose(f);
+}
+
+void t_read_depot(struct DepotManager *dm, int depot_index, const char *path){
+	struct ItemFunctions *fncs = &dm->fncs[depot_index];
+	if(!fncs->on_read){LOG(LOG_NULL, "Depot %d has no on_read", depot_index); return;}
+
+	FILE *f = fopen(path, "rb");
+	if(!f){return;}
+
+	int cap; fread(&cap, sizeof(int), 1, f);
+	if(cap != dm->depot_item_caps[depot_index]){LOG(LOG_OUTOFBOUNDS, "Save cap mismatch for depot %d", depot_index);}
+
+	int gindx;
+	while(fread(&gindx, sizeof(int), 1, f) == 1 && gindx != -1){
+		// item should already exist from t_load_item (prototype+config pass);
+		// on_read overwrites its mutable runtime fields.
+		void *item = dm->depots[depot_index][gindx];
+		if(!item){LOG(LOG_NULL, "Save references unspawned gindex %d", gindx); continue;}
+		fncs->on_read(item, f);
+	}
+	fclose(f);
+}
 struct DepotManagerFile *t_create_depotmanfile(int count){
 	struct DepotManagerFile *df = XCALLOC(1, sizeof *df + (size_t)count * sizeof(int));
 	df->depot_count = count;

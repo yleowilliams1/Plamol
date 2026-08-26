@@ -45,7 +45,7 @@ void si_write_map_to_disk(struct Map *map, const char *filename){
 	fwrite(map->ground_sprite_gindex, sizeof(int), tiles_size, f);
 	fwrite(map->wall_sprite_gindex, sizeof(int), tiles_size, f);
 	fwrite(map->ceiling_sprite_gindex, sizeof(int), tiles_size, f);
-	
+	fwrite(map->occupancy, sizeof(bool), tiles_size, f);	
 	
 	fclose(f);
 }
@@ -68,13 +68,14 @@ struct Map *si_read_map_to_memory(const char *filename){
 	map->ground_sprite_gindex = XCALLOC(1, sizeof(int) * tiles_size);
 	map->wall_sprite_gindex = XCALLOC(1, sizeof(int) * tiles_size);
 	map->ceiling_sprite_gindex = XCALLOC(1, sizeof(int) * tiles_size);
+	map->occupancy = XCALLOC(1, sizeof(bool) * tiles_size);
 	fread(map->entity_instances, sizeof(struct InstanceSlot), map->metadata[M_ENTITY_INSTANCE_COUNT], f);
 	fread(map->interactable_instances, sizeof(struct InstanceSlot), map->metadata[M_INTERACTABLE_INSTANCE_COUNT], f);
 
 	fread(map->ground_sprite_gindex, sizeof(int), tiles_size, f);
 	fread(map->wall_sprite_gindex, sizeof(int), tiles_size, f);
 	fread(map->ceiling_sprite_gindex, sizeof(int), tiles_size, f);
-
+	fread(map->occupancy, sizeof(bool), tiles_size, f);
 	fclose(f);
 	return map;
 }
@@ -91,6 +92,7 @@ void si_free_map(struct Map *map){
 	if(map->ground_sprite_gindex){free(map->ground_sprite_gindex); map->ground_sprite_gindex = NULL;}
 	if(map->ceiling_sprite_gindex){free(map->ceiling_sprite_gindex); map->ceiling_sprite_gindex = NULL;}
 	if(map->wall_sprite_gindex){free(map->wall_sprite_gindex); map->wall_sprite_gindex = NULL;}
+	if(map->occupancy){free(map->occupancy); map->occupancy = NULL;}
 	free(map);
 	map = NULL;	
 }
