@@ -3,6 +3,8 @@
 #include "t_math.h"
 #include "si_map.h"
 
+struct DepotManager;
+
 struct MapManager{
 	struct Map *map_pack;
 	// 2d heap array index with tile
@@ -13,3 +15,6 @@ struct MapManager *e_create_map_manager(int map_index);
 void e_free_map_manager(struct MapManager *map_manager);
 void e_occupy(struct MapManager *man, v2 tile);
 void e_tclear(struct MapManager *man, v2 tile);
+
+void e_apply_map_save(struct MapManager *map_manager, struct DepotManager *dman, int save_slot);
+void e_persist_map_save(struct MapManager *map_manager, struct DepotManager *dman, int save_slot);

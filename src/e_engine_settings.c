@@ -68,6 +68,10 @@ int e_grab_depoitemcount(enum DepotType depot_index){
 	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 1;}
 	return settings->depo_item_counts[depot_index];
 }
+int e_grab_mapcount(){
+	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 1;}
+	return settings->map_count;
+}
 static void engine_parser(struct config_pack p, void *ptr){
 	struct EngineSettings *s = ptr;
 	if(!s){LOG(LOG_NULL, "NULL settings in parser");return;}
@@ -82,6 +86,9 @@ static void engine_parser(struct config_pack p, void *ptr){
 		}
 	}
 	if(t_check(p.current_section, "Memory")){
+		if(t_check(p.key, "MapCount")){
+			t_atoi(p.value, &s->map_count);
+		}
 		for(int i = 0; i < DEPOT_COUNT; i++){
 			size_t size = 128;
 			char buf[size];

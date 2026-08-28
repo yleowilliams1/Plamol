@@ -35,4 +35,10 @@ void si_free_stage(struct Stage *stage){
 	if(!stage){return;}
 	e_free_map_manager(stage->map_manager);
 	stage->map_manager = NULL;
+
+	t_free_depot_manager(stage->depot_manager);
+	stage->depot_manager = NULL;
+
+	free(stage);
+	stage = NULL;
 }

@@ -6,7 +6,8 @@
 
 struct EngineSettings{
 	float anim_fps;
-	
+	int map_count;
+
 	char *si_paths[SI_COUNT];
 	
 	char *depo_paths[DEPOT_COUNT];
@@ -16,6 +17,8 @@ struct EngineSettings{
 
 void e_free_settings();
 void e_load_engine_settings();
+
+int e_grab_mapcount();
 
 char *e_grab_sipath(enum SiEnum si);
 float e_grab_animfps();
