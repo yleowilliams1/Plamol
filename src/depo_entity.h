@@ -35,6 +35,9 @@ struct EntityPrototype{
 	int bstat_data[BASE_STAT_COUNT];
 	
 	int sprite_gindx;
+	
+	int hp;
+	int ap;
 
 	int inventory_cap;
 	int hotbar_cap;
@@ -45,22 +48,6 @@ struct EntityPrototype{
 	uint32_t flags;
 };
 
-struct AnimationState{
-	float elapsed_time;
-	int current_frame;
-	int current_animation;
-};
-struct EntityInstanceLoadData{
-	struct EntityPrototype *prototype;
-	v3 start_tile;
-	enum Direction start_direction;
-};
-struct EntityPrototypeInteractData{
-	int killer_beans;
-};
-struct EntityInstanceInteractData{
-	int important_stuff;
-};
 struct EntityInstance{
 	v3 tile;
 	

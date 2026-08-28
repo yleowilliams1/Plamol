@@ -10,6 +10,7 @@
 #include "t_strings.h"
 
 #include "c_depot_list.h"
+#include "c_instance_list.h"
 
 #define INI_PATH "data/engine.ini"
 
@@ -68,6 +69,10 @@ int e_grab_depoitemcount(enum DepotType depot_index){
 	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 1;}
 	return settings->depo_item_counts[depot_index];
 }
+int e_grab_instance_count(enum InstanceType instance){
+	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 1;}
+	return settings->instance_counts[instance];
+}
 int e_grab_mapcount(){
 	if(!settings){LOG(LOG_NULL, "Settings is NULL");return 1;}
 	return settings->map_count;
@@ -96,6 +101,14 @@ static void engine_parser(struct config_pack p, void *ptr){
 			t_snprintf(buf, size, NULL, "%s%s", base, "Count");	
 			if(!t_check(p.key, buf)){continue;}
 			t_atoi(p.value, &s->depo_item_counts[i]);
+		}
+		for(int i = 0; i < INSTANCE_COUNT; i++){
+			size_t size = 128;
+			char buf[size];
+			char *base = (char *)inststr(i); 
+			t_snprintf(buf, size, NULL, "%s%s", base, "Count");	
+			if(!t_check(p.key, buf)){continue;}
+			t_atoi(p.value, &s->instance_counts[i]);
 		}
 	}
 	if(t_check(p.current_section, "Format")){

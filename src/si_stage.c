@@ -8,6 +8,7 @@
 #include "e_engine_settings.h"
 
 #include "si_stage.h"
+#include "si_save_manager.h"
 
 struct Stage *si_init_stage(int map_index){
 	struct Stage *stage = XCALLOC(1, sizeof(struct Stage));
@@ -25,14 +26,17 @@ struct Stage *si_init_stage(int map_index){
 	load_depot_DPO_ITEM_PROTO(stage->depot_manager);	
 	load_depot_DPO_SPRITE(stage->depot_manager);
 	load_depot_DPO_INTER_PROTO(stage->depot_manager);
-	load_depot_DPO_INTER_INST(stage->depot_manager);
 	load_depot_DPO_ENTITY_PROTO(stage->depot_manager);
-	load_depot_DPO_ENTITY_INST(stage->depot_manager);
+
+	stage->save_manager = si_create_save_manager();
 
 	return stage;
 }
 void si_free_stage(struct Stage *stage){
 	if(!stage){return;}
+	si_free_save_manager(stage->save_manager);
+	stage->save_manager = NULL;
+	
 	e_free_map_manager(stage->map_manager);
 	stage->map_manager = NULL;
 

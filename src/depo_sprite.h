@@ -16,10 +16,11 @@ enum Direction{
 	#undef X
 	DIRECTION_COUNT
 };
-struct SpriteDataInteractData{
+struct AnimationState{
+	float elapsed_time;
+	int current_frame;
+	int current_animation;
 };
-
-
 struct SpriteData{
 	char *sprite_path;
 	int animation_count;

@@ -10,12 +10,14 @@
 #include "si_input.h"
 #include "si_stage.h"
 
+#define DEFAULT_STAGE 0
+
 struct EngineState *e_create_engine_state(){
 	struct EngineState *engine_state = XCALLOC(1, sizeof(struct EngineState));	
 
 	engine_state->flag_manager = si_init_flag();	
 	engine_state->input_manager = si_init_input();
-	engine_state->stage = si_init_stage();
+	engine_state->stage = si_init_stage(DEFAULT_STAGE);
 
 	return engine_state;
 }
