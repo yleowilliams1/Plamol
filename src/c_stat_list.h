@@ -44,19 +44,5 @@ enum StatType{
 	DerivedStatType,
 	StatTypeCount,
 };
-const char *bsttr(enum BaseStatEnum bstat){
-	switch(bstat){
-		#define X(name) case name: return #name;
-		BSTAT_LIST
-		#undef X
-		default: return NULL;
-	}
-}
-const char *dsttr(enum DerivedStatEnum dstat){
-	switch(dstat){
-		#define X(name) case name: return #name;
-		DSTAT_LIST
-		#undef X
-		default: return NULL;
-	}
-}
+const char *bsttr(enum BaseStatEnum bstat);
+const char *dsttr(enum DerivedStatEnum dstat);

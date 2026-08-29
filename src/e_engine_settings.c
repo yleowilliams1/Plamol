@@ -11,6 +11,7 @@
 
 #include "c_depot_list.h"
 #include "c_instance_list.h"
+#include "c_si_list.h"
 
 #define INI_PATH "data/engine.ini"
 

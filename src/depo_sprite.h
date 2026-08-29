@@ -30,4 +30,4 @@ struct SpriteData{
 };
 
 struct ItemFunctions;
-struct ItemFunctions sprite_data();
+struct ItemFunctions dou_sprite();

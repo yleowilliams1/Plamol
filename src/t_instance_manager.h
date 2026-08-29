@@ -8,9 +8,6 @@
 #include "depo_sprite.h"
 
 
-typedef void (*Update)(void *slot, float delta);
-typedef void (*Draw)(void *slot, float delta);
-typedef void (*Interact)(void *slot, void *message);
 typedef void (*Serialize)(void *slot, FILE *file);
 typedef void (*Deserialize)(void *slot, FILE *file);
 typedef void (*Free)(void *slot);
@@ -25,9 +22,6 @@ struct InstanceHeader{
 #pragma pack(pop)
 
 struct InstanceFunctions{
-	Update on_update;
-	Draw on_draw;
-	Interact on_interact;
 	Serialize on_serialize;
 	Deserialize on_deserialize;
 	Free on_free;

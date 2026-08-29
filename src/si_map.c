@@ -104,4 +104,11 @@ static bool si_validate_header(struct MapHeader *header){
 	if(header->version != VERSION){LOG(LOG_OUTOFBOUNDS, "Possibly map won't be read since they are on differing version from compiled executable");}	
 	return true;
 }
-
+const char *mmetastr(enum MetadataProperties type){
+	switch(type){
+		#define X(name) case name: return #name;
+		META_PROPER
+		#undef X
+		default: return NULL;
+	}
+}

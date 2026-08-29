@@ -33,5 +33,5 @@ struct InteractableInstance{
 
 struct ItemFunctions;
 struct InstanceFunctions;
-struct ItemFunctions interactable_prototype();
-struct InstanceFunctions interactable_instance();
+struct ItemFunctions prototype_interactable();
+struct InstanceFunctions instance_interactable();

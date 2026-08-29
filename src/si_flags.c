@@ -19,7 +19,7 @@ struct FlagManager *si_init_flag(){
 	if(!path){LOG(LOG_NULL, "e_grab_si_path return NULL path for enum");}
 		
 	bool configured = t_config(fm, path, flag_parser);		
-	if(!configured){LOG(LOG_ABORT, "Flag failed to configure at %s", path);}
+	if(!configured){LOG(LOG_PARSE, "Flag failed to configure at %s", path);}
 	
 	LOG(LOG_LOAD, "Loading flags at %s.", path);
 	return fm;

@@ -8,9 +8,9 @@
 #include "depo_sprite.h"
 
 #define DEPOT_LIST \
-	X(DPO_ITEM_PROTO,   struct ItemPrototype,         item_prototype) \
-	X(DPO_SPRITE,       struct SpriteData,            sprite_data) \
-	X(DPO_INTER_PROTO,  struct InteractablePrototype, interactable_prototype) \
+	X(DPO_ITEM_PROTO,   struct ItemPrototype,         prototype_item) \
+	X(DPO_SPRITE,       struct SpriteData,            dou_sprite) \
+	X(DPO_INTER_PROTO,  struct InteractablePrototype, prototype_interactable) \
 	X(DPO_ENTITY_PROTO, struct EntityPrototype,       entity_prototype) \
 
 enum DepotType{
@@ -37,12 +37,4 @@ static inline void free_##id(struct DepotManager *dman, int item_index){ \
 } 
 DEPOT_LIST
 #undef X
-const char *depstr(enum DepotType depot){
-	switch(depot){
-		#define X(id, type, fncs) case id: return #id;
-		DEPOT_LIST
-		#undef X
-		case DEPOT_COUNT: return NULL;
-		default: return NULL;
-	}
-}
+const char *depstr(enum DepotType depot);

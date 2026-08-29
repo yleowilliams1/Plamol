@@ -66,11 +66,4 @@ void si_free_map(struct Map *map);
 
 void si_write_map_to_disk(struct Map *map, const char *filename);
 struct Map *si_read_map_to_memory(const char *filename);
-const char *mmetastr(enum MetadataProperties type){
-	switch(type){
-		#define X(name) case name: return #name;
-		META_PROPER
-		#undef X
-		default: return NULL;
-	}
-}
+const char *mmetastr(enum MetadataProperties type);

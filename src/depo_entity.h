@@ -54,5 +54,3 @@ struct ItemFunctions entity_prototype();
 struct InstanceFunctions entity_instance();
 
 const char *entflgstr(enum EntityFlags flag);
-const char *bstatstr(enum BaseStatEnum stat);
-const char *dstatstr(enum DerivedStatEnum stat);

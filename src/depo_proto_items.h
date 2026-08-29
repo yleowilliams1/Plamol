@@ -49,29 +49,8 @@ struct ItemPrototype{
 };
 
 struct ItemFunctions;
-struct ItemFunctions item_prototype();
+struct ItemFunctions prototype_item();
 
-const char *modstr(enum ModifierType type){
-	switch(type){
-		#define X(name) case name: return #name;
-		MODIFIER_LIST
-		#undef X
-		default: return NULL;
-	}
-}
-const char *itemstrstr(enum ItemStringType type){
-	switch(type){
-		#define X(name) case name: return #name;
-		ITEM_STRING_LIST	
-		#undef X
-		default: return NULL;
-	}
-}
-const char *itemflgstr(enum ItemFlags flag){
-	switch(flag){
-		#define X(name) case name: return #name;
-		ITEM_FLAGS	
-		#undef X
-		default: return NULL;
-	}	
-}
+const char *modstr(enum ModifierType type);
+const char *itemstrstr(enum ItemStringType type);
+const char *itemflgstr(enum ItemFlags flag);

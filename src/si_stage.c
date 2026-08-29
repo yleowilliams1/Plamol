@@ -34,15 +34,11 @@ struct Stage *si_init_stage(int map_index){
 	stage->save_manager = si_create_save_manager();
 
 	struct InstanceFunctions entity_fncs = entity_instance();
-	struct InstanceFunctions interactable_fncs = interactable_instance();
+	struct InstanceFunctions interactable_fncs = instance_interactable();
 
 	stage->entity_instances = t_create_instance_manager(entity_fncs, e_grab_instance_count(INST_ENTITY), sizeof(struct EntityPrototype));
 	stage->interactable_instances = t_create_instance_manager(interactable_fncs, e_grab_instance_count(INST_INTERACTABLE), sizeof(struct InteractablePrototype));
 
-	// This is the actual save-manager <-> stage-loader connection: for the active
-	// save slot, either replay the map's immutable InstanceSlot list against the
-	// (also immutable) prototype depot, or, if a save exists for this map, load
-	// the live instances straight from disk instead.
 	si_load_stage_instances(stage->save_manager, map_index, stage->depot_manager,
 		stage->entity_instances,
 		stage->map_manager->map_pack->entity_instances,
