@@ -1,4 +1,38 @@
 #!/bin/bash
 
-path="depo_entity.c depo_interactable.c depo_proto_items.c depo_sprite.c e_coordinator.c e_engine_settings.c main.c run_runtime.c si_flags.c si_input.c si_map.c si_world.c t_config_tool.c t_depot_manager.c t_log_handler.c t_math.c t_strings.c w_window_manager.c"
-gcc $(printf "src/%s " $path) -o game -lraylib -lm
+# Compile all .c files found in a src directory into one binary
+# Usage: ./compile_src.sh [path_to_src] [output_binary]
+
+set -euo pipefail
+
+SRC_DIR="${1:-src}"
+OUT_BIN="${2:-build/app}"
+CC="${CC:-gcc}"
+CFLAGS="${CFLAGS:--Wall -Wextra -O2 -Iinclude}"
+
+if [ ! -d "$SRC_DIR" ]; then
+    echo "Error: source directory '$SRC_DIR' not found." >&2
+    exit 1
+fi
+
+mkdir -p "$(dirname "$OUT_BIN")"
+
+# Collect all .c files recursively, null-delimited for safety
+files=()
+while IFS= read -r -d '' file; do
+    files+=("$file")
+done < <(find "$SRC_DIR" -type f -name "*.c" -print0)
+
+if [ "${#files[@]}" -eq 0 ]; then
+    echo "No .c files found in '$SRC_DIR'." >&2
+    exit 1
+fi
+
+echo "Found ${#files[@]} source file(s):"
+printf '  %s\n' "${files[@]}"
+
+echo "Compiling into: $OUT_BIN"
+"$CC" $CFLAGS "${files[@]}" -o "$OUT_BIN"
+
+echo "----------------------------------------"
+echo "Build succeeded: $OUT_BIN"

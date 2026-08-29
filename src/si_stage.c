@@ -1,7 +1,9 @@
 #include "c_depot_list.h"
+#include "c_instance_list.h"
 
 #include "t_log_handler.h"
 #include "t_depot_manager.h"
+#include "t_instance_manager.h"
 #include "t_config_tool.h"
 
 #include "e_map_manager.h"
@@ -9,6 +11,7 @@
 
 #include "si_stage.h"
 #include "si_save_manager.h"
+#include "si_map.h"
 
 struct Stage *si_init_stage(int map_index){
 	struct Stage *stage = XCALLOC(1, sizeof(struct Stage));
@@ -30,10 +33,45 @@ struct Stage *si_init_stage(int map_index){
 
 	stage->save_manager = si_create_save_manager();
 
+	// NOTE: entity_instance()/interactable_instance() (depo_entity.c / depo_interactable.c)
+	// currently populate fields (on_bulk/on_save/on_read/on_interact) that don't exist on
+	// struct ItemFunctions anymore, so they don't compile against t_depot_manager.h as it
+	// stands today. That's a pre-existing issue unrelated to this wiring pass, so for now
+	// we hand the instance managers zeroed InstanceFunctions. Update/draw/serialize will
+	// just log-and-noop (see t_instance_manager.c's NULL checks) until that's fixed.
+	struct InstanceFunctions entity_fncs = {0};
+	struct InstanceFunctions interactable_fncs = {0};
+
+	stage->entity_instances = t_create_instance_manager(entity_fncs,
+		e_grab_instance_count(INST_ENTITY), sizeof(struct EntityPrototype));
+	stage->interactable_instances = t_create_instance_manager(interactable_fncs,
+		e_grab_instance_count(INST_INTERACTABLE), sizeof(struct InteractablePrototype));
+
+	// This is the actual save-manager <-> stage-loader connection: for the active
+	// save slot, either replay the map's immutable InstanceSlot list against the
+	// (also immutable) prototype depot, or, if a save exists for this map, load
+	// the live instances straight from disk instead.
+	si_load_stage_instances(stage->save_manager, map_index, stage->depot_manager,
+		stage->entity_instances,
+		stage->map_manager->map_pack->entity_instances,
+		stage->map_manager->map_pack->metadata[M_ENTITY_INSTANCE_COUNT],
+		DPO_ENTITY_PROTO,
+		stage->interactable_instances,
+		stage->map_manager->map_pack->interactable_instances,
+		stage->map_manager->map_pack->metadata[M_INTERACTABLE_INSTANCE_COUNT],
+		DPO_INTER_PROTO);
+
 	return stage;
 }
 void si_free_stage(struct Stage *stage){
 	if(!stage){return;}
+
+	t_free_instance_manager(stage->entity_instances);
+	stage->entity_instances = NULL;
+
+	t_free_instance_manager(stage->interactable_instances);
+	stage->interactable_instances = NULL;
+
 	si_free_save_manager(stage->save_manager);
 	stage->save_manager = NULL;
 	

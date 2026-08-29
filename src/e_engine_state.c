@@ -27,11 +27,11 @@ bool e_free_engine_state(struct EngineState *engine_state){
 	si_free_flag(engine_state->flag_manager);
 	if(engine_state->input_manager){free(engine_state->input_manager);}
 
-	free(engine_state);
-	engine_state = NULL;
-
 	si_free_stage(engine_state->stage);
 	engine_state->stage = NULL;
+
+	free(engine_state);
+	engine_state = NULL;
 
 	return true;
 }

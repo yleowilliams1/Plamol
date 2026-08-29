@@ -49,3 +49,16 @@ struct InstanceManager{
 	size_t prototype_size;
 };
 
+struct DepotManager;
+struct InstanceSlot;
+
+struct InstanceManager *t_create_instance_manager(struct InstanceFunctions fncs, int count, size_t size);
+void t_free_instance_manager(struct InstanceManager *instance_manager);
+
+void t_save_instance_manager(struct InstanceManager *iman, char *path);
+void t_load_instance_manager(struct InstanceManager *iman, char *path);
+
+// If path is NULL, spawns fresh instances from islots/the prototype depot.
+// If path is non-NULL, loads iman's instances straight from that save file instead.
+void t_populate_instance_manager(struct InstanceManager *iman, struct DepotManager *dman, int depot_index, struct InstanceSlot *islots, int islot_count, char *path);
+
