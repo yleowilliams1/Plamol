@@ -11,7 +11,7 @@
 
 #include "e_engine_settings.h"
 #define VERSION 1
-#define MAGIC_NUMBER 0x53414E444D414E00ULL
+#define MAGIC_NUMBER 0x4C6F6E6553746172
 #define EXPECTED_ENDIAN 0xFFFE
 #define SWAPPED_ENDIAN 0xFEFF
 

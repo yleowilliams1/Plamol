@@ -30,7 +30,7 @@ struct SaveManager *si_create_save_manager(){
 
 	struct SaveManager *sm = XCALLOC(1, sizeof(struct SaveManager));
 	sm->slot_cursor = 0;
-	
+	// allocate slots here todo	
 	// Gentle reminder that -1 items will just load the default map	
 	for(int i = 0; i < SAVE_SLOT_COUNT; i++){
 		sm->slot[i]->item_indexs = XCALLOC(1, sizeof(int) * e_grab_mapcount());
@@ -125,7 +125,7 @@ static bool valid_slot(int save){
 	return save >= 0 && save < SAVE_SLOT_COUNT;
 }
 static bool valid_map(int map_gindx){
-	return map_gindx < 0  && map_gindx > e_grab_mapcount();
+	return map_gindx < 0  || map_gindx > e_grab_mapcount();
 }
 static int find_highest_save_index(const char *dir_path){
 	DIR *dir = opendir(dir_path);
