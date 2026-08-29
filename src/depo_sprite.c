@@ -16,19 +16,13 @@ static void on_init(void *slot);
 static void on_pload(void *slot);
 static void on_free(void *slot);
 static void on_load(struct config_pack p, void *ptr);
-static void on_interact(void *interactdata, void *slot);
-
 struct ItemFunctions dou_sprite(){
 	return (struct ItemFunctions){
 		.on_load = on_load,
 		.on_init = on_init,
 		.on_free = on_free,
 		.on_pload = on_pload,
-		.on_bulk = NULL,
-		.on_interact = on_interact, 
 	};
-}
-static void on_interact(void *interactdata, void *slot){
 }
 static void on_init(void *slot){
 	// this is super important

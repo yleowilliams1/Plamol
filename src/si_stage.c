@@ -33,19 +33,11 @@ struct Stage *si_init_stage(int map_index){
 
 	stage->save_manager = si_create_save_manager();
 
-	// NOTE: entity_instance()/interactable_instance() (depo_entity.c / depo_interactable.c)
-	// currently populate fields (on_bulk/on_save/on_read/on_interact) that don't exist on
-	// struct ItemFunctions anymore, so they don't compile against t_depot_manager.h as it
-	// stands today. That's a pre-existing issue unrelated to this wiring pass, so for now
-	// we hand the instance managers zeroed InstanceFunctions. Update/draw/serialize will
-	// just log-and-noop (see t_instance_manager.c's NULL checks) until that's fixed.
-	struct InstanceFunctions entity_fncs = {0};
-	struct InstanceFunctions interactable_fncs = {0};
+	struct InstanceFunctions entity_fncs = entity_instance();
+	struct InstanceFunctions interactable_fncs = interactable_instance();
 
-	stage->entity_instances = t_create_instance_manager(entity_fncs,
-		e_grab_instance_count(INST_ENTITY), sizeof(struct EntityPrototype));
-	stage->interactable_instances = t_create_instance_manager(interactable_fncs,
-		e_grab_instance_count(INST_INTERACTABLE), sizeof(struct InteractablePrototype));
+	stage->entity_instances = t_create_instance_manager(entity_fncs, e_grab_instance_count(INST_ENTITY), sizeof(struct EntityPrototype));
+	stage->interactable_instances = t_create_instance_manager(interactable_fncs, e_grab_instance_count(INST_INTERACTABLE), sizeof(struct InteractablePrototype));
 
 	// This is the actual save-manager <-> stage-loader connection: for the active
 	// save slot, either replay the map's immutable InstanceSlot list against the
@@ -83,4 +75,6 @@ void si_free_stage(struct Stage *stage){
 
 	free(stage);
 	stage = NULL;
+}
+void si_draw_stage(struct Stage *stage){
 }

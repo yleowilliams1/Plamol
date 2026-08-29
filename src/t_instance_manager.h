@@ -1,3 +1,4 @@
+
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
@@ -13,6 +14,7 @@ typedef void (*Interact)(void *slot, void *message);
 typedef void (*Serialize)(void *slot, FILE *file);
 typedef void (*Deserialize)(void *slot, FILE *file);
 typedef void (*Free)(void *slot);
+
 #pragma pack (push, 1)
 struct InstanceHeader{
 	uint32_t time_stamp;

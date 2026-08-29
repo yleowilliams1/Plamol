@@ -10,131 +10,75 @@
 #include "t_strings.h"
 #include "t_depot_manager.h"
 #include "t_config_tool.h"
-
+#include "t_instance_manager.h"
 #define INVALID_CAP -1
 
 static void prototype_on_free(void *slot);
 static void prototype_on_init(void *slot);
 static void prototype_on_ploader(void *slot);
 static void prototype_on_loader(struct config_pack p, void *ptr);
-static void prototype_on_interact(void *interactdata, void *slot);
 
+static void instance_on_update(void *slot, float delta);
+static void instance_on_draw(void *slot, float delta);
+static void instance_on_interact(void *slot, void *message);
+static void instance_on_serialize(void *slot, FILE *file);
+static void instance_on_deserialize(void *slot, FILE *file);
 static void instance_on_free(void *slot);
-static void instance_on_init(void *slot);
-static void instance_on_ploader(void *slot);
-static void instance_on_load(struct config_pack p, void *ptr);
-static void instance_on_bulk(void *loaddata, void *ptr);
-static void instance_on_interact(void *interactdata, void *slot);
-static void instance_on_save(void *slot, FILE *f);
-static void instance_on_read(void *slot, FILE *f);
-
 
 struct ItemFunctions entity_prototype(){
 	return (struct ItemFunctions){
 		.on_load = prototype_on_loader,
-		.on_bulk = NULL,
 		.on_init = prototype_on_init,
 		.on_free = prototype_on_free,
 		.on_pload = prototype_on_ploader,
-		.on_interact = prototype_on_interact,
-		.on_save = NULL,
-		.on_read = NULL,
 	};
 }
-
-struct ItemFunctions entity_instance(){
-	return (struct ItemFunctions){
-		.on_load = instance_on_load,
-		.on_bulk = instance_on_bulk,
-		.on_init = instance_on_init,
-		.on_free = instance_on_free,
-		.on_pload = instance_on_ploader,
+struct InstanceFunctions entity_instance(){
+	return (struct InstanceFunctions){
+		.on_update = instance_on_update,
+		.on_draw = instance_on_draw,
 		.on_interact = instance_on_interact,
-		.on_save = instance_on_save,
-		.on_read = instance_on_read,
+		.on_serialize = instance_on_serialize,
+		.on_deserialize = instance_on_deserialize,
+		.on_free = instance_on_free,
 	};
 }
-// depo_entity.c
-static void instance_on_save(void *slot, FILE *f){
-	struct EntityInstance *e = slot;
-	fwrite(&e->tile, sizeof(v3), 1, f);
-	fwrite(&e->facing, sizeof(enum Direction), 1, f);
-	fwrite(&e->anim, sizeof(struct AnimationState), 1, f);
-	fwrite(&e->runtime_flags, sizeof(uint32_t), 1, f);
-	fwrite(&e->current_hp, sizeof(int), 1, f);
-	fwrite(&e->current_ap, sizeof(int), 1, f);
-	fwrite(e->bstat, sizeof(int), BASE_STAT_COUNT, f);
 
-	fwrite(&e->inventory_size, sizeof(int), 1, f);
-	fwrite(e->inventory, sizeof(struct ChildInventorySlot), e->inventory_size, f);
-	fwrite(&e->hotbar_size, sizeof(int), 1, f);
-	fwrite(e->hotbar, sizeof(struct ChildInventorySlot), e->hotbar_size, f);
+static void instance_on_update(void *slot, float delta){
 }
-static void instance_on_read(void *slot, FILE *f){
-	struct EntityInstance *e = slot;
-	fread(&e->tile, sizeof(v3), 1, f);
-	fread(&e->facing, sizeof(enum Direction), 1, f);
-	fread(&e->anim, sizeof(struct AnimationState), 1, f);
-	fread(&e->runtime_flags, sizeof(uint32_t), 1, f);
-	fread(&e->current_hp, sizeof(int), 1, f);
-	fread(&e->current_ap, sizeof(int), 1, f);
-	fread(e->bstat, sizeof(int), BASE_STAT_COUNT, f);
+static void instance_on_draw(void *slot, float delta){
+}
+static void instance_on_interact(void *slot, void *message){
+}
+static void instance_on_serialize(void *slot, FILE *f){
+	struct EntityPrototype *e = slot;
+	fwrite(&e->flags, sizeof(uint32_t), 1, f);
+	fwrite(&e->hp, sizeof(int), 1, f);
+	fwrite(&e->ap, sizeof(int), 1, f);
+	fwrite(e->bstat_data, sizeof(int), BASE_STAT_COUNT, f);
+
+	fwrite(&e->inventory_cap, sizeof(int), 1, f);
+	fwrite(e->inventory, sizeof(struct ChildInventorySlot), e->inventory_cap, f);
+	fwrite(&e->hotbar_cap, sizeof(int), 1, f);
+	fwrite(e->hotbar, sizeof(struct ChildInventorySlot), e->hotbar_cap, f);
+}
+static void instance_on_deserialize(void *slot, FILE *f){
+	struct EntityPrototype *e = slot;
+	fread(&e->flags, sizeof(uint32_t), 1, f);
+	fread(&e->hp, sizeof(int), 1, f);
+	fread(&e->ap, sizeof(int), 1, f);
+	fread(e->bstat_data, sizeof(int), BASE_STAT_COUNT, f);
 
 	int inv_size; fread(&inv_size, sizeof(int), 1, f);
-	if(inv_size != e->inventory_size){LOG(LOG_OUTOFBOUNDS, "Inventory size mismatch on load"); return;}
+	if(inv_size != e->inventory_cap){LOG(LOG_OUTOFBOUNDS, "Inventory size mismatch on load"); return;}
 	fread(e->inventory, sizeof(struct ChildInventorySlot), inv_size, f);
 
 	int hot_size; fread(&hot_size, sizeof(int), 1, f);
-	if(hot_size != e->hotbar_size){LOG(LOG_OUTOFBOUNDS, "Hotbar size mismatch on load"); return;}
+	if(hot_size != e->hotbar_cap){LOG(LOG_OUTOFBOUNDS, "Hotbar size mismatch on load"); return;}
 	fread(e->hotbar, sizeof(struct ChildInventorySlot), hot_size, f);
 }
 static void instance_on_free(void *slot){
-	struct EntityInstance *e = (struct EntityInstance *)slot;
-	if(!e){LOG(LOG_NULL, "Entity instance is NULL");return;}
-	if(e->inventory){free(e->inventory); e->inventory = NULL;}
-	if(e->hotbar){free(e->hotbar); e->hotbar = NULL;}
-}
-static void instance_on_init(void *slot){
-	struct EntityInstance *e = (struct EntityInstance *)slot;
-	if(!e){LOG(LOG_NULL, "Entity instance is NULL");return;}
-}
-static void instance_on_ploader(void *slot){
-	struct EntityInstance *e = (struct EntityInstance *)slot;
-	if(!e){LOG(LOG_NULL, "Entity instance is NULL");return;}
-}
-static void instance_on_load(struct config_pack p, void *ptr){
-	// Load save data here and figure out runtime data like health and ap
-}
-static void instance_on_bulk(void *loaddata, void *ptr){
-	struct EntityInstance *e = (struct EntityInstance *)ptr;
-	if(!e){LOG(LOG_NULL, "Entity instance is NULL");return;}
-	struct EntityInstanceLoadData *ld = (struct EntityInstanceLoadData *)loaddata;
-	if(!ld){LOG(LOG_NULL, "Load data is NULL");return;}
-	struct EntityPrototype *prototype = (ld->prototype);
-	if(!prototype){LOG(LOG_NULL, "Prototype is NULL");return;}
-	
-	e->tile = ld->start_tile;
-	e->facing = ld->start_direction;
-	e->runtime_flags = prototype->flags;
-
-	e->inventory_size = prototype->inventory_cap;
-	e->hotbar_size = prototype->hotbar_cap;
-	
-	if(!e->inventory){e->inventory = XCALLOC(1, sizeof(struct ChildInventorySlot) * e->inventory_size);}
-	if(!e->hotbar){e->hotbar = XCALLOC(1, sizeof(struct ChildInventorySlot) * e->hotbar_size);}
-
-	if(prototype->inventory){*e->inventory = *prototype->inventory;}
-	if(prototype->hotbar){*e->hotbar = *prototype->hotbar;}
-	
-	memcpy(e->bstat, prototype->bstat_data, sizeof(e->bstat));
-}
-static void instance_on_interact(void *interactdata, void *slot){
-	struct EntityInstance *e = (struct EntityInstance *)slot;
-	if(!e){LOG(LOG_NULL, "Entity instance is NULL");return;}
-	struct EntityInteractData *ld = (struct EntityInteractData *)interactdata;
-	if(!ld){LOG(LOG_NULL, "Load data is NULL");return;}
-
-	LOG(LOG_LOAD, "Hello. I have been interact with! Hipee...");	
+	prototype_on_free(slot);
 }
 
 static void prototype_on_free(void *slot){
@@ -229,10 +173,6 @@ static void prototype_on_loader(struct config_pack p, void *ptr){
 			}
 		}	
 	}
-}
-static void prototype_on_interact(void *interactdata, void *slot){
-	LOG(LOG_NULL, "Tried to interact with prototype! Returning");
-	return;
 }
 const char *entflgstr(enum EntityFlags flag) {
     switch (flag) {

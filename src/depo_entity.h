@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "t_math.h"
-
+#include "t_instance_manager.h"
 #include "depo_sprite.h"
 
 #include "c_stat_list.h"
@@ -48,32 +48,11 @@ struct EntityPrototype{
 	uint32_t flags;
 };
 
-struct EntityInstance{
-	v3 tile;
-	
-	enum Direction facing;
-
-	struct AnimationState anim;
-	uint32_t runtime_flags;
-	
-	int current_hp;
-	int current_ap;
-
-	int bstat[BASE_STAT_COUNT];
-	
-	int inventory_size;
-	int hotbar_size;
-
-	struct ChildInventorySlot *inventory;
-	struct ChildInventorySlot *hotbar;
-};
-
 struct ItemFunctions;
 
 struct ItemFunctions entity_prototype();
-struct ItemFunctions entity_instance();
+struct InstanceFunctions entity_instance();
 
 const char *entflgstr(enum EntityFlags flag);
 const char *bstatstr(enum BaseStatEnum stat);
 const char *dstatstr(enum DerivedStatEnum stat);
-

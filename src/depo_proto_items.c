@@ -17,7 +17,6 @@ static void item_on_init(void *slot);
 static void item_on_free(void *slot);
 static void item_on_pload(void *slot);
 static void item_on_load(struct config_pack p, void *ptr);
-static void item_on_interact(void *interactdata, void *slot);
 
 struct ItemFunctions prototype_item(){
 	return (struct ItemFunctions){
@@ -25,11 +24,7 @@ struct ItemFunctions prototype_item(){
 		.on_init = item_on_init,
 		.on_free = item_on_free,
 		.on_pload = item_on_pload,
-		.on_bulk = NULL,
-		.on_interact = item_on_interact,
 	};
-}
-static void item_on_interact(void *interactdata, void *slot){
 }
 static void item_on_init(void *slot){
 	LOG(LOG_LOAD, "Initalizing item of address %p", slot);

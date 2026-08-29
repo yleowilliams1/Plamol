@@ -8,7 +8,7 @@ set -euo pipefail
 SRC_DIR="${1:-src}"
 OUT_BIN="${2:-build/app}"
 CC="${CC:-gcc}"
-CFLAGS="${CFLAGS:--Wall -Wextra -O2 -Iinclude -lraylib -lm}"
+CFLAGS="${CFLAGS:--Wall -Wextra -O2 -Iinclude}"
 
 if [ ! -d "$SRC_DIR" ]; then
     echo "Error: source directory '$SRC_DIR' not found." >&2
