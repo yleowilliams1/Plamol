@@ -1,5 +1,6 @@
 #pragma once
 #include <stdbool.h>
+#include <raylib.h>
 #include "t_math.h"
 #include "si_map.h"
 

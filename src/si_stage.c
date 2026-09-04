@@ -1,3 +1,5 @@
+#include <raylib.h>
+
 #include "c_depot_list.h"
 #include "c_instance_list.h"
 
@@ -12,7 +14,7 @@
 #include "si_stage.h"
 #include "si_save_manager.h"
 #include "si_map.h"
-
+static void update_cam(Camera2D *cam);
 struct Stage *si_init_stage(int map_index){
 	struct Stage *stage = XCALLOC(1, sizeof(struct Stage));
 	stage->map_manager = e_create_map_manager(map_index);	
@@ -49,6 +51,11 @@ struct Stage *si_init_stage(int map_index){
 		stage->map_manager->map_pack->metadata[M_INTERACTABLE_INSTANCE_COUNT],
 		DPO_INTER_PROTO);
 
+	stage->camera.target = (Vector2){0, 0};
+	stage->camera.offset = (Vector2){0, 0};
+	stage->camera.rotation = 0.0f;
+	stage->camera.zoom = 1.0f;
+	
 	return stage;
 }
 void si_free_stage(struct Stage *stage){
@@ -73,4 +80,34 @@ void si_free_stage(struct Stage *stage){
 	stage = NULL;
 }
 void si_draw_stage(struct Stage *stage){
+	update_cam(&stage->camera);
+	BeginMode2D(stage->camera);
+	
+	EndMode2D();
+}
+void update_cam(struct Camera2D *cam){
+	static float base_zoom = 1.0f;
+	Vector2 c_mpos = GetMousePosition();
+	if(IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)){
+		Vector2 delta = GetMouseDelta();
+		cam->target.x -= delta.x / cam->zoom;
+		cam->target.y -= delta.y / cam->zoom;
+	}
+
+	float wheel = GetMouseWheelMove();
+	if(wheel != 0){
+		Vector2 w_before = GetScreenToWorld2D(c_mpos, *cam);
+		float zoom_factor = 1.1f;
+		if(wheel > 0){base_zoom *= zoom_factor;}
+		else{base_zoom /= zoom_factor;}
+
+		if(base_zoom < 0.5f){base_zoom = 0.5f;}
+		if(base_zoom > 6.0f){base_zoom = 6.0f;}
+
+		cam->zoom = base_zoom;
+		Vector2 w_after = GetScreenToWorld2D(c_mpos, *cam);
+
+		cam->target.x += w_before.x - w_after.x;
+		cam->target.y += w_before.y - w_after.y;
+	}else{cam->zoom = base_zoom;}
 }

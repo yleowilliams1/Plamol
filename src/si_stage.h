@@ -1,4 +1,5 @@
 #pragma once
+#include <raylib.h>
 #include "t_depot_manager.h"
 #include "t_instance_manager.h"
 #include "e_map_manager.h"
@@ -14,6 +15,8 @@ struct Stage{
 	// a save file if the save manager has one active for this map/slot.
 	struct InstanceManager *entity_instances;
 	struct InstanceManager *interactable_instances;
+
+	Camera2D camera;
 };
 
 struct Stage *si_init_stage(int map_index);
