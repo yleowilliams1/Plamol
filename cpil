@@ -1,35 +1,96 @@
 #!/bin/bash
-
-# Compile all .c files found in a src directory into one binary
-# Usage: ./compile_src.sh [path_to_src] [output_binary]
-
 set -euo pipefail
 
-SRC_DIR="${1:-src}"
-OUT_BIN="${2:-app}"
+SRC_DIR="src"
+IMGUI_DIR="imgui_backend"   # new
+CIMGUI_DIR="cimgui"         # new
 CC="${CC:-gcc}"
 
-if [ ! -d "$SRC_DIR" ]; then
-    echo "Error: source directory '$SRC_DIR' not found." >&2
-    exit 1
-fi
+# build_target <entry_file> <out_bin> <with_imgui: true|false>
+build_target(){
+    local entry="$1"
+    local out_bin="$2"
+    local with_imgui="${3:-false}"
 
-# Collect all .c files recursively, null-delimited for safety
-files=()
-while IFS= read -r -d '' file; do
-    files+=("$file")
-done < <(find "$SRC_DIR" -type f -name "*.c" -print0)
+    if [ ! -d "$SRC_DIR" ]; then
+        echo "Error: source directory '$SRC_DIR' not found." >&2
+        exit 1
+    fi
 
-if [ "${#files[@]}" -eq 0 ]; then
-    echo "No .c files found in '$SRC_DIR'." >&2
-    exit 1
-fi
+    local files=()
+    while IFS= read -r -d '' file; do
+        local base
+        base="$(basename "$file")"
+        if [[ "$base" == main_*.c && "$base" != "$entry" ]]; then
+            continue
+        fi
+        files+=("$file")
+    done < <(find "$SRC_DIR" -type f -name "*.c" -print0)
 
-echo "Found ${#files[@]} source file(s):"
-printf '  %s\n' "${files[@]}"
+    if [ "${#files[@]}" -eq 0 ]; then
+        echo "No .c files found in '$SRC_DIR'." >&2
+        exit 1
+    fi
 
-echo "Compiling into: $OUT_BIN"
-"$CC" "${files[@]}" -o "$OUT_BIN" -lraylib -lm
+    local entry_found=false
+    for f in "${files[@]}"; do
+        if [ "$(basename "$f")" == "$entry" ]; then
+            entry_found=true
+            break
+        fi
+    done
+    if ! $entry_found; then
+        echo "Error: entry file '$entry' not found under '$SRC_DIR'." >&2
+        exit 1
+    fi
+    local extra_flags=()
+    if [ "$with_imgui" = true ]; then
+        if [ ! -d "$IMGUI_DIR" ]; then
+            echo "Error: '$IMGUI_DIR' not found (expected rlcimgui.c there)." >&2
+            exit 1
+        fi
+        while IFS= read -r -d '' file; do
+            files+=("$file")
+        done < <(find "$IMGUI_DIR" -type f -name "*.c" -print0)
 
-echo "----------------------------------------"
-echo "Build succeeded: $OUT_BIN"
+        extra_flags+=(
+            "-DNO_FONT_AWESOME"
+            "-I$CIMGUI_DIR"
+            "-I$IMGUI_DIR"
+            "-L$CIMGUI_DIR"
+            "-l:cimgui.so"
+            "-lstdc++"
+            "-Wl,-rpath,\$ORIGIN/$CIMGUI_DIR"
+        )
+    fi
+
+    echo "Found ${#files[@]} source file(s) (entry point: $entry):"
+    printf '  %s\n' "${files[@]}"
+
+    echo "Compiling into: $out_bin"
+    "$CC" "${files[@]}" "${extra_flags[@]}" -o "$out_bin" -lraylib -lm
+
+    echo "----------------------------------------"
+    echo "Build succeeded: $out_bin"
+}
+
+TARGET="${1:-BOTH}"
+TARGET="${TARGET^^}"
+
+case "$TARGET" in
+    GAME)
+        build_target "main_game.c" "game" false
+        ;;
+    EDITOR)
+        build_target "main_editor.c" "editor" true
+        ;;
+    BOTH)
+        build_target "main_game.c" "game" false
+        echo
+        build_target "main_editor.c" "editor" true
+        ;;
+    *)
+        echo "Error: unknown target '$1'. Expected GAME, EDITOR, or BOTH." >&2
+        exit 1
+        ;;
+esac
