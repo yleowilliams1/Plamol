@@ -11,8 +11,6 @@
 
 #define ANIMATION_COUNT_INVALID -1
 
-static void free_sprite_at(struct SpriteData **s, int gindex);
-
 // Parser used to check animation_count against ANIMATION_COUNT_INVALID to
 // enforce ini ordering: [metadata] (which sets animation_count) must come
 // before [frame_counts], which must come before [frame_origins], since each
@@ -95,7 +93,7 @@ static void parse_sprite(struct config_pack p, void *ptr){
 	}
 }
 
-static struct SpriteData *load_sprite_from_disk(int sprite_gindex){
+struct SpriteData *load_sprite_from_disk(int sprite_gindex){
 	char *path = format_path(STR(SPRITE_PATH), "cfg", sprite_gindex);
 	if(!path){
 		LOG(IS_NULL, "Failed to build sprite path for gindex %d", sprite_gindex);
@@ -165,7 +163,7 @@ void unload_map_sprites(struct SpriteManager *sman, struct Map *map){
 	}
 }
 
-static void free_sprite_at(struct SpriteData **s, int gindex){
+void free_sprite_at(struct SpriteData **s, int gindex){
 	if(!*s){return;}
 	struct SpriteData *spr = *s;
 

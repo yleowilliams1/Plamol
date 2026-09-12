@@ -213,12 +213,12 @@ v2 world_to_tile(vf2 world){
 
 	v2 tile;
 	tile.x = lround((x + y) /2.0f);
-	tile.y = lround((x - y) /2.0f);
+	tile.y = lround((y - x) /2.0f);
 	return tile;
 }
 vf2 tile_to_world(v2 tile){
 	vf2 world;
 	world.x = ((float)tile.x - (float)tile.y) * (TILE_W/2.0f);
-	world.y = ((float)tile.y + (float)tile.y) * (TILE_H/2.0f);
+	world.y = ((float)tile.x + (float)tile.y) * (TILE_H/2.0f);
 	return world;
 }

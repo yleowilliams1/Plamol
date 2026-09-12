@@ -11,4 +11,3 @@ struct EntityManager;
 struct SpriteManager;
 struct Map;
 void draw_map(struct EntityManager *entity_manager, struct Map *map, struct SpriteManager *sprite_manager);
-

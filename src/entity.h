@@ -122,7 +122,10 @@ struct EntityManager{
 struct Map;
 struct SaveManager;
 struct EntityManager *create_entity_manager();
+void update_entity(struct EntityManager *entity_manager);
 void free_entity_manager(struct EntityManager **entity_manager);
 void load_map_entities(struct EntityManager *eman, struct Map *map, struct SaveManager *save, int save_file);
 void unload_map_entities(struct EntityManager *eman, struct Map *map);
 int get_effective_stat(struct EntityManager *eman, struct EntityMutable *mut, enum BaseStat stat);
+struct EntityImmutable *load_entity_immutable_from_disk(int prototype_gindex);
+void free_entity_immutable_at(struct EntityImmutable **e, int gindex);

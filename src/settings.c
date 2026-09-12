@@ -30,25 +30,24 @@ void load_settings(char *path){
 	}
 	for(int i = 0; i < SETTINGS_INTEGER_COUNT; i++){
 		if(settings->integers[i] != -1){
-			LOG(LOAD, "Loaded %s as %d", INT(i), settings->integers[i]);
+			LOG(LOAD, "Loaded %s as %d", settings_integer_str(i), settings->integers[i]);
 			continue;
 		}
 		LOG(IS_NULL, "Integer %s has not been set!", settings_integer_str(i));
 	}
 	for(int i = 0; i < SETTINGS_FLOAT_COUNT; i++){
-		if(settings->floats [i] != -1.0f){
-			LOG(LOAD, "Loaded %s as %f", FLT(i), settings->floats[i]);
+		if(settings->floats[i] != -1.0f){
+			LOG(LOAD, "Loaded %s as %f", settings_float_str(i), settings->floats[i]);
 			continue;
 		}
 		LOG(IS_NULL, "Float %s has not been set!", settings_float_str(i));
 	}
 	for(int i = 0; i < SETTINGS_FLAG_COUNT; i++){
 		if(is_bit(settings->flags, i)){
-			LOG(LOAD, "Set %s to true", FLG(i));
+			LOG(LOAD, "Set %s to true", settings_flag_str(i));
 			continue;
 		}
-	}
-	
+	}	
 	LOG(LOAD, "Loading settings");
 }
 void free_settings(){

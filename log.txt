@@ -1,0 +1,4 @@
+2026-09-12 11:29:18 | LOAD:OK| code=0 | src/main_editor.c:30 in main() | Is Closed
+2026-09-12 11:29:18 | LOAD:OK| code=0 | src/main_editor.c:32 in main() | Is Inputed
+2026-09-12 11:29:18 | LOAD:OK| code=0 | src/editor.c:288 in free_editor() | Is mapped
+2026-09-12 11:29:18 | LOAD:OK| code=0 | src/editor.c:290 in free_editor() | Is entitied

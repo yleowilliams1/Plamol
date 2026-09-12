@@ -51,10 +51,10 @@ static enum Action ac_lokup(const char *str){
 	}
 	return INVALID_ENUM;
 }
+static struct InputManager *input = NULL;
 
 static struct InputManager *grab_input(){
-	static struct InputManager *input = NULL;
-	if(!input){
+		if(!input){
 		int set_count = MAX_KEYS * A_COUNT;
 		struct parser_set set[set_count];
 		for(int i = 0; i < set_count; i++){
@@ -90,7 +90,7 @@ static struct InputManager *grab_input(){
 	return input;
 }
 void free_input(){
-	// This will not null it which is really really bad. So only call this at the end of the program
+	if(input == NULL){return;}
 	free(grab_input());
 }
 bool pressed(enum Action action) {

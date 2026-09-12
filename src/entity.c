@@ -5,7 +5,6 @@
 #include "map.h"
 #include "settings.h"
 #include "save.h"
-static void free_entity_immutable_at(struct EntityImmutable **e, int gindex);
 static void free_item_immutable_at(struct ItemImmutable **it, int gindex);
 static void free_entity_mutable_at(struct EntityMutable **mut, int gindex);
 
@@ -83,6 +82,12 @@ void free_entity_manager(struct EntityManager **entity_manager){
 	free(*entity_manager);
 	*entity_manager = NULL;
 }
+void update_entity(struct EntityManager *entity_manager){
+	if(!entity_manager){return;}
+	for(int i=0; i<INT(ENTITY_INSTANCE_COUNT); i++){
+		entity_manager->mutable_entity[i];
+	}
+}
 // Here is how loading happens. We take the map as an argument with it's list of
 // mutable entities and load everything into memory. Then when the map is 
 // unloaded we take its argument again, and we generate a list of the immutables 
@@ -101,7 +106,7 @@ static struct ItemImmutable *load_item_immutable(int item_gindex){
 	free(path);
 	return it;
 }
-static struct EntityImmutable *load_entity_immutable_from_disk(int prototype_gindex){
+struct EntityImmutable *load_entity_immutable_from_disk(int prototype_gindex){
 	char *path = format_path(STR(ENTITY_PATH), ".cfg", prototype_gindex);
 	if(!path){
 		LOG(IS_NULL, "Failed to build entity path for gindex %d", prototype_gindex);
@@ -206,7 +211,7 @@ void unload_map_entities(struct EntityManager *eman, struct Map *map){
 		free_entity_immutable_at(&eman->immutable_entity[e->prototype_gindex], e->prototype_gindex);
 	}
 }
-static void free_entity_immutable_at(struct EntityImmutable **e, int gindex){
+void free_entity_immutable_at(struct EntityImmutable **e, int gindex){
 	if(!*e){return;}
 	if((*e)->name){free((*e)->name); (*e)->name = NULL;}
 	if((*e)->description){free((*e)->description); (*e)->description = NULL;}

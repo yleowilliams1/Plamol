@@ -30,3 +30,5 @@ struct SpriteManager *create_sprite_manager();
 void free_sprite_manager(struct SpriteManager **sman);
 void load_map_sprites(struct SpriteManager *sman, struct Map *map);
 void unload_map_sprites(struct SpriteManager *sman, struct Map *map);
+struct SpriteData *load_sprite_from_disk(int sprite_gindex);
+void free_sprite_at(struct SpriteData **s, int gindedx);

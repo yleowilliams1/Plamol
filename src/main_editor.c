@@ -27,8 +27,12 @@ int main(int argc, char *argv[]){
 	}
 
 	CloseWindow();
-	free_settings();
+	LOG(LOAD, "Is Closed");
 	free_input();
+	LOG(LOAD, "Is Inputed");
 	free_editor(editor);
+	LOG(LOAD, "Is Editored");
+	free_settings();
+	LOG(LOAD, "Is Settinged");
 	return 0;
 }
