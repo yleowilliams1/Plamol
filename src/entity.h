@@ -28,24 +28,26 @@ static inline const char *base_stat_str(enum BaseStat id){
 		default: return NULL;
 	}
 }
-// Derived from BASE_STAT_LIST at load time (see compute_entity_bonuses in entity.c).
-// Never read off disk directly - a prototype config file can only set the seven
-// base stats above; these get (re)computed every time the immutable is loaded.
-#define BONUS_LIST\
-	X(INVESTIGATION_BONUS) \
-	X(APPEAL_BONUS) \
-	X(SPEECH_BONUS) \
-	X(SMARTS_BONUS) \
-	X(RANGED_BONUS) \
-	X(ACTION_POINTS) \
+#define EXTRAS_LIST\
 	X(HEALTH_PER_LEVEL) \
+	X(AP_PER_LEVEL)\
 	X(DAMAGE_BONUS) \
-	X(ATTACK_BONUS)
-enum Bonus{
+	X(ATTACK_BONUS) \
+	X(GUNS)\
+	X(UNARMED)\
+	X(MELEE)\
+	X(THROWING)\
+	X(DOCTOR)\
+	X(SNEAK)\
+	X(STEAL)\
+	X(SCIENCE)\
+	X(REPAIR)\
+	X(SPEECH)
+enum ExtraInfo{
 	#define X(name) name,
-	BONUS_LIST
+	EXTRAS_LIST
 	#undef X
-	BONUS_COUNT,
+	EXTRAS_COUNT,
 };
 #define FLAG_LIST\
 	X(PLAYER)\
@@ -79,6 +81,8 @@ struct EntityMutable{
 	int current_health_points;
 	int current_action_points;
 	
+	int level;
+
 	struct StorageItem inventory[INVENTORY_SIZE];
 	struct StorageItem hotbar[HOTBAR_SIZE];
 	
@@ -90,12 +94,13 @@ struct EntityMutable{
 // This one gets loaded and never touched again
 struct EntityImmutable{
 	int stats_array[BASE_STAT_COUNT];
-	int bonuses_array[BONUS_COUNT]; // derived - see compute_entity_bonuses(), never loaded from disk
 	int sprite_gindex;	
 	int immutable_gindex;
 
 	char *name;
 	char *description;
+	char *script;	
+	int starting_level;
 
 	char *dialogue_path;
 };
@@ -126,6 +131,5 @@ void update_entity(struct EntityManager *entity_manager);
 void free_entity_manager(struct EntityManager **entity_manager);
 void load_map_entities(struct EntityManager *eman, struct Map *map, struct SaveManager *save, int save_file);
 void unload_map_entities(struct EntityManager *eman, struct Map *map);
-int get_effective_stat(struct EntityManager *eman, struct EntityMutable *mut, enum BaseStat stat);
 struct EntityImmutable *load_entity_immutable_from_disk(int prototype_gindex);
 void free_entity_immutable_at(struct EntityImmutable **e, int gindex);

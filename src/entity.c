@@ -8,13 +8,16 @@
 static void free_item_immutable_at(struct ItemImmutable **it, int gindex);
 static void free_entity_mutable_at(struct EntityMutable **mut, int gindex);
 
+// I'm pretty sure these paths are NULL so this will fuck up so you should proably fix this
+
 static void parse_entity_immutable(struct config_pack p, void *ptr){
 	struct EntityImmutable *e = (struct EntityImmutable *)ptr;
 	if(check(p.key, "name")){t_cpy(p.value, &e->name); return;}
 	if(check(p.key, "description")){t_cpy(p.value, &e->description); return;}
 	if(check(p.key, "dialogue_path")){t_cpy(p.value, &e->dialogue_path); return;}
+	if(check(p.key, "script_path")){t_cpy(p.value, &e->script); return;}
 	if(check(p.key, "sprite_gindex")){t_atoi(p.value, &e->sprite_gindex); return;}
-	// Base stats only - bonuses are derived, never read off the prototype file.
+	if(check(p.key, "starting_level")){t_atoi(p.value, &e->starting_level); return;}
 	for(int i=0; i<BASE_STAT_COUNT; i++){
 		if(check(p.key, (char *)base_stat_str(i))){t_atoi(p.value, &e->stats_array[i]); return;}
 	}
@@ -27,29 +30,6 @@ static void parse_item_immutable(struct config_pack p, void *ptr){
 		if(check(p.key, (char *)base_stat_str(i))){t_atoi(p.value, &it->stats_array[i]); return;}
 	}
 }
-// Bonuses are always derived from the seven base stats, never loaded off disk.
-// Called once right after an EntityImmutable's stats_array is populated.
-static void compute_entity_bonuses(struct EntityImmutable *e){
-	if(!e){return;}
-	int str  = e->stats_array[STRENGTH];
-	int dex  = e->stats_array[DEXTERITY];
-	int soc  = e->stats_array[SOCIAL];
-	int inte = e->stats_array[INTELLIGENCE];
-	int will = e->stats_array[WILLPOWER];
-	int per  = e->stats_array[PERCEPTION];
-	int lok  = e->stats_array[LOOKS];
-
-	e->bonuses_array[INVESTIGATION_BONUS] = (per + inte) / 10;
-	e->bonuses_array[APPEAL_BONUS]        = (lok + soc)  / 10;
-	e->bonuses_array[SPEECH_BONUS]        = (per + soc)  / 10;
-	e->bonuses_array[SMARTS_BONUS]        = (inte + will) / 10;
-	e->bonuses_array[RANGED_BONUS]        = (dex + per)  / 10;
-	e->bonuses_array[ACTION_POINTS]       = (inte + dex) / 2;
-	e->bonuses_array[HEALTH_PER_LEVEL]    = (str + will) / 2;
-	e->bonuses_array[DAMAGE_BONUS]        = (str + dex)  / 10;
-	e->bonuses_array[ATTACK_BONUS]        = (will + lok) / 10;
-}
-	
 struct EntityManager *create_entity_manager(){
 	struct EntityManager *eman = XCALLOC(1, sizeof(struct EntityManager));
 	// This will zero everything out. So nothing is loaded right now
@@ -84,9 +64,8 @@ void free_entity_manager(struct EntityManager **entity_manager){
 }
 void update_entity(struct EntityManager *entity_manager){
 	if(!entity_manager){return;}
-	for(int i=0; i<INT(ENTITY_INSTANCE_COUNT); i++){
-		entity_manager->mutable_entity[i];
-	}
+	// Update animation stuff here.
+	// Frame 0 of animation 0 is the idle frame.
 }
 // Here is how loading happens. We take the map as an argument with it's list of
 // mutable entities and load everything into memory. Then when the map is 
@@ -118,7 +97,6 @@ struct EntityImmutable *load_entity_immutable_from_disk(int prototype_gindex){
 		LOG(NO_FILE, "Failed to load entity config at %s", path);
 	}
 	free(path);
-	compute_entity_bonuses(e);
 	return e;
 }
 static struct EntityMutable *load_entity_mutable_from_disk(int prototype_gindex, int instance_gindex, struct SaveManager *save, int save_file, struct EntityImmutable *immutable){
@@ -130,28 +108,15 @@ static struct EntityMutable *load_entity_mutable_from_disk(int prototype_gindex,
 	e->mutable_gindex = instance_gindex;
 	e->immutable_gindex = prototype_gindex;
 	if(immutable){
-		e->current_health_points = immutable->bonuses_array[HEALTH_PER_LEVEL];
-		e->current_action_points = immutable->bonuses_array[ACTION_POINTS];
+		// Load default entity now
 	}
 	return e;
 }
+void update_entity_stats(struct EntityManager *eman, int entity_gindex){
+	if(!eman){return;}
+	eman->mutable_entity[entity_gindex];
 
-int get_effective_stat(struct EntityManager *eman, struct EntityMutable *mut, enum BaseStat stat){
-	if(!eman || !mut){return 0;}
-	struct EntityImmutable *imm = eman->immutable_entity[mut->immutable_gindex];
-	if(!imm){
-		LOG(IS_NULL, "get_effective_stat: no immutable loaded for gindex %d", mut->immutable_gindex);
-		return mut->stats_modifier_array[stat];
-	}
-	int total = imm->stats_array[stat] + mut->stats_modifier_array[stat];
-	for(size_t s=0; s<HOTBAR_SIZE; s++){
-		if(!mut->hotbar[s].filled){continue;}
-		struct ItemImmutable *it = eman->immutable_item[mut->hotbar[s].item_gindex];
-		if(it){total += it->stats_array[stat];}
-	}
-	return total;
 }
-
 void load_map_entities(struct EntityManager *eman, struct Map *map, struct SaveManager *save, int save_file){
 	if(!eman || !map){return;}
 	for(int i=0; i<map->entity_count; i++){
