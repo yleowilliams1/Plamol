@@ -1,4 +1,5 @@
 #pragma once
+#include <raylib.h>
 #include "entity.h"
 #include "map.h"
 #include "save.h"
@@ -15,10 +16,10 @@ struct Scene{
 	struct SaveManager *save_manager;
 	struct Map *map;
 	enum SceneState state;
+	Camera2D camera;
 };
 
 struct Scene *init_scene();
 void update_scene(struct Scene *scene);
 void draw_scene(struct Scene *scene);
-void draw_scene_ui(struct Scene *scene);
 void free_scene(struct Scene *scene);

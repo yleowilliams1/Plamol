@@ -5,17 +5,19 @@
 #include "map.h"
 #include "settings.h"
 #include "save.h"
+#include "sprite.h"
 static void free_item_immutable_at(struct ItemImmutable **it, int gindex);
 static void free_entity_mutable_at(struct EntityMutable **mut, int gindex);
 
-// I'm pretty sure these paths are NULL so this will fuck up so you should proably fix this
+// This basically doesn't update anything. The escript.c script does. It reads the entity script and then updates based on that
+
 
 static void parse_entity_immutable(struct config_pack p, void *ptr){
 	struct EntityImmutable *e = (struct EntityImmutable *)ptr;
 	if(check(p.key, "name")){t_cpy(p.value, &e->name); return;}
 	if(check(p.key, "description")){t_cpy(p.value, &e->description); return;}
 	if(check(p.key, "dialogue_path")){t_cpy(p.value, &e->dialogue_path); return;}
-	if(check(p.key, "script_path")){t_cpy(p.value, &e->script); return;}
+	if(check(p.key, "script_path")){t_cpy(p.value, &e->script_path); return;}
 	if(check(p.key, "sprite_gindex")){t_atoi(p.value, &e->sprite_gindex); return;}
 	if(check(p.key, "starting_level")){t_atoi(p.value, &e->starting_level); return;}
 	for(int i=0; i<BASE_STAT_COUNT; i++){
@@ -29,6 +31,8 @@ static void parse_item_immutable(struct config_pack p, void *ptr){
 	for(int i=0; i<BASE_STAT_COUNT; i++){
 		if(check(p.key, (char *)base_stat_str(i))){t_atoi(p.value, &it->stats_array[i]); return;}
 	}
+}
+void update_entity(struct EntityManager *entity_manager, struct SpriteManager *sprite){
 }
 struct EntityManager *create_entity_manager(){
 	struct EntityManager *eman = XCALLOC(1, sizeof(struct EntityManager));
@@ -62,11 +66,6 @@ void free_entity_manager(struct EntityManager **entity_manager){
 	free(*entity_manager);
 	*entity_manager = NULL;
 }
-void update_entity(struct EntityManager *entity_manager){
-	if(!entity_manager){return;}
-	// Update animation stuff here.
-	// Frame 0 of animation 0 is the idle frame.
-}
 // Here is how loading happens. We take the map as an argument with it's list of
 // mutable entities and load everything into memory. Then when the map is 
 // unloaded we take its argument again, and we generate a list of the immutables 
@@ -97,6 +96,9 @@ struct EntityImmutable *load_entity_immutable_from_disk(int prototype_gindex){
 		LOG(NO_FILE, "Failed to load entity config at %s", path);
 	}
 	free(path);
+	if(e->script_path){
+		e->script = load_script_from_disk(e->script_path);
+	}
 	return e;
 }
 static struct EntityMutable *load_entity_mutable_from_disk(int prototype_gindex, int instance_gindex, struct SaveManager *save, int save_file, struct EntityImmutable *immutable){
@@ -109,13 +111,9 @@ static struct EntityMutable *load_entity_mutable_from_disk(int prototype_gindex,
 	e->immutable_gindex = prototype_gindex;
 	if(immutable){
 		// Load default entity now
+		// TODO:
 	}
 	return e;
-}
-void update_entity_stats(struct EntityManager *eman, int entity_gindex){
-	if(!eman){return;}
-	eman->mutable_entity[entity_gindex];
-
 }
 void load_map_entities(struct EntityManager *eman, struct Map *map, struct SaveManager *save, int save_file){
 	if(!eman || !map){return;}
@@ -181,6 +179,8 @@ void free_entity_immutable_at(struct EntityImmutable **e, int gindex){
 	if((*e)->name){free((*e)->name); (*e)->name = NULL;}
 	if((*e)->description){free((*e)->description); (*e)->description = NULL;}
 	if((*e)->dialogue_path){free((*e)->dialogue_path); (*e)->dialogue_path = NULL;}
+	if((*e)->script_path){free((*e)->script_path); (*e)->script_path = NULL;}
+	free_script(&(*e)->script);
 	free(*e);
 	*e = NULL;
 }

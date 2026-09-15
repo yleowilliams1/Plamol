@@ -157,3 +157,10 @@ uint32_t pran(int max_num);
 
 v2  world_to_tile(vf2 world);
 vf2 tile_to_world(v2 tile);
+
+struct PathNode{
+	int x, y;
+};
+struct Map;
+bool in_bounds(struct Map *m, int x, int y);
+bool astar_find_path(struct Map *map, v2 s, v2 e, struct PathNode **out_path, size_t *out_len);

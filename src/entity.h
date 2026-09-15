@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
-
+#include "escript.h"
+#include "hook.h"
 #include "util/util.h"
 #define INVENTORY_SIZE 64
 #define HOTBAR_SIZE 8
@@ -50,12 +51,10 @@ enum ExtraInfo{
 	EXTRAS_COUNT,
 };
 #define FLAG_LIST\
-	X(PLAYER)\
 	X(HOSTILE)\
 	X(DEAD)\
 	X(PASSTHROUGH)\
-	X(WORLD)\
-	X(DOOR) 
+	X(LOOT)
 enum EntityFlags{
 	#define X(name) name,
 	FLAG_LIST
@@ -67,11 +66,13 @@ struct StorageItem{
 	int count;
 	bool filled;
 };
-struct EntityMutable{	
-	float elapsed_time;
+// This is mostly safe to change but you do need to go to the save manager and add the new entries to the swap_entity_mutable. Keep pointers out of this so you can keep it a single fwrite
+struct EntityMutable{
+	uint32_t flags;
+	
+	int direction;
 	int current_frame;
-	int current_animation;
-	int current_direction; // enum Dir - which direction-block of frames to draw
+	float elapsed_time;
 	
 	int mutable_gindex;
 	int immutable_gindex;
@@ -86,8 +87,7 @@ struct EntityMutable{
 	struct StorageItem inventory[INVENTORY_SIZE];
 	struct StorageItem hotbar[HOTBAR_SIZE];
 	
-	uint32_t flags;
-	uint32_t dialogue_flags;
+	enum HookType active_hook;
 
 	v2 position;
 };
@@ -99,7 +99,8 @@ struct EntityImmutable{
 
 	char *name;
 	char *description;
-	char *script;	
+	char *script_path;	
+	struct Script *script;
 	int starting_level;
 
 	char *dialogue_path;
@@ -126,8 +127,9 @@ struct EntityManager{
 // whatever's granted by items currently in its hotbar (treated as "equipped").
 struct Map;
 struct SaveManager;
+struct SpriteManager;
 struct EntityManager *create_entity_manager();
-void update_entity(struct EntityManager *entity_manager);
+void update_entity(struct EntityManager *entity_manager, struct SpriteManager *sprite);
 void free_entity_manager(struct EntityManager **entity_manager);
 void load_map_entities(struct EntityManager *eman, struct Map *map, struct SaveManager *save, int save_file);
 void unload_map_entities(struct EntityManager *eman, struct Map *map);

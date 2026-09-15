@@ -7,7 +7,10 @@
 #include "settings.h"
 #include "scene.h"
 #include "util/util.h"
-
+#include "player.h"
+#include "ai.h"
+#include "camera.h"
+#include "movement.h"
 struct Scene *init_scene(){
 	struct Scene *s = XCALLOC(1, sizeof(struct Scene));
 	s->state = UNINITALIZED;
@@ -25,13 +28,24 @@ struct Scene *init_scene(){
 		LOG(LOAD, "Found %d save file(s)", found);
 		// Save selection here then load map and entities with selected save
 	}
+	init_move();
 	return s;
 }
 void update_scene(struct Scene *scene){
+	update_move();
+	simulate_player(scene);
+	simulate_entities(scene);
+	update_cam(&scene->camera);
+	
 }
 void draw_scene(struct Scene *scene){
-}
-void draw_scene_ui(struct Scene *scene){
+	if(!scene){return;}
+	BeginDrawing();
+	BeginMode2D(scene->camera);	
+	draw_map(scene->entity_manager, scene->map, scene->sprites_manager);
+	EndMode2D();
+	draw_player_ui(scene);
+	EndDrawing();
 }
 void free_scene(struct Scene *scene){
 	if(!scene){return;}
@@ -39,5 +53,6 @@ void free_scene(struct Scene *scene){
 	if(scene->map){free_map(scene->map); scene->map = NULL;}	
 	if(scene->save_manager){free_save_manager(&scene->save_manager); scene->save_manager = NULL;}
 	if(scene->sprites_manager){free_sprite_manager(&scene->sprites_manager); scene->sprites_manager = NULL;}
+	free_move();
 	scene->state = FREED;
 }

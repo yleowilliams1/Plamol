@@ -289,10 +289,14 @@ struct SavePacket *read_packet(char *path){
 	return packet;
 }
 static void swap_entity_mutable(struct EntityMutable *m){
+	m->flags = swap32(m->flags);
+	
+	m->direction = swap_i32(m->direction);
+	m->current_frame = swap_i32(m->current_frame);
+	m->elapsed_time = 0.0f;
+	
 	m->mutable_gindex   = swap_i32(m->mutable_gindex);
 	m->immutable_gindex = swap_i32(m->immutable_gindex);
-
-	m->current_direction = swap_i32(m->current_direction);
 
 	for(int i=0; i<BASE_STAT_COUNT; i++){
 		m->stats_modifier_array[i] = swap_i32(m->stats_modifier_array[i]);
@@ -300,6 +304,8 @@ static void swap_entity_mutable(struct EntityMutable *m){
 
 	m->current_health_points = swap_i32(m->current_health_points);
 	m->current_action_points = swap_i32(m->current_action_points);
+
+	m->level = swap_i32(m->level);
 
 	for(int i=0; i<INVENTORY_SIZE; i++){
 		m->inventory[i].item_gindex = swap_i32(m->inventory[i].item_gindex);
@@ -310,9 +316,8 @@ static void swap_entity_mutable(struct EntityMutable *m){
 		m->hotbar[i].item_gindex = swap_i32(m->hotbar[i].item_gindex);
 		m->hotbar[i].count       = swap_i32(m->hotbar[i].count);
 	}
-
-	m->flags          = swap32(m->flags);
-	m->dialogue_flags = swap32(m->dialogue_flags);
+	
+	m->active_hook = swap_i32(m->active_hook);
 
 	m->position.x = swap_i32(m->position.x);
 	m->position.y = swap_i32(m->position.y);

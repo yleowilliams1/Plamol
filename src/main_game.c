@@ -24,7 +24,6 @@ int main(int argc, char *argv[]){
 		update_window();
 		update_scene(scene);
 		draw_scene(scene);
-		draw_scene_ui(scene);
 	}	
 
 	CloseWindow();

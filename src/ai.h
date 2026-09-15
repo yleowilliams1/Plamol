@@ -1,5 +1,4 @@
 #pragma once
 
-struct AiModule{
-	
-};
+struct Scene;
+void simulate_entities(struct Scene *scene);
