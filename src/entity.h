@@ -54,7 +54,8 @@ enum ExtraInfo{
 	X(HOSTILE)\
 	X(DEAD)\
 	X(PASSTHROUGH)\
-	X(LOOT)
+	X(LOOT)\
+	X(IN_COMBAT)
 enum EntityFlags{
 	#define X(name) name,
 	FLAG_LIST
@@ -104,6 +105,11 @@ struct EntityImmutable{
 	int starting_level;
 
 	char *dialogue_path;
+
+	int width;
+	int height;
+	int x;
+	int y;
 };
 struct ItemImmutable{
 	int stats_array[BASE_STAT_COUNT]; // flat stat bonus this item grants when equipped

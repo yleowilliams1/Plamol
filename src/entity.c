@@ -23,6 +23,10 @@ static void parse_entity_immutable(struct config_pack p, void *ptr){
 	for(int i=0; i<BASE_STAT_COUNT; i++){
 		if(check(p.key, (char *)base_stat_str(i))){t_atoi(p.value, &e->stats_array[i]); return;}
 	}
+	if(check(p.key, "width")){t_atoi(p.value, &e->width);}
+	if(check(p.key, "height")){t_atoi(p.value, &e->height);}
+	if(check(p.key, "x")){t_atoi(p.value, &e->x);}
+	if(check(p.key, "y")){t_atoi(p.value, &e->y);}
 }
 static void parse_item_immutable(struct config_pack p, void *ptr){
 	struct ItemImmutable *it = (struct ItemImmutable *)ptr;

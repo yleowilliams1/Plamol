@@ -32,6 +32,7 @@ void apply_script(struct EntityMutable *entity_mutable, struct EntityImmutable *
 	if(!sprite){LOG(IS_NULL, "Spritemanager is NULL"); return;}
 
 	struct Hook *h = resolve_hook(script, entity_mutable->active_hook);
+	
 	if(!h){return;}
 
 	entity_mutable->flags |= h->flag_add;

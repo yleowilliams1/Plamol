@@ -42,7 +42,8 @@ enum SettingsIntegers{
 	X(CAM_MIN_ZOOM)\
 	X(CAM_MAX_ZOOM)\
 	X(CAM_FACTOR)\
-	X(SECONDS_PER_TILE)
+	X(SECONDS_PER_TILE)\
+	X(FLOAT_TIME)
 enum SettingsFloats{
 	#define X(id) id,
 	SETTINGS_FLOATS

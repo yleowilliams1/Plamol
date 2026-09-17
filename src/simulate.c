@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "ai.h"
+#include "simulate.h"
 #include "entity.h"
 #include "escript.h"
 #include "hook.h"
@@ -37,9 +37,6 @@ void simulate_entities(struct Scene *scene){
 		struct EntityImmutable *imm = eman->immutable_entity[e->prototype_gindex];
 		struct EntityMutable   *mut = eman->mutable_entity[e->instance_gindex];
 		if(!imm || !mut){continue;}
-	
-		// 0 is always the player
-		if(i == 0){continue;}
 
 		enum HookType current = mut->active_hook;
 		enum HookType next = decide_hook(scene, e, imm, mut);
