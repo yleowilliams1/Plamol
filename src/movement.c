@@ -85,13 +85,14 @@ void update_move(){
 		m[i]->entity->active_hook = ON_MOVING;
 		if((size_t)m[i]->next_tile >= m[i]->len){
 			// reached the end of the path
-			free(m[i]->path);
-			free(m[i]);
-			m[i] = NULL;
 			m[i]->entity->active_hook = ON_IDLE;
 			// Reset animation
 			m[i]->entity->current_frame = 0;
 			m[i]->entity->elapsed_time = 0;
+
+			free(m[i]->path);
+			free(m[i]);
+			m[i] = NULL;
 			continue;
 		}
 		face_current_segment(m[i]);

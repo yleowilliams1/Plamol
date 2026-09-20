@@ -8,7 +8,8 @@
 #include "scene.h"
 #include "util/util.h"
 #include "player.h"
-#include "ai.h"
+#include "simulate.h"
+#include "interact.h"
 #include "camera.h"
 #include "movement.h"
 struct Scene *init_scene(){
@@ -33,8 +34,10 @@ struct Scene *init_scene(){
 }
 void update_scene(struct Scene *scene){
 	update_move();
-	simulate_player(scene);
 	simulate_entities(scene);
+	simulate_player(scene);
+	update_interact();
+	update_move();
 	update_cam(&scene->camera);
 	
 }
