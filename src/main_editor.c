@@ -26,7 +26,6 @@ int main(int argc, char *argv[]){
 		draw_editor(editor);
 	}
 
-	CloseWindow();
 	LOG(LOAD, "Is Closed");
 	free_input();
 	LOG(LOAD, "Is Inputed");
@@ -34,5 +33,7 @@ int main(int argc, char *argv[]){
 	LOG(LOAD, "Is Editored");
 	free_settings();
 	LOG(LOAD, "Is Settinged");
+	CloseWindow();
+
 	return 0;
 }

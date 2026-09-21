@@ -33,7 +33,6 @@ struct Scene *init_scene(){
 	return s;
 }
 void update_scene(struct Scene *scene){
-	update_move();
 	simulate_entities(scene);
 	simulate_player(scene);
 	update_interact();

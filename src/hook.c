@@ -2,7 +2,9 @@
 #include <stdint.h>
 #include "hook.h"
 #include "escript.h"
-
+#include "entity.h"
+void request_hook(struct EntityMutable *e, enum HookType hook){
+}
 
 struct Hook *resolve_hook(struct Script *script, enum HookType wanted){
 	if(!script){return NULL;}

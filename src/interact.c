@@ -35,9 +35,10 @@ void update_interact(){
 		} else if (m[i].immutable->description){
 			// Okay so there is a description so floater
 			if(m[i].time >= FLT(FLOAT_TIME)){
+				m[i].mutable->active_hook = ON_IDLE;
 				m[i] = (struct InteractModule){0}; 
 				// It's a bit dumb to manually update on_end since on_idle will flip any bits it doesn't want. So this is fine
-				m[i].mutable->active_hook = ON_IDLE;
+
 			}
 			// This needs to be inverted with drawing since i can't be bothered to write a for loop to inialzie all opacitiyes to 1 like a nerd. Just flip the informaiton is already there
 			if(m[i].time >= FLT(FLOAT_TIME)/10){m[i].opacity += 0.1f;}
@@ -99,6 +100,7 @@ void interact(struct EntityManager *entity, struct Map *map, vf2 world_position)
 
 	for(int i = 0; i < INTERACT_SIZE; i++){
 		if(m[i].slot_active){continue;}
+		if(!target_imm->script){continue;}
 		if(!is_bit(target_imm->script->hooks_bitmask, ON_START_INTERACT)){continue;}
 		if(!is_bit(target_imm->script->hooks_bitmask, ON_IN_INTERACT)){continue;}
 		if(!is_bit(target_imm->script->hooks_bitmask, ON_END_INTERACT)){continue;}
