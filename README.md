@@ -1,5 +1,49 @@
 # Plamol
 
+A 2D isometric RPG engine written in C using Raylib. An in-house map editor is also included (currently under construction) using CImgui.
+
+The engine is heavily data-driven, configured via text files and a central `engine.ini` file.
+
 ---
 
-Under renovation
+## Extra Libraries
+
+This repository uses the following third-party libraries:
+
+- [raylib](https://github.com/raysan5/raylib): `user/include`
+- [cimgui](https://github.com/cimgui/cimgui) (Includes [Dear ImGui](https://github.com/ocornut/imgui)): `root:/cimgui/`
+- [rlcimgui](https://github.com/raylib-extras/rlImGui): `root:/imgui-backend`
+- [pcg-dxsm](https://github.com/fanf2/pcg-dxsm): `root:/src/util/pcg_basic.c/h`
+
+> **Note:** In the future, `cimgui` and `rlcimgui` will be replaced with a custom UI library. There are currently no plans to replace Raylib or `pcg-dxsm`.
+
+---
+
+## Status
+
+**Dysfunctional / In Active Development:**
+- ZERO tests.
+- Currently waiting for an `active_hook` queue system to integrate into the `resolve_hook` function.
+- `load_entity_mutable_from_disk` is incomplete.
+- No game UI implemented yet.
+
+---
+
+## Build
+
+There is no automated build script right now. A `Makefile` or CMake configuration will be added eventually, but for now, there is no build setup available.
+
+---
+
+## Data & Architecture
+
+1. **`engine.ini`**: The master configuration file that most systems reference. You can override the default path (which defaults to the executable directory) by passing a path argument to the executable. Entries use an X-Macro pattern defined in `settings.h`. The parser detects missing values, but omitting required settings will cause undefined behavior.
+2. **Binary Formats**: Maps and save files are stored as binary blobs with custom magic numbers and endianness handling. Maps require the custom editor, while save files are handled directly in-game.
+
+---
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**. See the [LICENSE](LICENSE) file for details.
+
+Unaltered licenses for all third-party libraries are located in the `licenses/` directory.
