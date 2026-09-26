@@ -15,7 +15,7 @@ void simulate_player(struct Scene *scene){
 	struct EntityMutable *player = scene->entity_manager->mutable_entity[0];	
 	struct EntityImmutable *player_collision = scene->entity_manager->immutable_entity[0];
 
-	if(!player || !player_collision){LOG(IS_NULL, "No player"); return;}
+	if(!player || !player_collision){/*LOG(IS_NULL, "No player");*/ return;}
 
 	if(pressed(ACTION)){
 		Vector2 world_pos = GetScreenToWorld2D(GetMousePosition(), scene->camera);

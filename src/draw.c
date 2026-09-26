@@ -88,7 +88,7 @@ static struct DrawItem *create_draw_list(struct EntityManager *entity_manager, s
 	for(int i=0; i<map->sprite_count; i++){
 		struct Sprite *s = &map->sprite[i];
 		struct SpriteData *spr = sprite_manager->sprite[s->sprite_gindex];
-		if(!spr){LOG(IS_NULL, "Sprite %d isn't loaded", s->sprite_gindex);continue;} // not loaded yet - skip rather than draw garbage
+		if(!spr){/*LOG(IS_NULL, "Sprite %d isn't loaded", s->sprite_gindex);*/continue;} // not loaded yet - skip rather than draw garbage
 		if(s->type == GROUND){continue;}
 		if(s->type == CEILING){continue;}
 		
@@ -113,7 +113,7 @@ static struct DrawItem *create_draw_list(struct EntityManager *entity_manager, s
 		if(!imm || !mut){continue;}
 
 		struct SpriteData *spr = sprite_manager->sprite[imm->sprite_gindex];
-		if(!spr){LOG(IS_NULL, "Sprite %d isn't loaded", imm->sprite_gindex);continue;}
+		if(!spr){/*LOG(IS_NULL, "Sprite %d isn't loaded", imm->sprite_gindex);*/continue;}
 
 		// Animation row comes from whichever hook is currently active on
 		// this entity, resolved through its script - not cached on
@@ -157,7 +157,7 @@ static void draw_flat_sprites(struct Map *map, struct SpriteManager *sprite_mana
 		if(s->type != type){continue;}
 
 		struct SpriteData *spr = sprite_manager->sprite[s->sprite_gindex];
-		if(!spr){LOG(IS_NULL, "Sprite %d isn't loaded", s->sprite_gindex);continue;}
+		if(!spr){/*LOG(IS_NULL, "Sprite %d isn't loaded", s->sprite_gindex);*/continue;}
 
 		v2 tile = {s->tx, s->ty};
 		vf2 pos = tile_to_world(tile);

@@ -21,7 +21,7 @@ struct Scene *init_scene(){
 	int found = load_all_saves(s->save_manager, STR(SAVE_PATH));
 	if(found == 0){
 		// New Game so load map 0
-		char *path = format_path(STR(MAP_PATH), ".MAP", 0);		
+		char *path = format_path(STR(MAP_PATH), "MAP", 0);		
 		s->map = read_map(path);
 		load_map_entities(s->entity_manager, s->map, s->save_manager, 0);
 		free(path);

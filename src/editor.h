@@ -1,6 +1,7 @@
 #pragma once
 
 struct Editor{
+	int a;
 };
 
 struct Editor *init_editor();
