@@ -9,8 +9,6 @@
 static void free_item_immutable_at(struct ItemImmutable **it, int gindex);
 static void free_entity_mutable_at(struct EntityMutable **mut, int gindex);
 
-// This basically doesn't update anything. The escript.c script does. It reads the entity script and then updates based on that
-
 
 static void parse_entity_immutable(struct config_pack p, void *ptr){
 	struct EntityImmutable *e = (struct EntityImmutable *)ptr;

@@ -1,12 +1,14 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
+// Order matters here and dictates the priority of hooks
+// TODO; fill this out properly
 #define HOOKS_LIST\
-	X(ON_IDLE)\
-	X(ON_MOVING)\
 	X(ON_START_INTERACT)\
 	X(ON_IN_INTERACT)\
 	X(ON_END_INTERACT)\
+	X(ON_IDLE)\
+	X(ON_MOVING)\
 	X(ON_DAMAGED)\
 	X(ON_MISSED)\
 	X(ON_DEATH)\
@@ -29,5 +31,13 @@ struct Hook{
 	uint32_t flag_add;
 	uint32_t flag_remove;
 };
+struct HookVote{
+	enum HookType hook;
+	bool active;
+};
 struct Script;
+void begin_vote();
+void vote_hook(enum HookType vote);
+void end_vote();
+enum HookType resolve_vote_dispute();
 struct Hook *resolve_hook(struct Script *script, enum HookType wanted);

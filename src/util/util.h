@@ -164,3 +164,27 @@ struct PathNode{
 struct Map;
 bool in_bounds(struct Map *m, int x, int y);
 bool astar_find_path(struct Map *map, v2 s, v2 e, struct PathNode **out_path, size_t *out_len);
+
+struct PoolHeader{
+	uint32_t slot;
+	uint32_t gen;
+	bool active;
+};
+struct InRef{
+	uint32_t slot;
+	uint32_t gen;
+};
+struct Pool{
+	void *items;
+	size_t element_size;
+	int cap;
+	int count;
+	uint32_t next_gen;
+};
+
+void pool_init(struct Pool *p, int cap, size_t element_size);
+void  pool_free_all(struct Pool *p);
+void *pool_alloc(struct Pool *p, struct InRef *out);
+void *pool_get(struct Pool *p, struct InRef r);
+bool  pool_release(struct Pool *p, struct InRef r);
+void *pool_next(struct Pool *p, int *cursor, struct InRef *out);
