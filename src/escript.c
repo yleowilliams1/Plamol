@@ -8,6 +8,7 @@
 #include "sprite.h"
 #include "settings.h"
 #include "hook.h"
+#include "map.h"
 // Config format assumed (adjust if yours differs):
 //
 //   flags=PLAYER|HOSTILE          <- lines before any [SECTION] set script-wide flags
@@ -42,13 +43,20 @@ void apply_script(struct EntityMutable *entity_mutable, struct EntityImmutable *
 	if(!sprite_data){LOG(IS_NULL, "%d sprite for entity immutable %d is NULL", entity_immutable->sprite_gindex, entity_immutable->immutable_gindex); return;}
 
 	if(sprite_data->frame_count[h->animation] <= 0){return;}
+	// frame_count[anim] is the WHOLE row (frames_per_dir * DIR_COUNT columns) -
+	// draw.c's entity_sprite_origin_at/entity_sprite_frame_rect_at only ever
+	// index current_frame within one direction's slice (frames_per_dir wide),
+	// so that's what current_frame must wrap against here too, or it walks
+	// off the end of that slice and draw.c starts returning a zero rect.
+	int frames_per_dir = sprite_data->frame_count[h->animation] / DIR_COUNT;
+	if(frames_per_dir <= 0){return;}
+
 	entity_mutable->elapsed_time += GetFrameTime();
 	if(entity_mutable->elapsed_time >= FLT(SECONDS_PER_FRAME)){
 		entity_mutable->elapsed_time = 0.0f;
-		int frame_count = sprite_data->frame_count[h->animation];
 		int new_frame = entity_mutable->current_frame + 1;
-		if(new_frame >= frame_count){
-			new_frame = h->play_and_hold ? frame_count - 1 : 0;
+		if(new_frame >= frames_per_dir){
+			new_frame = h->play_and_hold ? frames_per_dir - 1 : 0;
 		}
 		entity_mutable->current_frame = new_frame;
 	}	

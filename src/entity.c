@@ -74,7 +74,7 @@ void free_entity_manager(struct EntityManager **entity_manager){
 // it used (entity protoype, itme prototype) and we remove those. And of course we
 // remove the mutable entities as well. 
 static struct ItemImmutable *load_item_immutable(int item_gindex){
-	char *path = format_path(STR(ITEM_PATH), ".cfg", item_gindex);
+	char *path = format_path(STR(ITEM_PATH), "cfg", item_gindex);
 	if(!path){
 		LOG(IS_NULL, "Failed to build item path for gindex %d", item_gindex);
 		return NULL;
@@ -87,7 +87,7 @@ static struct ItemImmutable *load_item_immutable(int item_gindex){
 	return it;
 }
 struct EntityImmutable *load_entity_immutable_from_disk(int prototype_gindex){
-	char *path = format_path(STR(ENTITY_PATH), ".cfg", prototype_gindex);
+	char *path = format_path(STR(ENTITY_PATH), "cfg", prototype_gindex);
 	if(!path){
 		LOG(IS_NULL, "Failed to build entity path for gindex %d", prototype_gindex);
 		return NULL;
@@ -111,9 +111,21 @@ static struct EntityMutable *load_entity_mutable_from_disk(int prototype_gindex,
 	// (see load_map_entities), we just read out of it here, never free it.
 	e->mutable_gindex = instance_gindex;
 	e->immutable_gindex = prototype_gindex;
+	// A freshly-XCALLOC'd active_hook is 0, which is ON_START_INTERACT (the
+	// first entry in HOOKS_LIST) - not ON_IDLE. simulate_entities' vote
+	// system self-corrects this on its very first pass anyway (nobody votes
+	// -> resolve_vote_dispute() defaults to ON_IDLE), but set it explicitly
+	// here too since we're already establishing this instance's defaults.
+	e->active_hook = ON_IDLE;
 	if(immutable){
-		// Load default entity now
-		// TODO:
+		e->level = immutable->starting_level > 0 ? immutable->starting_level : 1;
+		// stats_modifier_array intentionally stays zeroed here - per the
+		// comment above EntityManager, it's *modifiers on top of*
+		// immutable->stats_array, not a copy of the base stats themselves.
+		// Whatever eventually computes a "live" stat is expected to add
+		// stats_array + stats_modifier_array + equipped item bonuses.
+		e->current_health_points = 10 * e->level;
+		e->current_action_points = 10 * e->level;
 	}
 	return e;
 }

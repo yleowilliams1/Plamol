@@ -17,13 +17,15 @@ void update_interact(){
 		if(!m[i].slot_active){continue;}
 		if(!m[i].mutable){continue;}
 		if(!m[i].immutable){continue;}
-		if(m[i].time == 0.0f){
-			// first time to initalize
-			m[i].mutable->active_hook = ON_START_INTERACT;
-			m[i].mutable->current_frame = 0;
-			m[i].mutable->elapsed_time = 0;
 
-		} else {m[i].mutable->active_hook = ON_IN_INTERACT;} // Theres acutally a bug here. If on_in_interact has less than 2 frames and the secodns per frame is less or equal to a frame, and on_start_interact has more than 2, then it will probably crash. I actually don't know, i think there might be some checks which will catch it but this is a bug.
+		// get_interact_hook_vote() already reported ON_END_INTERACT for this
+		// slot once (that's what moved it to CLOSING) - now it's just waiting
+		// to be freed. Nothing left to tick.
+		if(m[i].phase == INTERACT_PHASE_CLOSING){
+			m[i] = (struct InteractModule){0};
+			continue;
+		}
+
 		m[i].time += GetFrameTime();
 		if(is_bit(m[i].mutable->flags, IN_COMBAT)){
 			// Combat stuff here. It's empty because i haven't written it yet.
@@ -34,11 +36,11 @@ void update_interact(){
 			// This means we hand off to dialogue manager and zero out this 
 		} else if (m[i].immutable->description){
 			// Okay so there is a description so floater
-			if(m[i].time >= FLT(FLOAT_TIME)){
-				m[i].mutable->active_hook = ON_IDLE;
-				m[i] = (struct InteractModule){0}; 
-				// It's a bit dumb to manually update on_end since on_idle will flip any bits it doesn't want. So this is fine
-
+			if(m[i].time >= FLT(FLOAT_TIME) && m[i].phase != INTERACT_PHASE_END){
+				// Don't free the slot here anymore - flag it as ending so
+				// get_interact_hook_vote() gets one shot at ON_END_INTERACT
+				// before we tear it down.
+				m[i].phase = INTERACT_PHASE_END;
 			}
 			// This needs to be inverted with drawing since i can't be bothered to write a for loop to inialzie all opacitiyes to 1 like a nerd. Just flip the informaiton is already there
 			if(m[i].time >= FLT(FLOAT_TIME)/10){m[i].opacity += 0.1f;}
@@ -47,6 +49,27 @@ void update_interact(){
 			LOG(LOAD, "There isn't actually anything wrong, just wanted to point out that we foiund an interactable, but it doens't have anything to show.");
 		}
 	}
+}
+enum HookType get_interact_hook_vote(struct EntityMutable *mut){
+	if(!mut){return HOOK_COUNT;}
+	for(int i = 0; i < INTERACT_SIZE; i++){
+		if(!m[i].slot_active){continue;}
+		if(m[i].mutable != mut){continue;}
+		switch(m[i].phase){
+			case INTERACT_PHASE_START:
+				m[i].phase = INTERACT_PHASE_IN; // fires exactly once
+				return ON_START_INTERACT;
+			case INTERACT_PHASE_END:
+				m[i].phase = INTERACT_PHASE_CLOSING; // fires exactly once
+				return ON_END_INTERACT;
+			case INTERACT_PHASE_CLOSING:
+				return HOOK_COUNT; // already reported, waiting to be freed
+			case INTERACT_PHASE_IN:
+			default:
+				return ON_IN_INTERACT;
+		}
+	}
+	return HOOK_COUNT; // this entity isn't in an interact slot at all
 }
 void clear_interact(){
 	for(int i = 0; i < INTERACT_SIZE; i++){
@@ -109,6 +132,7 @@ void interact(struct EntityManager *entity, struct Map *map, vf2 world_position)
 		m[i].slot_active = true;
 		m[i].time = 0.0f;
 		m[i].opacity = 0.0f;
+		m[i].phase = INTERACT_PHASE_START;
 		m[i].mutable = target_mut;
 		m[i].immutable = target_imm;
 		break;

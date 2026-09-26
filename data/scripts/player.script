@@ -1,0 +1,12 @@
+[ON_IDLE]
+animation=0
+play_and_hold=0
+
+[ON_MOVING]
+animation=1
+play_and_hold=0
+
+[ON_DEATH]
+animation=0
+play_and_hold=1
+flag_add=DEAD

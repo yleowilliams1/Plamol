@@ -82,14 +82,11 @@ void update_move(){
 		m[i]->entity->position.x = m[i]->path[m[i]->root_tile].x;
 		m[i]->entity->position.y = m[i]->path[m[i]->root_tile].y;
 		m[i]->next_tile++;
-		m[i]->entity->active_hook = ON_MOVING;
+		// Hook + animation reset live in simulate_entities() now, driven by
+		// is_moving() below going false once we free this module - not our
+		// job to touch active_hook/current_frame/elapsed_time here anymore.
 		if((size_t)m[i]->next_tile >= m[i]->len){
 			// reached the end of the path
-			m[i]->entity->active_hook = ON_IDLE;
-			// Reset animation
-			m[i]->entity->current_frame = 0;
-			m[i]->entity->elapsed_time = 0;
-
 			free(m[i]->path);
 			free(m[i]);
 			m[i] = NULL;

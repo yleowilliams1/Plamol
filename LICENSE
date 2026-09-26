@@ -709,23 +709,7 @@ Copyright (c) 2013-2024 Ramon Santamaria (@raysan5)
 [licenses/raylib]
 
 ---
-2. cimgui / Dear ImGui
-Website/Repo: https://github.com/cimgui/cimgui
-License: MIT License
-
-Copyright (c) 2014-2024 Omar Cornut (Dear ImGui) / cimgui contributors
-[licenses/cimgui]
-
----
-3. rlcimgui / rlImGui
-Website/Repo: https://github.com/raylib-extras/rlImGui
-License: zlib / MIT License
-
-Copyright (c) Jeffery Myers
-[licenses/rlimgui]
-
----
-4. pcg-dxsm
+2. pcg-dxsm
 Website/Repo: https://github.com/fanf2/pcg-dxsm
 License: Apache 2.0 / MIT / 0BSD
 

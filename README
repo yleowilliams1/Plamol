@@ -1,6 +1,6 @@
 # Plamol
 
-A 2D isometric RPG engine written in C using Raylib. An in-house map editor is also included (currently under construction) using CImgui.
+A 2D isometric RPG engine written in C using Raylib. An in-house map editor is also included (currently under construction while work on the UI library is under work).
 
 The engine is heavily data-driven, configured via text files and a central `engine.ini` file.
 
@@ -11,11 +11,7 @@ The engine is heavily data-driven, configured via text files and a central `engi
 This repository uses the following third-party libraries:
 
 - [raylib](https://github.com/raysan5/raylib): `user/include`
-- [cimgui](https://github.com/cimgui/cimgui) (Includes [Dear ImGui](https://github.com/ocornut/imgui)): `root:/cimgui/`
-- [rlcimgui](https://github.com/raylib-extras/rlImGui): `root:/imgui-backend`
 - [pcg-dxsm](https://github.com/fanf2/pcg-dxsm): `root:/src/util/pcg_basic.c/h`
-
-> **Note:** In the future, `cimgui` and `rlcimgui` will be replaced with a custom UI library. There are currently no plans to replace Raylib or `pcg-dxsm`.
 
 ---
 
@@ -23,8 +19,6 @@ This repository uses the following third-party libraries:
 
 **Dysfunctional / In Active Development:**
 - ZERO tests.
-- Currently waiting for an `active_hook` queue system to integrate into the `resolve_hook` function.
-- `load_entity_mutable_from_disk` is incomplete.
 - No game UI implemented yet.
 
 ---
