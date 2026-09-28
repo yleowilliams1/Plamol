@@ -1,6 +1,4 @@
-#include <sys/stat.h>
 #include <raylib.h>
-#include <unistd.h>
 #include <string.h>
 #include "util/util.h"
 #include "editor.h"
@@ -10,6 +8,7 @@
 #define EDITOR 0
 #define GAME 1
 int main(int argc, char *argv[]){		
+	ChangeDirectory(GetApplicationDirectory());
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	int mode = GAME;
 		
