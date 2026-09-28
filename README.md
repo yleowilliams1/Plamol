@@ -20,7 +20,6 @@ This repository uses the following third-party libraries:
 **Dysfunctional / In Active Development:**
 [^1]: In order
 
-- Setup Cmake.
 - Implement unity tests with Unity.
 - Write dialogue runner.
 - Write combat system.
@@ -40,33 +39,40 @@ or you can have cmake compile raylib automatically in the build folder
 `cmake -S . -B build -DFETCH_RAYLIB=ON`
 
 Then build normally.
-
+---
 ### Linux
 
-[^1]: Installing raylib on your system is going to depend on your distro, please look into it, or manually point cmake to raylib or have it automatically compile for you [see above].
+Installing raylib on your system is going to depend on your distro, please look into it, or manually point cmake to raylib or have it automatically compile for you [see above].
 
 `cmake -S . -B build`
-`cmake --build build`
-`./app`
 
+`cmake --build build`
+
+`./app`
+---
 ### macOS
 
 #### dependencies
 `xcode-select --install`
+
 `brew install cmake raylib` 
 #### cmake
 `cmake -S . -B build`
-`cmake --build build`
-`./app`
 
+`cmake --build build`
+
+`./app`
+---
 ### Windows
 
 I'm pretty sure this won't work. I use posix functions for the logging. Eventually I'll get round to making it compilable for windows, but for now it's not happening. Even if I fixed that I'm pretty sure it'll freak out about fopen and strcpy and sscanf and strtok and sprintf, and I'm not doing windows specific EOF checking on the ini files, I'm not actually sure if that'll break, but it's definetly not ideal. It's probably a 20 minutes fix with a couple ifdefs, I'll get round to it eventually.
 
-#### You can use MSVC from powershell with Visual Studio or the Build Tools with "Desktop Development with C++"
-[^1]: You'll most likely need to use fetch raylib. You don't have to of course but it's the simplest.
+#### You can use MSVC from powershell with Visual Studio or the Build Tools with "Desktop Development with C++
+
 `cmake -S . -B build -DFETCH_RAYLIB=ON`
+
 `cmake --build build --config Release`
+
 `.\Release\app.exe`
 
 ---
