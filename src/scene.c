@@ -23,6 +23,7 @@ struct Scene *init_scene(){
 		// New Game so load map 0
 		char *path = format_path(STR(MAP_PATH), "MAP", 0);		
 		s->map = read_map(path);
+		load_map_sprites(s->sprites_manager, s->map);
 		load_map_entities(s->entity_manager, s->map, s->save_manager, 0);
 		free(path);
 	} else{
@@ -44,6 +45,7 @@ void draw_scene(struct Scene *scene){
 	if(!scene){return;}
 	BeginDrawing();
 	BeginMode2D(scene->camera);	
+	ClearBackground(RAYWHITE);
 	draw_map(scene->entity_manager, scene->map, scene->sprites_manager);
 	EndMode2D();
 	draw_player_ui(scene);

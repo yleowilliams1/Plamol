@@ -18,10 +18,15 @@ This repository uses the following third-party libraries:
 ## Status
 
 **Dysfunctional / In Active Development:**
-- ZERO tests.
-- No game UI implemented yet.
-- Need to lazy load and unload sprites to draw map
-- Write dialogue runner
+[^1]: In order
+
+- Setup Cmake.
+- Implement unity tests with Unity.
+- Write dialogue runner.
+- Write combat system.
+- Write custom UI system.
+- Write in house map editor with UI system.
+- Write game manager for map transitions, loading/saving, and camera placement on load(focus on player).
 ---
 
 ## Build
