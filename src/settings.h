@@ -19,7 +19,8 @@ enum SettingsFlags{
 	X(ENTITY_PATH)\
 	X(ITEM_PATH)\
 	X(MAP_PATH)\
-	X(INPUT_CONFIG_PATH)
+	X(INPUT_CONFIG_PATH)\
+	X(NULL_STRING_REF)
 enum SettingsStrings{
 	#define X(id) id,
 	SETTINGS_STRINGS

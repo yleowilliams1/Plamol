@@ -24,7 +24,6 @@ int main(int argc, char *argv[]){
 	
 	switch(mode){
 		case EDITOR:{
-
 			struct Editor *editor = init_editor();
 			while(!WindowShouldClose()){
 				update_window();

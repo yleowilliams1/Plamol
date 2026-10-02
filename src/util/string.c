@@ -191,4 +191,9 @@ bool t_snprintf(char *buf, size_t bufsize, size_t *out_len, const char *fmt, ...
 	va_end(ap);
 	return result;
 }
-
+char *xstrdup(const char *src){
+	size_t len = strlen(src) + 1;
+	char *dst = XCALLOC(len, 1);
+	memcpy(dst, src, len);
+	return dst;
+}

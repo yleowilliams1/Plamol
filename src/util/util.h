@@ -1,4 +1,5 @@
 #pragma once
+#include <lua.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -188,3 +189,7 @@ void *pool_alloc(struct Pool *p, struct InRef *out);
 void *pool_get(struct Pool *p, struct InRef r);
 bool  pool_release(struct Pool *p, struct InRef r);
 void *pool_next(struct Pool *p, int *cursor, struct InRef *out);
+
+
+bool valua(lua_State *L, int r);
+char *xstrdup(const char *src);

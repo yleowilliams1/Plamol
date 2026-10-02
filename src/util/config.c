@@ -1,3 +1,5 @@
+#include <lua.h>
+#include <lualib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -5,6 +7,12 @@
 #include <sys/stat.h>
 #include "util.h"
 #define PATH_MAX 512
+
+bool valua(lua_State *L, int r){
+	if(r != LUA_OK){LOG(IS_NULL, lua_tostring(L, -1)); return false;}
+	return true;
+}
+
 bool check(char *line, char *arg){
 	// These arguments could return valid strings
 	// with no null terminatino and just silently fail.
