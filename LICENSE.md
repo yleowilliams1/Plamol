@@ -709,7 +709,15 @@ Copyright (c) 2013-2024 Ramon Santamaria (@raysan5)
 [licenses/raylib]
 
 ---
-2. pcg-dxsm
+2. raygui
+Website/Repo: https://github.com/raysan5/raygui
+License: zlib license
+
+Copyright (c) 2014-2026 Ramon Santamaria (@raysan5)
+[licenses/raygui]
+
+---
+3. pcg-dxsm
 Website/Repo: https://github.com/fanf2/pcg-dxsm
 License: Apache 2.0 / MIT / 0BSD
 

@@ -1,6 +1,6 @@
 # Plamol
 
-A 2D isometric RPG engine written in C using Raylib. An in-house map editor is also included (currently under construction while work on the UI library is under work).
+A 2D isometric RPG engine written in C using Raylib. An in-house map editor is also included (currently under construction while work on the entity and loading is under work).
 
 The engine is heavily data-driven, configured via text files and a central `engine.ini` file.
 
@@ -11,7 +11,9 @@ The engine is heavily data-driven, configured via text files and a central `engi
 This repository uses the following third-party libraries:
 
 - [raylib](https://github.com/raysan5/raylib): *not vendoreded see Build*
+- [raygui](https://github.com/raysan5/raygui) `root:/src/raygui.h` 
 - [pcg-dxsm](https://github.com/fanf2/pcg-dxsm): `root:/src/util/pcg_basic.c/h`
+- [lua](I'm working on it): *not vendoreded see Build*
 
 ---
 
@@ -20,11 +22,14 @@ This repository uses the following third-party libraries:
 **Dysfunctional / In Active Development:**
 [^1]: In order
 
+- Write a string table system
+- Add lua license and build instructions to Readme
+- Write object oriented entity system and integrate with lua and cleaner new save system to prioritize modularity and make entity loading cleaner and less reliant on other systems
+- Rewrite draw.c to memory efficent and faster.
+- Write the map editor.
 - Implement unity tests with Unity.
 - Write dialogue runner.
 - Write combat system.
-- Write custom UI system.
-- Write in house map editor with UI system.
 - Write game manager for map transitions, loading/saving, and camera placement on load(focus on player).
 ---
 
