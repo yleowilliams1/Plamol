@@ -725,4 +725,10 @@ Copyright (c) Tony Finch <dot@fanf.nu>
 [licenses/pcg-dxsm]
 
 
+4, lua
+Webite/Repo: https://www.lua.org/
+License: MIT license
 
+	
+Copyright (c) 1994–2026 Lua.org, PUC-Rio.
+[licenses/lua]

@@ -2,7 +2,7 @@
 
 A 2D isometric RPG engine written in C using Raylib. An in-house map editor is also included (currently under construction while work on the entity and loading is under work).
 
-The engine is heavily data-driven, configured via text files and a central `engine.ini` file.
+The engine is heavily data-driven, configured via lua files. 
 
 ---
 
@@ -13,7 +13,7 @@ This repository uses the following third-party libraries:
 - [raylib](https://github.com/raysan5/raylib): *not vendoreded see Build*
 - [raygui](https://github.com/raysan5/raygui) `root:/src/raygui.h` 
 - [pcg-dxsm](https://github.com/fanf2/pcg-dxsm): `root:/src/util/pcg_basic.c/h`
-- [lua](I'm working on it): *not vendoreded see Build*
+- [lua](https://www.lua.org/): *not vendoreded see Build*
 
 ---
 
@@ -22,9 +22,10 @@ This repository uses the following third-party libraries:
 **Dysfunctional / In Active Development:**
 [^1]: In order
 
-- Write a string table system
-- Add lua license and build instructions to Readme
-- Write object oriented entity system and integrate with lua and cleaner new save system to prioritize modularity and make entity loading cleaner and less reliant on other systems
+- Add windows alternatives for POSIX functions
+- Implement entity scripting
+- Implement item scripting
+- Implement entity saving feature
 - Rewrite draw.c to memory efficent and faster.
 - Write the map editor.
 - Implement unity tests with Unity.
@@ -79,13 +80,6 @@ I'm pretty sure this won't work. I use posix functions for the logging. Eventual
 `cmake --build build --config Release`
 
 `.\Release\app.exe`
-
----
-
-## Data & Architecture
-
-1. **`engine.ini`**: The master configuration file that most systems reference. You can override the default path (which defaults to the executable directory) by passing a path argument to the executable. Entries use an X-Macro pattern defined in `settings.h`. The parser detects missing values, but omitting required settings will cause undefined behavior.
-2. **Binary Formats**: Maps and save files are stored as binary blobs with custom magic numbers and endianness handling. Maps require the custom editor, while save files are handled directly in-game.
 
 ---
 

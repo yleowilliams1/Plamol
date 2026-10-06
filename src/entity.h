@@ -2,8 +2,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "util/util.h"
-
-// Object hooks are a way for scripters to extend object functionality. These have default functionality which all objects have, but scripters can extend this. Theres no overrideing a object hooks defualt funciton 
+#include "string_table.h"
+// hooks are a way for scripters to extend object functionality. These have default functionality , but scripters can extend this. Theres no overrideing a hooks defualt funciton 
 #define OBJECT_HOOKS\
 	X(SPAWN)\
 	X(KILL)\
@@ -42,8 +42,7 @@
 	X(TRY_UNEQUIP)\
 	X(TRY_GIVE_XP)\
 	X(TRY_INTERACT)\
-	X(SET_VAR)\
-	X(KILL_ARG)
+	X(TRY_SET_VAR)
 // Object queries are ways for scripting to read object data. 
 #define OBJECT_QUERIES\
 	X(GET_IN_COMBAT)\
@@ -123,7 +122,6 @@
 	X(PASSTHROUGH)\
 	X(LOOT)\
 	X(IN_COMBAT)
-
 enum ObjectDirection{
 	#define X(name) DIR_##name,
 	OBJECT_DIRECTION
@@ -140,14 +138,15 @@ enum ObjectFlags{
 	FLAG_LIST
 	#undef X
 };
-
 // Proto are static contants in memory, actors store indirect index references to item props.
-
+// adding scripting hooks for this.
 struct ItemProto{
 	uint32_t uid;
 	uint32_t name_sid;
 	uint32_t descr_sid;
+	uint32_t 
 	int8_t stat_bonuses[STAT_COUNT];
+	// add damage rolling bonsues weight gold and else
 };
 struct ItemStack{
 	uint32_t prop_uid;
@@ -156,17 +155,11 @@ struct ItemStack{
 #define INVENTORY_SIZE 128
 #define EQUIPMENT_SIZE 8
 
-struct ObjectPrototype{
-};
-struct StaticComponent{
+struct ObjectProto{
 	uint32_t uid;
 	uint32_t name_sid;
 	uint32_t descr_sid;	
-	int current_frame;
-	float elapsed_time;
 	
-	uint32_t current_map;
-	v2 tile_pos;	
 	// Used for interaction	
 	int rec_offset_x;
 	int rec_offset_y;
@@ -174,20 +167,22 @@ struct StaticComponent{
 	int rec_height;
 };
 struct ScriptableComponent{
+	uint32_t proto_uid;
 	uint32_t stats[STAT_COUNT];
 	int8_t stat_bonuses[STAT_COUNT];
 	enum ObjectDirection dir;
+	int current_frame;
+	float elapsed_time;
 	
+	uint32_t current_map;
+	v2 tile_pos;	
+
 	uint32_t object_flags;
 
 	uint32_t hook_bitmask;
 
 	struct ItemStack inv[INVENTORY_SIZE];
 	struct ItemStack equ[EQUIPMENT_SIZE];
-};
-struct Object{
-	struct StaticComponent root;
-	struct ScriptableComponent sub;
 };
 struct EntityManager{
 	/* We sacrificed the space of n*ptr for O(1) 
@@ -197,11 +192,11 @@ struct EntityManager{
 	 * load, unload, and get with just that index
 	 * this way. And we keep unloaded data arr[gindex] = NULL*/
 	
-	// Indexed with uid
-	struct Object **obj;
+	// Loaded with UI	
+	struct ScriptableComponent **object_scriptables;
+	struct ObjectProto **object_prototypes;
 	
 	// These are stored with UIDs in objects and are static. They can only be changed through the lua prototype file 
 	struct ItemProto **item_proto;
-	struct ObjectPrototype **obj_proto;
 };
 

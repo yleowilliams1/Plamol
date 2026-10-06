@@ -58,26 +58,26 @@ void write_message(const char *path, const char *out){
 			bool str_match = str->sizes[a] == str->sizes[b] && memcmp(str->str + str->offsets[a], str->str + str->offsets[b], str->sizes[a]) == 0;
 
 			// Not intended behaviour, but not fatal either.
-			if(str_match){LOG(PARSE, "Matched duplicate strings for '%.*s' and '%.*s': string: %s", NAME_SIZE, str->names[a], NAME_SIZE, str->names[b], str->str + str->offsets[a]);}
+			if(str_match){LOG(PARSE, "Matched duplicate strings for '%.*s' and '%.*s': string: %s", STR_NAME_SIZE, str->names[a], STR_NAME_SIZE, str->names[b], str->str + str->offsets[a]);}
 		}
 	}
 
 	// Hash here
 	for(size_t i = 0; i < msg->blob_count; i++){
-		uint32_t hash = fnv1a(str->names[i], strnlen(str->names[i], NAME_SIZE));
+		uint32_t hash = fnv1a(str->names[i], strnlen(str->names[i], STR_NAME_SIZE));
 		uint32_t idx = hash & mask;
 
 		// Names are unique, so just probe to the next empty slot.
 		while(msg->occupancy[idx]){
 			// Same 32-bit hash for two different names: name lookup still works, hash-only lookup can't tell them apart.
-			if(msg->tbl[idx].hash == hash){LOG(PARSE, "Hash collision between '%.*s' and '%.*s'", NAME_SIZE, msg->tbl[idx].name, NAME_SIZE, str->names[i]);}
+			if(msg->tbl[idx].hash == hash){LOG(PARSE, "Hash collision between '%.*s' and '%.*s'", STR_NAME_SIZE, msg->tbl[idx].name, STR_NAME_SIZE, str->names[i]);}
 			idx = (idx + 1) & mask;
 		}
 
 		// Write to table
 		msg->occupancy[idx] = 1;
 		msg->tbl[idx].hash = hash;
-		memcpy(msg->tbl[idx].name, str->names[i], NAME_SIZE);
+		memcpy(msg->tbl[idx].name, str->names[i], STR_NAME_SIZE);
 		msg->tbl[idx].offset = str->offsets[i];
 	}
 
@@ -199,7 +199,7 @@ struct MessageData *read_message(const char *path){
 		const struct StringHook *e = &msg->tbl[i];
 		if(e->name[0] == '\0'){why = "empty name in table"; goto fail;}
 		if(e->offset >= blob_size || !memchr(msg->blob + e->offset, '\0', blob_size - e->offset)){why = "string offset out of range"; goto fail;}
-		if(e->hash != fnv1a(e->name, strnlen(e->name, NAME_SIZE))){why = "hash does not match name"; goto fail;}
+		if(e->hash != fnv1a(e->name, strnlen(e->name, STR_NAME_SIZE))){why = "hash does not match name"; goto fail;}
 		occupied++;
 	}
 	if(occupied != blob_count){why = "occupied slots do not match blob_count"; goto fail;}
@@ -216,14 +216,14 @@ fail:
 // Hash for a 1-4 character name. Use this to get the hash for message_get_hash.
 uint32_t message_hash(const char *name){
 	if(!name){return 0;}
-	return fnv1a(name, strnlen(name, NAME_SIZE));
+	return fnv1a(name, strnlen(name, STR_NAME_SIZE));
 }
 // Name -> string. Returns NULL if the name isn't in the table.
 const char *message_get(const struct MessageData *msg, const char *name){
 	if(!msg || !name){return NULL;}
-	size_t len = strnlen(name, NAME_SIZE + 1);
-	if(len == 0 || len > NAME_SIZE){return NULL;}   // can't exist, names are 1-NAME_SIZE chars
-	char key[NAME_SIZE] = {0};                      // zero-padded, same as stored names
+	size_t len = strnlen(name, STR_NAME_SIZE + 1);
+	if(len == 0 || len > STR_NAME_SIZE){return NULL;}   // can't exist, names are 1-NAME_SIZE chars
+	char key[STR_NAME_SIZE] = {0};                      // zero-padded, same as stored names
 	memcpy(key, name, len);
 	return find_slot(msg, fnv1a(key, len), key);
 }
@@ -239,7 +239,7 @@ static const char *find_slot(const struct MessageData *msg, uint32_t hash, const
 	for(uint32_t n = 0; n < msg->table_count; n++){
 		if(!msg->occupancy[idx]){return NULL;}   // empty slot ends the chain
 		const struct StringHook *e = &msg->tbl[idx];
-		if(e->hash == hash && (!key || memcmp(e->name, key, NAME_SIZE) == 0)){
+		if(e->hash == hash && (!key || memcmp(e->name, key, STR_NAME_SIZE) == 0)){
 			return msg->blob + e->offset;
 		}
 		idx = (idx + 1) & mask;
@@ -314,7 +314,7 @@ static struct StringTable *string_table_parse(const char *path){
 	}
 
 	size_t n = count ? count : 1;
-	t->names = XCALLOC(1, NAME_SIZE * n);
+	t->names = XCALLOC(1, STR_NAME_SIZE * n);
 	t->offsets = XCALLOC(1, sizeof(uint32_t) * n);
 	t->sizes = XCALLOC(1, sizeof(uint32_t) * n);
 
@@ -346,21 +346,21 @@ static struct StringTable *string_table_parse(const char *path){
 			while (name_end > name && isspace((unsigned char)name_end[-1])) name_end--;
 			size_t name_len = (size_t)(name_end - name);
 
-			if (name_len == 0 || name_len > NAME_SIZE) {
-				LOG(IS_NULL, "%s:%d: name must be 1-%d chars", path, line_no, NAME_SIZE);
+			if (name_len == 0 || name_len > STR_NAME_SIZE) {
+				LOG(IS_NULL, "%s:%d: name must be 1-%d chars", path, line_no, STR_NAME_SIZE);
 				free_string_table(t);
 				return NULL;
 			}
-			char key[NAME_SIZE] = {0};   // zero-padded, matches how names are stored
+			char key[STR_NAME_SIZE] = {0};   // zero-padded, matches how names are stored
 			memcpy(key, name, name_len);
 			for (size_t j = 0; j < i; j++) {
-				if (memcmp(t->names[j], key, NAME_SIZE) == 0) {
+				if (memcmp(t->names[j], key, STR_NAME_SIZE) == 0) {
 					LOG(IS_NULL, "%s:%d: duplicate name '%.*s'", path, line_no, (int)name_len, name);
 					free_string_table(t);
 					return NULL;
 				}
 			}
-			memcpy(t->names[i], key, NAME_SIZE);
+			memcpy(t->names[i], key, STR_NAME_SIZE);
 			i++;
 			text = next;
 		}

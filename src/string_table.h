@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#define NAME_SIZE 4
+#define STR_NAME_SIZE 4
 
 struct MessageHeader{
 	uint64_t magic_number;
@@ -12,7 +12,7 @@ struct MessageHeader{
 };
 struct StringHook{
 	uint32_t hash;
-	char name[NAME_SIZE];
+	char name[STR_NAME_SIZE];
 	uint32_t offset;
 };
 struct MessageData{
@@ -26,7 +26,7 @@ struct MessageData{
 // This is the format the text gets converted into
 struct StringTable {
 	char *str;
-	char (*names)[NAME_SIZE];
+	char (*names)[STR_NAME_SIZE];
 	uint32_t *offsets;
 	uint32_t *sizes;
 	size_t count;
