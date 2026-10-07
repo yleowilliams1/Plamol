@@ -4,20 +4,33 @@
 #include "util/util.h"
 #include "string_table.h"
 // hooks are a way for scripters to extend object functionality. These have default functionality , but scripters can extend this. Theres no overrideing a hooks defualt funciton 
+// requests are a way for scripters to interact with object memory while keeping the engine authoriative. These are queued and then authorizated by the game engine. 
+
+#define ITEM_HOOK\
+	X(ON_USE)\
+	X(ON_INSPECT)\
+	X(ON_MOVE)\
+	X(ON_ATTACK)\
+	X(ON_DROP)\
+	X(ON_CONSUME)\
+	X(ON_LOAD)
+#define ITEM_REQUEST\
+	X(TRY_ATTACK)\
+	X(TRY_HEAL)\
+	X(TRY_EFFECT)
 #define OBJECT_HOOKS\
-	X(SPAWN)\
-	X(KILL)\
-	X(MOVE)\
-	X(INTERACT)\
-	X(TICK)\
-	X(LOAD)\
-	X(DESTROY)\
-	X(SEE)\
-	X(OBSCURE)\
-	X(COMBAT_START)\
-	X(COMBAT_END)
-// Concrete requests are a way for scripters to interact with object memory while keeping the engine authoriative. These are queued and then authorizated by the game engine. 
-#define CONCRETE_REQUESTS\
+	X(ON_SPAWN)\
+	X(ON_KILL)\
+	X(ON_MOVE)\
+	X(ON_INTERACT)\
+	X(ON_TICK)\
+	X(ON_LOAD)\
+	X(ON_DESTROY)\
+	X(ON_SEE)\
+	X(ON_OBSCURE)\
+	X(ON_COMBAT_START)\
+	X(ON_COMBAT_END)
+#define OBJECT_REQUESTS\
 	X(TRY_SPAWN)\
 	X(TRY_KILL)\
 	X(TRY_DESPAWN)\
@@ -43,7 +56,6 @@
 	X(TRY_GIVE_XP)\
 	X(TRY_INTERACT)\
 	X(TRY_SET_VAR)
-// Object queries are ways for scripting to read object data. 
 #define OBJECT_QUERIES\
 	X(GET_IN_COMBAT)\
 	X(GET_POSITION)\
@@ -76,114 +88,195 @@
 	X(NE)\
 	X(SW)\
 	X(SE)
-// Temporary recreation of Fallout 1s SPECIAL system before I do anything
 #define OBJECT_STATS\
 	X(STRENGTH)\
-	X(PERCEPTION)\
-	X(ENDURANCE)\
-	X(CHARISMA)\
-	X(INTELLIGENCE)\
 	X(AGILITY)\
-	X(LUCK)\
-	X(AGE)\
-	X(LEVEL)\
-	X(CURRENT_EXP)\
-	X(EXP_TO_NEXT_LEVEL)\
-	X(CHAR_POINTS)\
-	X(HIT_POINTS)\
-	X(MAX_HITPOINTS)\
-	X(ARMOR_CLASS)\
-	X(ACTION_POINTS)\
-	X(CARRY_WEIGHT)\
-	X(MELEE_DAMAGE)\
-	X(DAMAGE_RES)\
-	X(POISON_RES)\
-	X(RADIATION_RES)\
-	X(SEQUENCE)\
-	X(HEALING_RATE)\
-	X(CRIT_CHANCE)\
+	X(SOCIAL)\
+	X(CONSTITUTION)\
+	X(PERCEPTION)\
+	X(INTELLIGENCE)\
+	X(WISDOM)\
+	X(BEAUTY)
+#define OBJECT_SKILLS\
 	X(GUNS)\
-	X(ENERGY_WEAPONS)\
 	X(UNARMED)\
-	X(MELEE_WEAPONS)\
-	X(THROWING)\
-	X(MEDICINE)\
+	X(DODGE)\
+	X(MELEE_WEAPON)\
+	X(INVESTIGATE)\
+	X(DOCTOR)\
 	X(SNEAK)\
 	X(THIEF)\
-	X(SCIENCE)\
-	X(REPAIR)\
 	X(SPEECH)\
-	X(BARTER)\
-	X(GAMBLING)\
-	X(OUTDOORSMAN)
-#define FLAG_LIST\
+	X(INTIMIDATE)\
+	X(FLIRT)\
+	X(REPAIR)\
+	X(SCIENCE)
+#define OBJECT_RUNTIME\
+	X(AGE)\
+	X(LEVEL)\
+	X(CURRENT_XP)\
+	X(CHAR_POINTS)\
+	X(HIT_POINTS)\
+	X(ARMOR_CLASS)
+#define OBJECT_DERIVED\
+	X(MAX_HEALTH)\
+	X(MAX_AP)\
+	X(CARRY_WEIGHT)\
+	X(NATURAL_AC)\
+	X(NATURAL_MELEE_DAMAGE)\
+	X(NATURAL_DAMAGE_RES)\
+	X(NATURAL_POISON_RES)\
+	X(NATURAL_RADIATION_RES)\
+	X(NATURAL_HEALING_RATE)
+#define OBJECT_FLAGS\
 	X(HOSTILE)\
 	X(DEAD)\
 	X(PASSTHROUGH)\
 	X(LOOT)\
 	X(IN_COMBAT)
+enum ItemHooks{
+	#define X(name) ITEM_##name,
+	ITEM_HOOKS
+	#undef X
+};
+enum ItemRequest{
+	#define X(name) ITEM_##name,
+	ITEM_REQUESTS
+	#undef X
+};
+enum ObjectHooks{
+	#define X(name) OBJ_##name,
+	OBJECT_HOOK
+	#undef X
+};
+enum ObjectRequest{
+	#define X(name) OBJ_##name,
+	OBJECT_REQUEST
+	#undef X
+};
+enum ObjectQueries{
+	#define X(name) OBJ_##name,
+	OBJECT_QUERIES
+	#undef X
+};
 enum ObjectDirection{
-	#define X(name) DIR_##name,
+	#define X(name) OBJ_##name,
 	OBJECT_DIRECTION
 	#undef X
 };
 enum ObjectStats{
-	#define X(name) STAT_##name,
+	#define X(name) OBJ_##name,
 	OBJECT_STATS
 	#undef X
-	STAT_COUNT
+	OBJ_STAT_COUNT
+};
+enum ObjectSkills{
+	#define X(name) OBJ_##name,
+	OBJECT_SKILLS
+	#undef X
+	OBJ_SKILL_COUNT
+};
+enum ObjectRuntime{
+	#define X(name) OBJ_##name,
+	OBJECT_RUNTIME
+	#undef X
+	OBJ_RUNTIME_COUNT
+};
+enum ObjectDerived{
+	#define X(name) OBJ_##name,
+	OBJECT_DERIVED
+	#undef X
+	OBJ_DERIVED_COUNT
 };
 enum ObjectFlags{
-	#define X(name) FLG_##name,
-	FLAG_LIST
+	#define X(name) OBJ_##name,
+	OBJECT_FLAG
 	#undef X
 };
-// Proto are static contants in memory, actors store indirect index references to item props.
-// adding scripting hooks for this.
 struct ItemProto{
 	uint32_t uid;
-	uint32_t name_sid;
-	uint32_t descr_sid;
-	uint32_t 
-	int8_t stat_bonuses[STAT_COUNT];
-	// add damage rolling bonsues weight gold and else
+	uint32_t name_str;
+	uint32_t descr_str;
+	uint32_t weight;
+	uint8_t attack_damage;
+	uint8_t skill_to_use;
+	uint16_t value;	
+	int8_t stat_bonuses[OBJ_STAT_COUNT];
+	uint32_t available_hooks;
 };
 struct ItemStack{
-	uint32_t prop_uid;
+	uint32_t proto_uid;
 	uint16_t count;
 };
-#define INVENTORY_SIZE 128
 #define EQUIPMENT_SIZE 8
 
-struct ObjectProto{
-	uint32_t uid;
-	uint32_t name_sid;
-	uint32_t descr_sid;	
+// Seperate into runtime, saved, and proto and then build a inref for the entity.
+
+struct Effect{
+	uint8_t effect_type;
+	float elapsed_time;
+	bool active;
+};	
+#define NUMBER_OF_EFFECTS 16
+struct SavedComponent{
+	// We don't store derived stats, instead we load them live so we don't have to worry about the data gfoing out of sync.
+	uint32_t flags;
+
+	uint32_t health_points;
+	uint32_t action_points;
 	
+	uint32_t current_map;
+
+	uint32_t tx;
+	uint32_t ty;
+
+	uint8_t direction;
+
+	// These mutable bonuses are the exception. For items and effects you have procedural control over what gets removed when and how, where as for mutable bonuses you don't have that. This is used for things like leveling up, the player character uses this on character creation to modify the default player prototype. Generally, you want to stay away from this if you can for thigns that aren't leveling.  
+
+	int8_t stat_mutable_bonus[OBJ_STAT_COUNT];	
+	int8_t skill_mutable_bonus[OBJ_SKILL_COUNT];
+	int8_t derived_mutable_bonus[OBJ_DERIVED_COUNT];
+
+	uint32_t runtime_data[OBJ_RUNTIME_COUNT];
+	
+	struct Effect effects[NUMBER_OF_EFFECTS];
+	
+	uint32_t inventory_size;
+	uint32_t equipment_size;
+	struct ItemStack *inv;
+	struct ItemStack *equ;
+	
+};
+struct RuntimeComponent{
+	vf2 tile_offset;
+	int current_frame;
+	float elapsed_time;
+
+};
+struct ProtoComponent{
+	uint32_t uid;
+	uint32_t name_string;
+	uint32_t descr_string;	
+	
+	uint32_t sprite_id;
+	char *dialogue_name;
+	char *script_name;
+
+	int8_t stats[OBJ_STAT_COUNT];	
+	int8_t skill[OBJ_SKILL_COUNT];
+
 	// Used for interaction	
 	int rec_offset_x;
 	int rec_offset_y;
 	int rec_width;
 	int rec_height;
-};
-struct ScriptableComponent{
-	uint32_t proto_uid;
-	uint32_t stats[STAT_COUNT];
-	int8_t stat_bonuses[STAT_COUNT];
-	enum ObjectDirection dir;
-	int current_frame;
-	float elapsed_time;
 	
-	uint32_t current_map;
-	v2 tile_pos;	
-
-	uint32_t object_flags;
-
-	uint32_t hook_bitmask;
-
-	struct ItemStack inv[INVENTORY_SIZE];
-	struct ItemStack equ[EQUIPMENT_SIZE];
+	// What effects can be applied
+	uint32_t effect_bitmask;
+	uint32_t available_hooks;
 };
+
 struct EntityManager{
 	/* We sacrificed the space of n*ptr for O(1) 
 	 * complexity when we look for something. 
