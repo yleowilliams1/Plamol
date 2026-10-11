@@ -6,27 +6,36 @@
 #include "stats.h"
 
 struct SaveComponent{
-	int32_t uid;
+	uint32_t uid;
 	uint32_t flags;
 
-	uint32_t health_points;
-	uint32_t action_points;
+	int32_t health_points;
+	int32_t action_points;
 	
 	int32_t current_map;
 
-	uint32_t tx;
-	uint32_t ty;
+	int32_t tx;
+	int32_t ty;
 
 	uint8_t direction;
 	
 	struct Inventory inv;	
 	struct StatsSave stats_save;
+
+	uint32_t level;
 };
 struct RuntimeComponent{
 	vf2 tile_offset;
 	int current_frame;
 	float elapsed_time;
-
+	
+	// Movement	
+	struct PathNode *path;
+	size_t len;
+	float time;
+	int root_tile;
+	int next_tile;
+	vf2 offset_from_root;
 };
 struct ProtoComponent{
 	int32_t uid;
@@ -48,7 +57,7 @@ struct ProtoComponent{
 // How this works is that map store a proto and a save index for objects, and then create a object struct with that data which gets loaded from disk. And create a new runtime component. This is super simple. Then what happens is we look through the items and load the ones which show up in that data. 
 struct Object{
 	struct SaveComponent save;
-	struct ProtoComponent proto;
+	uint32_t prototype_index;
 	struct RuntimeComponent runtime;
 };	
 
@@ -65,5 +74,6 @@ struct EntityManager{
 	
 	// This should be mostly NULL, then when we look at the map, and load the objects, after we loop through and look at all the items prottpyes which show up, and the ones which don't, and then unload those, and load the ones which do show up.
 	struct ItemPrototype **item_proto;
+	struct ProtoComponenet *object_prototypes;
 };
 

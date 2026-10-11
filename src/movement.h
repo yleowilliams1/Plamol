@@ -1,17 +1,6 @@
 #pragma once
 #include <stdbool.h>
 #include "util/util.h"
-struct Map;
-struct EntityMutable;
-struct MovementModule{
-	struct EntityMutable *entity;
-	struct PathNode *path;
-	size_t len;
-	float time;
-	int root_tile;
-	int next_tile;
-	vf2 offset_from_root;
-};
 void init_move();
 void update_move();
 void free_move();
