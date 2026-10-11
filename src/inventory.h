@@ -1,4 +1,5 @@
 #pragma once
+#include <stdio.h>
 #include <stdint.h>
 #include "stats.h"
 #define HOTBAR_SIZE 8
@@ -30,4 +31,3 @@ struct Inventory{
 	struct ItemStack *item_stack;
 	
 };
-

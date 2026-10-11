@@ -8,17 +8,17 @@
 
 #define DEFAULT_SIZE 1
 #define MAP_MAGIC "LoneStar"
-#define MAP_VERSION 2 // bumped: struct Sprite gained a `dir` byte
+#define MAP_VERSION 1 
 #define MAP_ENDIAN_CHECK 0x0102
-
+// This thing is immune to changes. I'd bet my left leg that this doesn't change from this commit
 struct Map *create_map(int width, int height, int map_gindx){
 	if(width <= 0){LOG(INDEX, "Cann't create map of width smaller or equal to 0");return NULL;}
 	if(height <= 0){LOG(INDEX, "Cannot create map of height smaller or equal to 0");return NULL;}
 
 	struct Map *m = XCALLOC(1, sizeof(struct Map));
-	m->width = (tilsize)width;
-	m->height = (tilsize)height;
-	m->map_gindx = (indsize)map_gindx;
+	m->width = (uint32_t)width;
+	m->height = (uint32_t)height;
+	m->map_gindx = (uint32_t)map_gindx;
 
 	m->sprite_count = 0;
 	m->sprite = NULL;
@@ -29,7 +29,7 @@ struct Map *create_map(int width, int height, int map_gindx){
 	m->exit_count = 0;
 	m->exit = NULL;
 
-	m->tile_flag = XCALLOC((size_t)width * (size_t)height, sizeof(tile_flag_size));
+	m->tile_flag = XCALLOC((size_t)width * (size_t)height, sizeof(uint32_t));
 	return m;
 };
 void free_map(struct Map *m){
@@ -48,10 +48,10 @@ void free_map(struct Map *m){
  * field has to be swapped on its own terms.
  */
 static void swap_sprite(struct Sprite *s){
-	s->sprite_gindex = swap16(s->sprite_gindex);
+	s->sprite_index = swap16(s->sprite_index);
 	s->tx = swap16(s->tx);
 	s->ty = swap16(s->ty);
-	// s->type is a single byte (uint8_t) - nothing to swap
+	// s->type is a single byte (uint8_t) nothing to swap
 }
 static void swap_entity(struct Entity *e){
 	e->prototype_gindex = swap16(e->prototype_gindex);
@@ -59,7 +59,7 @@ static void swap_entity(struct Entity *e){
 	e->tx = swap16(e->tx);
 	e->ty = swap16(e->ty);
 	e->flags = swap32(e->flags);
-	// e->dir is a single byte (uint8_t) - nothing to swap
+	// e->dir is a single byte (uint8_t) nothing to swap
 }
 static void swap_exit(struct ExitTile *e){
 	e->map_gindx = swap16(e->map_gindx);
@@ -74,15 +74,7 @@ void write_map(struct Map *m, char *path){
 	FILE *f = fopen(path, "wb");
 	if(!f){LOG(NO_FILE, "Could not open %s for writing", path);return;}
 
-	// We always write in the host's native byte order and stamp
-	// MAP_ENDIAN_CHECK as-is. r() detects a mismatch on load and does
-	// the byte-flipping there, so writing stays simple.
-	struct Header h = {0};
-	memcpy(&h.magic_number, MAP_MAGIC, sizeof(h.magic_number));
-	h.time_stamp = (uint32_t)time(NULL);
-	h.endian_check = MAP_ENDIAN_CHECK;
-	h.version = MAP_VERSION;
-
+	struct Header h = create_header(MAP_MAGIC, MAP_VERSION);
 	if(fwrite(&h, sizeof(h), 1, f) != 1){goto write_fail;}
 
 	if(fwrite(&m->width, sizeof(m->width), 1, f) != 1){goto write_fail;}
@@ -98,7 +90,7 @@ void write_map(struct Map *m, char *path){
 
 	{
 		size_t tile_count = (size_t)m->width * (size_t)m->height;
-		if(tile_count > 0 && fwrite(m->tile_flag, sizeof(tile_flag_size), tile_count, f) != tile_count){goto write_fail;}
+		if(tile_count > 0 && fwrite(m->tile_flag, sizeof(uint32_t), tile_count, f) != tile_count){goto write_fail;}
 	}
 
 	fclose(f);
@@ -155,9 +147,9 @@ struct Map *read_map(char *path){
 		return NULL;
 	}
 
-	tilsize width, height;
-	indsize map_gindx;
-	dsize sprite_count, entity_count, exit_count;
+	uint32_t width, height;
+	uint32_t map_gindx;
+	uint32_t sprite_count, entity_count, exit_count;
 
 	if(fread(&width, sizeof(width), 1, f) != 1){goto read_fail;}
 	if(fread(&height, sizeof(height), 1, f) != 1){goto read_fail;}
@@ -194,27 +186,27 @@ struct Map *read_map(char *path){
 		m->sprite = XCALLOC(sprite_count, sizeof(struct Sprite));
 		if(fread(m->sprite, sizeof(struct Sprite), sprite_count, f) != sprite_count){goto read_fail_alloc;}
 		if(need_swap){
-			for(dsize i = 0; i < sprite_count; i++){swap_sprite(&m->sprite[i]);}
+			for(uint32_t i = 0; i < sprite_count; i++){swap_sprite(&m->sprite[i]);}
 		}
 	}
 	if(entity_count > 0){
 		m->entity = XCALLOC(entity_count, sizeof(struct Entity));
 		if(fread(m->entity, sizeof(struct Entity), entity_count, f) != entity_count){goto read_fail_alloc;}
 		if(need_swap){
-			for(dsize i = 0; i < entity_count; i++){swap_entity(&m->entity[i]);}
+			for(uint32_t i = 0; i < entity_count; i++){swap_entity(&m->entity[i]);}
 		}
 	}
 	if(exit_count > 0){
 		m->exit = XCALLOC(exit_count, sizeof(struct ExitTile));
 		if(fread(m->exit, sizeof(struct ExitTile), exit_count, f) != exit_count){goto read_fail_alloc;}
 		if(need_swap){
-			for(dsize i = 0; i < exit_count; i++){swap_exit(&m->exit[i]);}
+			for(uint32_t i = 0; i < exit_count; i++){swap_exit(&m->exit[i]);}
 		}
 	}
 	{
 		size_t tile_count = (size_t)width * (size_t)height;
-		m->tile_flag = XCALLOC(tile_count, sizeof(tile_flag_size));
-		if(fread(m->tile_flag, sizeof(tile_flag_size), tile_count, f) != tile_count){goto read_fail_alloc;}
+		m->tile_flag = XCALLOC(tile_count, sizeof(uint32_t));
+		if(fread(m->tile_flag, sizeof(uint32_t), tile_count, f) != tile_count){goto read_fail_alloc;}
 		if(need_swap){
 			for(size_t i = 0; i < tile_count; i++){m->tile_flag[i] = swap16(m->tile_flag[i]);}
 		}

@@ -1,7 +1,6 @@
 #pragma once
 #include "util/util.h"
 #include "entity.h"
-#include "hook.h"
 #include <stdbool.h>
 #define INTERACT_SIZE 128
 

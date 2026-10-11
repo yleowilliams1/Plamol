@@ -5,6 +5,8 @@
 #include "inventory.h"
 #include "stats.h"
 
+// Eventually we'll do script hooks. But I'm working on the vs so it's not the highest priority. It shouldn't be too big a job.
+
 struct SaveComponent{
 	uint32_t uid;
 	uint32_t flags;
@@ -19,10 +21,10 @@ struct SaveComponent{
 
 	uint8_t direction;
 	
-	struct Inventory inv;	
 	struct StatsSave stats_save;
 
 	uint32_t level;
+	struct Inventory inv;	
 };
 struct RuntimeComponent{
 	vf2 tile_offset;
@@ -43,9 +45,11 @@ struct ProtoComponent{
 	uint32_t descr_string;	
 	
 	uint32_t sprite_id;
-	int32_t dialogue_name;
+	int32_t dialogue_string;
+	int32_t script_string;
 
 	struct StatsProto stats_proto;
+	struct Inventory inv;	
 
 	// Used for interaction	
 	int rec_offset_x;

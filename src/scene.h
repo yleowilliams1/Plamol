@@ -4,19 +4,11 @@
 #include "map.h"
 #include "save.h"
 #include "sprite.h"
-enum SceneState{
-	UNINITALIZED,
-	LOADING,
-	RUNNING,
-	FREED,
-};
 struct Scene{
 	struct EntityManager *entity_manager;
 	struct SpriteManager *sprites_manager;
 	struct SaveManager *save_manager;
 	struct Map *map;
-	enum SceneState state;
-	Camera2D camera;
 };
 
 struct Scene *init_scene();

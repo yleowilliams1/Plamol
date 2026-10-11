@@ -1,6 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include "util/util.h"
+
 void init_move();
 void update_move();
 void free_move();

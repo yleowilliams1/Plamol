@@ -1,3 +1,4 @@
+#include <time.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -196,4 +197,28 @@ char *xstrdup(const char *src){
 	char *dst = XCALLOC(len, 1);
 	memcpy(dst, src, len);
 	return dst;
+}
+bool write_u8(FILE *f, uint8_t v){
+	return fwrite(&v, 1, 1, f) == 1;
+}
+bool write_u16(FILE *f, uint16_t v){
+	uint8_t b[2] = {(uint8_t)(v & 0xFF), (uint8_t)(v >> 8)};
+	return fwrite(b, 1, 2, f) == 2;
+}
+bool write_u32(FILE *f, uint32_t v){
+	uint8_t b[4] = {
+		(uint8_t)(v & 0xFF),
+		(uint8_t)((v >> 8)  & 0xFF),
+		(uint8_t)((v >> 16) & 0xFF),
+		(uint8_t)((v >> 24) & 0xFF)
+	};
+	return fwrite(b, 1, 4, f) == 4;
+}
+struct Header create_header(char mag[8], int version){
+	struct Header h = {0};
+	memcpy(&h.magic, mag, sizeof(h.magic));
+	h.time = (uint32_t)time(NULL);
+	h.endian = 0x0102;
+	h.version = version;	
+	return h;
 }

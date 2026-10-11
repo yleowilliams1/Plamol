@@ -193,3 +193,16 @@ void *pool_next(struct Pool *p, int *cursor, struct InRef *out);
 
 bool valua(lua_State *L, int r);
 char *xstrdup(const char *src);
+
+
+bool write_u8 (FILE *f, uint8_t v);
+bool write_u16(FILE *f, uint16_t v);
+bool write_u32(FILE *f, uint32_t v);
+
+struct Header{
+	uint64_t magic;
+	uint32_t time;
+	uint16_t endian;
+	uint16_t version;
+};
+struct Header create_header(char mag[8], int version);
