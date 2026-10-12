@@ -222,3 +222,39 @@ struct Header create_header(char mag[8], int version){
 	h.version = version;	
 	return h;
 }
+bool read_u8(FILE *f, uint8_t *out){
+	return fread(out, 1, 1, f) == 1;
+}
+bool read_u16(FILE *f, uint16_t *out){
+	uint8_t b[2];
+	if(fread(b, 1, 2, f) != 2){return false;}
+	*out = (uint16_t)(b[0] | (b[1] << 8));
+	return true;
+}
+bool read_u32(FILE *f, uint32_t *out){
+	uint8_t b[4];
+	if(fread(b, 1, 4, f) != 4){return false;}
+	*out = (uint32_t)b[0]
+	     | ((uint32_t)b[1] << 8)
+	     | ((uint32_t)b[2] << 16)
+	     | ((uint32_t)b[3] << 24);
+	return true;
+}
+
+bool write_header(FILE *f, const struct Header *h){
+	// The magic is plain bytes, so it has no byte order to worry about.
+	if(fwrite(&h->magic, sizeof(h->magic), 1, f) != 1){return false;}
+	if(!write_u32(f, h->time)){return false;}
+	if(!write_u16(f, h->version)){return false;}
+	return true;
+}
+
+bool read_header(FILE *f, const char magic[8], struct Header *out){
+	struct Header h = {0};
+	if(fread(&h.magic, sizeof(h.magic), 1, f) != 1){return false;}
+	if(memcmp(&h.magic, magic, sizeof(h.magic)) != 0){return false;}
+	if(!read_u32(f, &h.time)){return false;}
+	if(!read_u16(f, &h.version)){return false;}
+	*out = h;
+	return true;
+}

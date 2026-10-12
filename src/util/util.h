@@ -205,4 +205,11 @@ struct Header{
 	uint16_t endian;
 	uint16_t version;
 };
+// it's little endian 
 struct Header create_header(char mag[8], int version);
+bool read_u8 (FILE *f, uint8_t  *out);
+bool read_u16(FILE *f, uint16_t *out);
+bool read_u32(FILE *f, uint32_t *out);
+bool write_header(FILE *f, const struct Header *h);
+bool read_header(FILE *f, const char magic[8], struct Header *out);
+
