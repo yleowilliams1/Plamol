@@ -1,12 +1,11 @@
 #pragma once
 #include <stdbool.h>
+#include <stdint.h>
 #include "util/util.h"
+struct RuntimeComponent;
+struct Map;
+void update_move(struct RuntimeComponent *m, int32_t *tx,int32_t *ty, int8_t *dir);
+void move(struct RuntimeComponent *m,struct Map *map, int32_t *tx, int32_t *ty, int8_t *dir, v2 end);
+bool get_move_offset(struct RuntimeComponent *m, vf2 *out);
+bool is_moving(struct RuntimeComponent *m);
 
-void init_move();
-void update_move();
-void free_move();
-// This needs to be called when entitiesa re cleared
-void clear_move();
-bool get_move_offset(int indx, vf2 *out);
-bool is_moving(int indx);
-void move(struct EntityMutable *e, struct Map *map, v2 end);
