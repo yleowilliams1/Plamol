@@ -21,7 +21,7 @@ bool write_save(struct EntityManager *e, struct FlagManager *fm, int save_slot){
 	if(!base){LOG(IS_NULL, "SAVE_PATH not set"); return false;}
 
 	char path[BUF_SIZE];
-	if(!t_snprintf(path, sizeof(path), NULL, "%s%d.SAVE", base, save_slot)){
+	if(!t_snprintf(path, sizeof(path), NULL, "%s%d.sav", base, save_slot)){
 		LOG(WRITE, "Save path too long for slot %d", save_slot);
 		return false;
 	}	
@@ -32,8 +32,10 @@ bool write_save(struct EntityManager *e, struct FlagManager *fm, int save_slot){
 	struct Header h = create_header(MAGIC, VERSION);
 	if(fwrite(&h, sizeof(h), 1, f) != 1){fclose(f); return false;}
 	
-	// Write stuff	
-	
+	// From here load the last_loaded_save, then loop through and copy it's objs and obj count, then loop through entity managewrs objects and take note whats there, and go back through the file and loop through checkign whats there and whats not, and writing/overridign depending on if it's the same.
+
+
+	// Write flag	
 	if(!write_u32(f, fm->count)){fclose(f); return false;}
 	for(uint32_t i = 0; i < fm->count; i++){
 		char name[MAX_FLAG_NAME] = {0};

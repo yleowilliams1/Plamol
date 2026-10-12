@@ -9,6 +9,7 @@
 
 struct SaveComponent{
 	uint32_t uid;
+	uint32_t slot_gen;
 	uint32_t flags;
 
 	int32_t health_points;
@@ -80,4 +81,4 @@ struct EntityManager{
 	struct ItemPrototype **item_proto;
 	struct ProtoComponenet *object_prototypes;
 };
-
+bool write_object(struct SaveComponent *c);

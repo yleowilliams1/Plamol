@@ -4,9 +4,12 @@
 #include <stdbool.h>
 #include "flag.h"
 #include "entity.h"
-
+struct ObjectRef{
+	uint32_t uid;
+	uint32_t slot;
+};
 struct SaveFile{
-	struct SaveComponenet *objs;
+	struct ObjectRef *objs;
 	uint32_t obj_count;
 	uint32_t current_map_gindex;
 	struct FlagManager *fm;
@@ -14,4 +17,5 @@ struct SaveFile{
 struct SaveManager{
 	struct SaveFile *saves;
 	int32_t save_count;
+	uint32_t last_loaded_save;
 };
