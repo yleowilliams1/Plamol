@@ -54,12 +54,6 @@ struct ExitTile{
 	uint32_t map_gindx;
 	uint32_t tx, ty;
 };
-struct Header{
-	uint64_t magic_number;
-	uint32_t time_stamp;
-	uint16_t endian_check;
-	uint16_t version;
-};
 struct Map{
 	struct Sprite *sprite;
 	struct Entity *entity;

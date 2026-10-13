@@ -75,8 +75,7 @@ void write_map(struct Map *m, char *path){
 	if(!f){LOG(NO_FILE, "Could not open %s for writing", path);return;}
 
 	struct Header h = create_header(MAP_MAGIC, MAP_VERSION);
-	if(fwrite(&h, sizeof(h), 1, f) != 1){goto write_fail;}
-
+	if(!write_header(f, &h)){goto write_fail;}
 	if(fwrite(&m->width, sizeof(m->width), 1, f) != 1){goto write_fail;}
 	if(fwrite(&m->height, sizeof(m->height), 1, f) != 1){goto write_fail;}
 	if(fwrite(&m->map_gindx, sizeof(m->map_gindx), 1, f) != 1){goto write_fail;}
