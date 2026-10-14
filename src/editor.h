@@ -1,5 +1,6 @@
 #pragma once
 #include <raylib.h>
+#include "map.h"
 
 #define TOP_BUTTONS\
 	X(NEW_MAP)\
@@ -42,6 +43,9 @@ struct Editor{
 	
 	float top_delta;
 	float bottom_delta;
+
+	Camera2D cam;
+	struct Map *m;
 };
 static const char *top_labels[] = {
 	#define X(name) #name,

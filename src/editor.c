@@ -1,14 +1,15 @@
+#define RAYGUI_IMPLEMENTATION
+#include "../raygui/raygui.h"
+
 #include <raylib.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define RAYGUI_IMPLEMENTATION
-#include "raygui.h"
 
 #include "util/util.h"
 #include "settings.h"
 #include "editor.h"
-
+#include "camera.h"
 #define PANEL_HEIGHT 75
 #define SIDE_WIDTH 128
 static void top_fnc(struct Editor *e, int indx);
@@ -24,8 +25,20 @@ struct Editor *init_editor(){
 void update_editor(struct Editor *editor){
 	if(!editor){LOG(IS_NULL, "Editor is NULL"); return;}
 	if(IsWindowResized()){update_recs(editor);}
-	if(CheckCollisionPointRec(GetMousePosition(), editor->map_frame)){
-		if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){LOG(LOAD, "Is on frame");}
+	Vector2 screen = GetMousePosition();
+	Vector2 world = GetScreenToWorld2D(GetMousePosition(), editor->cam);
+	if(CheckCollisionPointRec(screen, editor->map_frame)){
+		if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+			update_cam(&editor->cam);
+			vf2 wray = (vf2){world.x, world.y};
+			v2 tile = world_to_tile(wray);
+
+			bool valid = false;
+			if(editor->m){valid = in_bounds(editor->m, tile.x, tile.y);}
+			if(valid){
+				
+			}
+		}
 	}
 }
 void draw_editor(struct Editor *e){
