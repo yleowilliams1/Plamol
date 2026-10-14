@@ -78,6 +78,6 @@ struct EntityManager{
 	
 	// This should be mostly NULL, then when we look at the map, and load the objects, after we loop through and look at all the items prottpyes which show up, and the ones which don't, and then unload those, and load the ones which do show up.
 	struct ItemPrototype **item_proto;
-	struct ProtoComponent *object_prototypes;
+	struct ProtoComponent **object_prototypes;
 };
 bool write_object(struct SaveComponent *c, uint32_t slot);
