@@ -11,7 +11,7 @@ The engine is heavily data-driven, configured via lua files.
 This repository uses the following third-party libraries:
 
 - [raylib](https://github.com/raysan5/raylib): *not vendoreded see Build*
-- [raygui](https://github.com/raysan5/raygui) `root:/src/raygui.h` 
+- [raygui](https://github.com/raysan5/raygui) `root:/raygui/raygui.h` 
 - [pcg-dxsm](https://github.com/fanf2/pcg-dxsm): `root:/src/util/pcg_basic.c/h`
 - [lua](https://www.lua.org/): *not vendoreded see Build*
 
@@ -25,7 +25,6 @@ This repository uses the following third-party libraries:
 - Add windows alternatives for POSIX functions
 - Implement entity scripting
 - Implement item scripting
-- Implement entity saving feature
 - Rewrite draw.c to memory efficent and faster.
 - Write the map editor.
 - Implement unity tests with Unity.
