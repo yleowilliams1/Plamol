@@ -8,8 +8,11 @@
 
 #define DEFAULT_SIZE 1
 #define MAP_MAGIC "LoneStar"
-#define MAP_VERSION 1 
-#define MAP_ENDIAN_CHECK 0x0102
+#define MAP_VERSION 1
+// Bytes per record on disk. This is the sum of the fields written below, NOT sizeof(struct), because structs have padding.
+#define SPRITE_DISK_SIZE 14  // tx ty sprite_index (3 x u32) + type dir (2 x u8)
+#define ENTITY_DISK_SIZE 21  // dir (u8) + prototype_gindex instance_gindex tx ty flags (5 x u32)
+#define EXIT_DISK_SIZE   12  // map_gindx tx ty (3 x u32)
 // This thing is immune to changes. I'd bet my left leg that this doesn't change from this commit
 struct Map *create_map(int width, int height, int map_gindx){
 	if(width <= 0){LOG(INDEX, "Cann't create map of width smaller or equal to 0");return NULL;}
@@ -42,62 +45,72 @@ void free_map(struct Map *m){
 	m = NULL;
 }
 
-/*
- * Per-element byte swap helpers. We can't just swap a whole struct's raw
- * bytes at once, since it's made of fields of different widths - each
- * field has to be swapped on its own terms.
- */
-static void swap_sprite(struct Sprite *s){
-	s->sprite_index = swap16(s->sprite_index);
-	s->tx = swap16(s->tx);
-	s->ty = swap16(s->ty);
-	// s->type is a single byte (uint8_t) nothing to swap
+static bool write_sprite(FILE *f, const struct Sprite *s){
+	return write_u32(f, s->tx) && write_u32(f, s->ty) && write_u32(f, s->sprite_index)
+	    && write_u8(f, s->type) && write_u8(f, s->dir);
 }
-static void swap_entity(struct Entity *e){
-	e->prototype_gindex = swap16(e->prototype_gindex);
-	e->instance_gindex  = swap16(e->instance_gindex);
-	e->tx = swap16(e->tx);
-	e->ty = swap16(e->ty);
-	e->flags = swap32(e->flags);
-	// e->dir is a single byte (uint8_t) nothing to swap
+static bool read_sprite(FILE *f, struct Sprite *s){
+	return read_u32(f, &s->tx) && read_u32(f, &s->ty) && read_u32(f, &s->sprite_index)
+	    && read_u8(f, &s->type) && read_u8(f, &s->dir);
 }
-static void swap_exit(struct ExitTile *e){
-	e->map_gindx = swap16(e->map_gindx);
-	e->tx = swap16(e->tx);
-	e->ty = swap16(e->ty);
+static bool write_entity(FILE *f, const struct Entity *e){
+	return write_u8(f, e->dir) && write_u32(f, e->prototype_gindex) && write_u32(f, e->instance_gindex)
+	    && write_u32(f, e->tx) && write_u32(f, e->ty) && write_u32(f, e->flags);
+}
+static bool read_entity(FILE *f, struct Entity *e){
+	return read_u8(f, &e->dir) && read_u32(f, &e->prototype_gindex) && read_u32(f, &e->instance_gindex)
+	    && read_u32(f, &e->tx) && read_u32(f, &e->ty) && read_u32(f, &e->flags);
+}
+static bool write_exit(FILE *f, const struct ExitTile *e){
+	return write_u32(f, e->map_gindx) && write_u32(f, e->tx) && write_u32(f, e->ty);
+}
+static bool read_exit(FILE *f, struct ExitTile *e){
+	return read_u32(f, &e->map_gindx) && read_u32(f, &e->tx) && read_u32(f, &e->ty);
 }
 
-void write_map(struct Map *m, char *path){
-	if(!m){LOG(IS_NULL, "Map is NULL");return;}
-	if(!path){LOG(IS_NULL, "Path is NULL");return;}
+bool write_map(struct Map *m, char *path){
+	if(!m){LOG(IS_NULL, "Map is NULL");return false;}
+	if(!path){LOG(IS_NULL, "Path is NULL");return false;}
+	if(m->sprite_count > 0 && !m->sprite){LOG(IS_NULL, "Map has a sprite count but no sprites");return false;}
+	if(m->entity_count > 0 && !m->entity){LOG(IS_NULL, "Map has an entity count but no entities");return false;}
+	if(m->exit_count > 0 && !m->exit){LOG(IS_NULL, "Map has an exit count but no exits");return false;}
+	if(!m->tile_flag){LOG(IS_NULL, "Map has no tile flags");return false;}
 
 	FILE *f = fopen(path, "wb");
-	if(!f){LOG(NO_FILE, "Could not open %s for writing", path);return;}
+	if(!f){LOG(NO_FILE, "Could not open %s for writing", path);return false;}
 
 	struct Header h = create_header(MAP_MAGIC, MAP_VERSION);
 	if(!write_header(f, &h)){goto write_fail;}
-	if(fwrite(&m->width, sizeof(m->width), 1, f) != 1){goto write_fail;}
-	if(fwrite(&m->height, sizeof(m->height), 1, f) != 1){goto write_fail;}
-	if(fwrite(&m->map_gindx, sizeof(m->map_gindx), 1, f) != 1){goto write_fail;}
-	if(fwrite(&m->sprite_count, sizeof(m->sprite_count), 1, f) != 1){goto write_fail;}
-	if(fwrite(&m->entity_count, sizeof(m->entity_count), 1, f) != 1){goto write_fail;}
-	if(fwrite(&m->exit_count, sizeof(m->exit_count), 1, f) != 1){goto write_fail;}
+	if(!write_u32(f, m->width)){goto write_fail;}
+	if(!write_u32(f, m->height)){goto write_fail;}
+	if(!write_u32(f, m->map_gindx)){goto write_fail;}
+	if(!write_u32(f, m->sprite_count)){goto write_fail;}
+	if(!write_u32(f, m->entity_count)){goto write_fail;}
+	if(!write_u32(f, m->exit_count)){goto write_fail;}
 
-	if(m->sprite_count > 0 && fwrite(m->sprite, sizeof(struct Sprite), m->sprite_count, f) != m->sprite_count){goto write_fail;}
-	if(m->entity_count > 0 && fwrite(m->entity, sizeof(struct Entity), m->entity_count, f) != m->entity_count){goto write_fail;}
-	if(m->exit_count > 0 && fwrite(m->exit, sizeof(struct ExitTile), m->exit_count, f) != m->exit_count){goto write_fail;}
-
+	for(uint32_t i = 0; i < m->sprite_count; i++){
+		if(!write_sprite(f, &m->sprite[i])){goto write_fail;}
+	}
+	for(uint32_t i = 0; i < m->entity_count; i++){
+		if(!write_entity(f, &m->entity[i])){goto write_fail;}
+	}
+	for(uint32_t i = 0; i < m->exit_count; i++){
+		if(!write_exit(f, &m->exit[i])){goto write_fail;}
+	}
 	{
 		size_t tile_count = (size_t)m->width * (size_t)m->height;
-		if(tile_count > 0 && fwrite(m->tile_flag, sizeof(uint32_t), tile_count, f) != tile_count){goto write_fail;}
+		for(size_t i = 0; i < tile_count; i++){
+			if(!write_u32(f, m->tile_flag[i])){goto write_fail;}
+		}
 	}
 
-	fclose(f);
-	return;
+	if(fclose(f) != 0){f = NULL; goto write_fail;}
+	return true;
 
 write_fail:
 	LOG(WRITE, "Failed to write map data to %s", path);
-	fclose(f);
+	if(f){fclose(f);}
+	return false;
 }
 
 struct Map *read_map(char *path){
@@ -106,74 +119,45 @@ struct Map *read_map(char *path){
 	FILE *f = fopen(path, "rb");
 	if(!f){LOG(NO_FILE, "Could not open %s for reading", path);return NULL;}
 
-	struct Header h = {0};
-	if(fread(&h, sizeof(h), 1, f) != 1){
-		LOG(READ, "Failed to read header from %s", path);
-		fclose(f);
-		return NULL;
-	}
-
-	// The magic number is copied in/out as raw bytes (never interpreted
-	// as a number), so it compares equal regardless of byte order.
-	uint64_t expected_magic = 0;
-	memcpy(&expected_magic, MAP_MAGIC, sizeof(expected_magic));
-	if(h.magic_number != expected_magic){
-		LOG(PARSE, "%s is not a valid map file (bad magic number)", path);
-		fclose(f);
-		return NULL;
-	}
-
-	// endian_check IS interpreted as a number, so this is where we can
-	// tell whether the file was written on a machine with the opposite
-	// byte order. If so, flip every remaining multi-byte field as we
-	// read it, instead of refusing to load the file.
-	bool need_swap = false;
-	if(h.endian_check == MAP_ENDIAN_CHECK){
-		need_swap = false;
-	}else if(swap16(h.endian_check) == MAP_ENDIAN_CHECK){
-		need_swap = true;
-		h.version = swap16(h.version);
-		h.time_stamp = swap32(h.time_stamp);
-	}else{
-		LOG(PARSE, "%s has a corrupt or unrecognized endian marker", path);
-		fclose(f);
-		return NULL;
-	}
-
-	if(h.version != MAP_VERSION){
-		LOG(PARSE, "%s has unsupported map version %u (expected %u)", path, h.version, MAP_VERSION);
-		fclose(f);
-		return NULL;
-	}
-
-	uint32_t width, height;
-	uint32_t map_gindx;
+	struct Map *m = NULL;
+	struct Header h;
+	uint32_t width, height, map_gindx;
 	uint32_t sprite_count, entity_count, exit_count;
+	size_t remaining = 0;
 
-	if(fread(&width, sizeof(width), 1, f) != 1){goto read_fail;}
-	if(fread(&height, sizeof(height), 1, f) != 1){goto read_fail;}
-	if(fread(&map_gindx, sizeof(map_gindx), 1, f) != 1){goto read_fail;}
-	if(fread(&sprite_count, sizeof(sprite_count), 1, f) != 1){goto read_fail;}
-	if(fread(&entity_count, sizeof(entity_count), 1, f) != 1){goto read_fail;}
-	if(fread(&exit_count, sizeof(exit_count), 1, f) != 1){goto read_fail;}
+	if(!read_header(f, MAP_MAGIC, MAP_VERSION, &h)){goto fail;}
 
-	if(need_swap){
-		width = swap16(width);
-		height = swap16(height);
-		map_gindx = swap16(map_gindx);
-		sprite_count = swap16(sprite_count);
-		entity_count = swap16(entity_count);
-		exit_count = swap16(exit_count);
-	}
+	if(!read_u32(f, &width)){goto fail;}
+	if(!read_u32(f, &height)){goto fail;}
+	if(!read_u32(f, &map_gindx)){goto fail;}
+	if(!read_u32(f, &sprite_count)){goto fail;}
+	if(!read_u32(f, &entity_count)){goto fail;}
+	if(!read_u32(f, &exit_count)){goto fail;}
 
 	if(width == 0 || height == 0){
 		LOG(PARSE, "%s has invalid dimensions (%u x %u)", path, width, height);
-		fclose(f);
-		return NULL;
+		goto fail;
 	}
 
-	struct Map *m = XCALLOC(1, sizeof(struct Map));
+	// Check the file is actually big enough for everything the header claims
+	// before allocating anything. All of these products fit in a uint64_t
+	// once tile_count has been bounded by the file size.
+	if(!bytes_remaining(f, &remaining)){goto fail;}
+	uint64_t tile_count = (uint64_t)width * (uint64_t)height;
+	if(tile_count > remaining / sizeof(uint32_t)){
+		LOG(PARSE, "%s claims a %u x %u map but is too short to hold it", path, width, height);
+		goto fail;
+	}
+	uint64_t need = tile_count * sizeof(uint32_t)
+	              + (uint64_t)sprite_count * SPRITE_DISK_SIZE
+	              + (uint64_t)entity_count * ENTITY_DISK_SIZE
+	              + (uint64_t)exit_count   * EXIT_DISK_SIZE;
+	if(need > remaining){
+		LOG(PARSE, "%s is too short for the object counts in its header", path);
+		goto fail;
+	}
 
+	m = XCALLOC(1, sizeof(struct Map));
 	m->width = width;
 	m->height = height;
 	m->map_gindx = map_gindx;
@@ -183,45 +167,33 @@ struct Map *read_map(char *path){
 
 	if(sprite_count > 0){
 		m->sprite = XCALLOC(sprite_count, sizeof(struct Sprite));
-		if(fread(m->sprite, sizeof(struct Sprite), sprite_count, f) != sprite_count){goto read_fail_alloc;}
-		if(need_swap){
-			for(uint32_t i = 0; i < sprite_count; i++){swap_sprite(&m->sprite[i]);}
+		for(uint32_t i = 0; i < sprite_count; i++){
+			if(!read_sprite(f, &m->sprite[i])){goto fail;}
 		}
 	}
 	if(entity_count > 0){
 		m->entity = XCALLOC(entity_count, sizeof(struct Entity));
-		if(fread(m->entity, sizeof(struct Entity), entity_count, f) != entity_count){goto read_fail_alloc;}
-		if(need_swap){
-			for(uint32_t i = 0; i < entity_count; i++){swap_entity(&m->entity[i]);}
+		for(uint32_t i = 0; i < entity_count; i++){
+			if(!read_entity(f, &m->entity[i])){goto fail;}
 		}
 	}
 	if(exit_count > 0){
 		m->exit = XCALLOC(exit_count, sizeof(struct ExitTile));
-		if(fread(m->exit, sizeof(struct ExitTile), exit_count, f) != exit_count){goto read_fail_alloc;}
-		if(need_swap){
-			for(uint32_t i = 0; i < exit_count; i++){swap_exit(&m->exit[i]);}
+		for(uint32_t i = 0; i < exit_count; i++){
+			if(!read_exit(f, &m->exit[i])){goto fail;}
 		}
 	}
-	{
-		size_t tile_count = (size_t)width * (size_t)height;
-		m->tile_flag = XCALLOC(tile_count, sizeof(uint32_t));
-		if(fread(m->tile_flag, sizeof(uint32_t), tile_count, f) != tile_count){goto read_fail_alloc;}
-		if(need_swap){
-			for(size_t i = 0; i < tile_count; i++){m->tile_flag[i] = swap16(m->tile_flag[i]);}
-		}
+	m->tile_flag = XCALLOC((size_t)tile_count, sizeof(uint32_t));
+	for(size_t i = 0; i < (size_t)tile_count; i++){
+		if(!read_u32(f, &m->tile_flag[i])){goto fail;}
 	}
 
 	fclose(f);
 	return m;
 
-read_fail_alloc:
-	LOG(PARSE, "%s is truncated or corrupt", path);
-	free_map(m);
+fail:
+	LOG(READ, "Failed reading map %s", path);
 	fclose(f);
-	return NULL;
-
-read_fail:
-	LOG(PARSE, "%s is truncated or corrupt", path);
-	fclose(f);
+	if(m){free_map(m);}
 	return NULL;
 }

@@ -193,23 +193,32 @@ void *pool_next(struct Pool *p, int *cursor, struct InRef *out);
 
 bool valua(lua_State *L, int r);
 char *xstrdup(const char *src);
-
-
+// ---- Binary file I/O (util/io.c). Everything on disk is little-endian. ----
 bool write_u8 (FILE *f, uint8_t v);
 bool write_u16(FILE *f, uint16_t v);
 bool write_u32(FILE *f, uint32_t v);
-
+bool write_bytes(FILE *f, const void *buf, size_t n);
+ 
+bool read_u8 (FILE *f, uint8_t  *out);
+bool read_u16(FILE *f, uint16_t *out);
+bool read_u32(FILE *f, uint32_t *out);
+bool read_i8 (FILE *f, int8_t   *out);
+bool read_i16(FILE *f, int16_t  *out);
+bool read_i32(FILE *f, int32_t  *out);
+bool read_bytes(FILE *f, void *buf, size_t n);
+// Bytes between the current position and EOF. Use it to sanity check counts before allocating.
+bool bytes_remaining(FILE *f, size_t *out);
+ 
+#define HEADER_ENDIAN 0x0102
 struct Header{
 	uint64_t magic;
 	uint32_t time;
 	uint16_t endian;
 	uint16_t version;
 };
-// it's little endian 
-struct Header create_header(char mag[8], int version);
-bool read_u8 (FILE *f, uint8_t  *out);
-bool read_u16(FILE *f, uint16_t *out);
-bool read_u32(FILE *f, uint32_t *out);
+struct Header create_header(const char mag[8], uint16_t version);
 bool write_header(FILE *f, const struct Header *h);
-bool read_header(FILE *f, const char magic[8], struct Header *out);
-
+// Validates magic + version of a header you already have.
+bool check_header(const struct Header *h, const char magic[8], uint16_t version);
+// Reads a header and runs check_header on it. Returns false (and logs why) on any failure.
+bool read_header(FILE *f, const char magic[8], uint16_t version, struct Header *out);

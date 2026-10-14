@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #define TYPE\
 	X(GROUND)\
@@ -39,7 +40,7 @@ enum TileFlags{
 };
 struct Sprite{
 	uint32_t tx, ty;
-	uint32_t sprite_index;
+	uint32_t sprite_gindex;
 	uint8_t type; 
 	uint8_t dir;  //which origin row (SpriteData->origin[dir]) this decoration uses
 };
@@ -65,8 +66,8 @@ struct Map{
 	uint32_t map_gindx;
 	uint32_t *tile_flag;
 };
+
 struct Map *create_map(int width, int height, int map_gindx);
 void free_map(struct Map *m);
-
-void write_map(struct Map *m, char *path);
+bool write_map(struct Map *m, char *path);
 struct Map *read_map(char *path);

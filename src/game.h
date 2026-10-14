@@ -1,13 +1,20 @@
 #pragma once
 #include "entity.h"
 #include "map.h"
-struct EntityManager; 
-struct SpriteManager;
+#include "string_table.h"
+#include "save.h"
 
-struct GameData{
+// General rule is this is just the living place of all this data. It never touches or changes it, all it does is create and destroy it.
+
+struct GameLifetime{
 	struct Map *m;
+	struct StringTable *str;
+	struct SaveManager *save;
+	struct SpriteData *spr;
+	struct EntityManager *en;
 };
 
-struct GameData create_game();
-void start_game(
-void update_game(struct EntityManager *e, struct SpriteManager *s);
+void create_gamelifetime();
+void free_gamelifetime();
+void update_gamelifetime();
+void draw_gamelifetime();

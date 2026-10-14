@@ -6,7 +6,6 @@
 
 #include "util/util.h"
 #include "sprite.h"
-#include "map.h"
 #include "settings.h"
 
 #define ANIMATION_COUNT_INVALID -1
@@ -144,25 +143,6 @@ void free_sprite_manager(struct SpriteManager **sman){
 	free(*sman);
 	*sman = NULL;
 }
-
-void load_map_sprites(struct SpriteManager *sman, struct Map *map){
-	if(!sman || !map){return;}
-	for(int i=0; i<map->sprite_count; i++){
-		struct Sprite *s = &map->sprite[i];
-		if(!sman->sprite[s->sprite_gindex]){
-			sman->sprite[s->sprite_gindex] = load_sprite_from_disk(s->sprite_gindex);
-		}
-	}
-}
-
-void unload_map_sprites(struct SpriteManager *sman, struct Map *map){
-	if(!sman || !map){return;}
-	for(int i=0; i<map->sprite_count; i++){
-		struct Sprite *s = &map->sprite[i];
-		free_sprite_at(&sman->sprite[s->sprite_gindex], s->sprite_gindex);
-	}
-}
-
 void free_sprite_at(struct SpriteData **s, int gindex){
 	if(!*s){return;}
 	struct SpriteData *spr = *s;

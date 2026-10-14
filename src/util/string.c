@@ -214,25 +214,24 @@ bool write_u32(FILE *f, uint32_t v){
 	};
 	return fwrite(b, 1, 4, f) == 4;
 }
-struct Header create_header(char mag[8], int version){
-	struct Header h = {0};
-	memcpy(&h.magic, mag, sizeof(h.magic));
-	h.time = (uint32_t)time(NULL);
-	h.endian = 0x0102;
-	h.version = version;	
-	return h;
+bool write_bytes(FILE *f, const void *buf, size_t n){
+	return n == 0 || fwrite(buf, 1, n, f) == n;
 }
+
 bool read_u8(FILE *f, uint8_t *out){
+	if(!f || !out){return false;}
 	return fread(out, 1, 1, f) == 1;
 }
 bool read_u16(FILE *f, uint16_t *out){
 	uint8_t b[2];
+	if(!f || !out){return false;}
 	if(fread(b, 1, 2, f) != 2){return false;}
 	*out = (uint16_t)(b[0] | (b[1] << 8));
 	return true;
 }
 bool read_u32(FILE *f, uint32_t *out){
 	uint8_t b[4];
+	if(!f || !out){return false;}
 	if(fread(b, 1, 4, f) != 4){return false;}
 	*out = (uint32_t)b[0]
 	     | ((uint32_t)b[1] << 8)
@@ -241,20 +240,83 @@ bool read_u32(FILE *f, uint32_t *out){
 	return true;
 }
 
+bool read_i8(FILE *f, int8_t *out){
+	uint8_t v;
+	if(!read_u8(f, &v)){return false;}
+	*out = (int8_t)v;
+	return true;
+}
+bool read_i16(FILE *f, int16_t *out){
+	uint16_t v;
+	if(!read_u16(f, &v)){return false;}
+	*out = (int16_t)v;
+	return true;
+}
+bool read_i32(FILE *f, int32_t *out){
+	uint32_t v;
+	if(!read_u32(f, &v)){return false;}
+	*out = (int32_t)v;
+	return true;
+}
+
+bool read_bytes(FILE *f, void *buf, size_t n){
+	if(!f || (n > 0 && !buf)){return false;}
+	return n == 0 || fread(buf, 1, n, f) == n;
+}
+bool bytes_remaining(FILE *f, size_t *out){
+	if(!f || !out){return false;}
+	long here = ftell(f);
+	if(here < 0){return false;}
+	if(fseek(f, 0, SEEK_END) != 0){return false;}
+	long end = ftell(f);
+	if(fseek(f, here, SEEK_SET) != 0){return false;}
+	if(end < here){return false;}
+	*out = (size_t)(end - here);
+	return true;
+}
+
+
+struct Header create_header(const char mag[8], uint16_t version){
+	struct Header h = {0};
+	memcpy(&h.magic, mag, sizeof(h.magic));
+	h.time = (uint32_t)time(NULL);
+	h.endian = HEADER_ENDIAN;
+	h.version = version;
+	return h;
+}
+
 bool write_header(FILE *f, const struct Header *h){
 	// The magic is plain bytes, so it has no byte order to worry about.
-	if(fwrite(&h->magic, sizeof(h->magic), 1, f) != 1){return false;}
+	// h->endian is never written: every file is little-endian, so the field
+	// only exists in memory.
+	if(!write_bytes(f, &h->magic, sizeof(h->magic))){return false;}
 	if(!write_u32(f, h->time)){return false;}
 	if(!write_u16(f, h->version)){return false;}
 	return true;
 }
 
-bool read_header(FILE *f, const char magic[8], struct Header *out){
+bool check_header(const struct Header *h, const char magic[8], uint16_t version){
+	if(!h || !magic){LOG(IS_NULL, "check_header called with NULL"); return false;}
+	if(memcmp(&h->magic, magic, sizeof(h->magic)) != 0){
+		LOG(PARSE, "Bad magic number (expected %.8s)", magic);
+		return false;
+	}
+	if(h->version != version){
+		LOG(PARSE, "Unsupported version %u (expected %u)", (unsigned)h->version, (unsigned)version);
+		return false;
+	}
+	return true;
+}
+
+bool read_header(FILE *f, const char magic[8], uint16_t version, struct Header *out){
+	if(!f || !magic || !out){LOG(IS_NULL, "read_header called with NULL"); return false;}
 	struct Header h = {0};
-	if(fread(&h.magic, sizeof(h.magic), 1, f) != 1){return false;}
-	if(memcmp(&h.magic, magic, sizeof(h.magic)) != 0){return false;}
-	if(!read_u32(f, &h.time)){return false;}
-	if(!read_u16(f, &h.version)){return false;}
+	if(!read_bytes(f, &h.magic, sizeof(h.magic)) || !read_u32(f, &h.time) || !read_u16(f, &h.version)){
+		LOG(READ, "File is too short to contain a header");
+		return false;
+	}
+	h.endian = HEADER_ENDIAN;
+	if(!check_header(&h, magic, version)){return false;}
 	*out = h;
 	return true;
 }
