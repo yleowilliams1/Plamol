@@ -2,7 +2,7 @@
 
 A 2D isometric RPG engine written in C using Raylib. An in-house map editor is also included (currently under construction while work on the entity and loading is under work).
 
-The engine is heavily data-driven, configured via lua files. 
+The engine is heavily data-driven. 
 
 ---
 
@@ -13,7 +13,6 @@ This repository uses the following third-party libraries:
 - [raylib](https://github.com/raysan5/raylib): *not vendoreded see Build*
 - [raygui](https://github.com/raysan5/raygui) `root:/raygui/raygui.h` 
 - [pcg-dxsm](https://github.com/fanf2/pcg-dxsm): `root:/src/util/pcg_basic.c/h`
-- [lua](https://www.lua.org/): *not vendoreded see Build*
 
 ---
 

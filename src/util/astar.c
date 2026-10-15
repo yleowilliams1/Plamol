@@ -180,8 +180,8 @@ bool astar_find_path(struct Map *m, v2 s, v2 e, struct PathNode **out_path, size
 		struct PathNode *path = XCALLOC(len, sizeof(struct PathNode));
 		size_t n = goal;
 		for(size_t i = len; i-- > 0;){
-			path[i].x = (tilsize)(n % m->width);
-			path[i].y = (tilsize)(n / m->width);
+			path[i].x = (uint32_t)(n % m->width);
+			path[i].y = (uint32_t)(n / m->width);
 			if(n == start){break;}
 			n = parent[n];
 		}

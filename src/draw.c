@@ -3,7 +3,6 @@
 #include <math.h>
 #include "draw.h"
 #include "entity.h"
-#include "hook.h"
 #include "map.h"
 #include "sprite.h"
 #include "util/util.h"
@@ -103,41 +102,6 @@ static struct DrawItem *create_draw_list(struct EntityManager *entity_manager, s
 		items[item_cursor].source   = source;
 		items[item_cursor].position = (Vector2){pos.x - origin.x, pos.y - origin.y};
 		items[item_cursor].depth    = pos.y ;
-		item_cursor++;
-	}
-
-	for(int i=0; i<map->entity_count; i++){
-		struct Entity *e = &map->entity[i];
-		struct EntityImmutable *imm = entity_manager->immutable_entity[e->prototype_gindex];
-		struct EntityMutable *mut   = entity_manager->mutable_entity[e->instance_gindex];
-		if(!imm || !mut){continue;}
-
-		struct SpriteData *spr = sprite_manager->sprite[imm->sprite_gindex];
-		if(!spr){/*LOG(IS_NULL, "Sprite %d isn't loaded", imm->sprite_gindex);*/continue;}
-
-		// Animation row comes from whichever hook is currently active on
-		// this entity, resolved through its script - not cached on
-		// EntityMutable, since active_hook is the single source of truth
-		// and this is cheap to derive. Falls back to row 0 if the entity
-		// has no script or the hook can't be resolved (see resolve_hook).
-		struct Hook *h = resolve_hook(imm->script, mut->active_hook);
-		int anim_index = h ? h->animation : 0;
-		
-		v2 tile = {mut->position.x, mut->position.y};
-		vf2 pos = tile_to_world(tile);
-
-		vf2 offset = {0.0f, 0.0f};
-		get_move_offset(mut->mutable_gindex, &offset); // no-op if not moving; offset stays {0,0}
-		pos.x += offset.x;
-		pos.y += offset.y;
-		
-		v2 origin = entity_sprite_origin_at(spr, anim_index, mut->direction, mut->current_frame);
-		Rectangle source = entity_sprite_frame_rect_at(spr, anim_index, mut->direction, mut->current_frame);
-
-		items[item_cursor].texture  = spr->texture;
-		items[item_cursor].source   = source;
-		items[item_cursor].position = (Vector2){pos.x - origin.x, pos.y - origin.y};
-		items[item_cursor].depth    = pos.y;
 		item_cursor++;
 	}
 

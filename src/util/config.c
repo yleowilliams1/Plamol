@@ -1,17 +1,9 @@
-#include <lua.h>
-#include <lualib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <sys/stat.h>
 #include "util.h"
-#define PATH_MAX 512
-
-bool valua(lua_State *L, int r){
-	if(r != LUA_OK){LOG(IS_NULL, lua_tostring(L, -1)); return false;}
-	return true;
-}
 
 bool check(char *line, char *arg){
 	// These arguments could return valid strings
@@ -95,9 +87,9 @@ char *format_path(char *base, char *format, int num){
 	
 	return file;
 }
-
+#define DIR_PATH_MAX 512
 bool dir_exists(const char *path) {
-    char buf[PATH_MAX];
+    char buf[DIR_PATH_MAX];
     strncpy(buf, path, sizeof(buf) - 1);
     buf[sizeof(buf) - 1] = '\0';
 

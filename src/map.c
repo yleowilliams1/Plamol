@@ -46,11 +46,11 @@ void free_map(struct Map *m){
 }
 
 static bool write_sprite(FILE *f, const struct Sprite *s){
-	return write_u32(f, s->tx) && write_u32(f, s->ty) && write_u32(f, s->sprite_index)
+	return write_u32(f, s->tx) && write_u32(f, s->ty) && write_u32(f, s->sprite_gindex)
 	    && write_u8(f, s->type) && write_u8(f, s->dir);
 }
 static bool read_sprite(FILE *f, struct Sprite *s){
-	return read_u32(f, &s->tx) && read_u32(f, &s->ty) && read_u32(f, &s->sprite_index)
+	return read_u32(f, &s->tx) && read_u32(f, &s->ty) && read_u32(f, &s->sprite_gindex)
 	    && read_u8(f, &s->type) && read_u8(f, &s->dir);
 }
 static bool write_entity(FILE *f, const struct Entity *e){
