@@ -33,8 +33,14 @@ struct Editor{
 	FilePathList available_sprites;
 	FilePathList available_entities;
 	FilePathList available_items;
-
+	
 	enum ActiveData active_data;
+	// brushes
+	struct Sprite sprite_brush;
+	struct Entity entity_brush;
+	struct ExitTile exit_brush;
+	uint32_t flag_brush;
+	
 	Rectangle top;
 	Rectangle bottom;
 	Rectangle right;
@@ -43,9 +49,17 @@ struct Editor{
 	
 	float top_delta;
 	float bottom_delta;
+	
+	float panel_h;
+	float side_w;
+	float box;
+	float pad;
 
 	Camera2D cam;
 	struct Map *m;
+
+	int  active_ctrl;
+	bool active_dropdown; 
 };
 static const char *top_labels[] = {
 	#define X(name) #name,

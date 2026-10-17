@@ -37,7 +37,10 @@ enum TileFlags{
 	#define X(name) name,
 	TILE_FLAGS
 	#undef X
+	TILE_FLAG_COUNT
 };
+#define FLAG_BIT(f) (1u << (f))
+_Static_assert(TILE_FLAG_COUNT <= 32, "tile_flag is a uint32_t, max 32 flags");
 struct Sprite{
 	uint32_t tx, ty;
 	uint32_t sprite_gindex;
